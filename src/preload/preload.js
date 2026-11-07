@@ -36,4 +36,12 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onEvolved: subscribe('pet:evolved'),
     onActivity: subscribe('pet:activity'), // { [kind]: count }
   },
+
+  panel: {
+    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, openAtLogin, petSize, sizeRange }
+    onState: subscribe('panel:state'),
+    action: send('panel:action'), // 'sync' | 'togglePet' | 'toggleOpenAtLogin' | 'openSettings' | 'disconnect' | 'quit'
+    setSize: send('panel:size'), // { size, commit }: live while dragging, commit on release
+    setHeight: send('panel:height'), // content height in px
+  },
 });

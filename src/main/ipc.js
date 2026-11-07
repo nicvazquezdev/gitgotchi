@@ -4,6 +4,7 @@ const store = require('./store');
 const session = require('./services/session');
 const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
+const panelWindow = require('./ui/panel-window');
 const catalog = require('./game/catalog');
 
 // Only accept messages from our own local pages.
@@ -20,7 +21,14 @@ function on(channel, fn) {
   ipcMain.on(channel, (event, payload) => isTrusted(event) && fn(payload));
 }
 
-/** @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void }} actions */
+// Panel buttons. Actions in KEEP_OPEN update the panel in place; the rest close it first.
+const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleOpenAtLogin', 'openSettings', 'disconnect', 'quit'];
+const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleOpenAtLogin']);
+
+/**
+ * @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
+ *           setPetSize: (size: number, persist?: boolean) => void }} actions
+ */
 function registerIpc(actions) {
   // App
   handle('app:bootstrap', () => {
@@ -64,6 +72,16 @@ function registerIpc(actions) {
   on('pet:drag-end', () => petWindow.stopDrag());
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());
+
+  // Panel
+  handle('panel:state', () => actions.panelState());
+  on('panel:action', (name) => {
+    if (!PANEL_ACTIONS.includes(name)) return;
+    if (!KEEP_OPEN.has(name)) panelWindow.hide();
+    actions[name]();
+  });
+  on('panel:size', ({ size, commit }) => actions.setPetSize(Number(size), Boolean(commit)));
+  on('panel:height', (height) => Number.isFinite(height) && panelWindow.setHeight(height));
 }
 
 module.exports = { registerIpc };

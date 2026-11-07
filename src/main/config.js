@@ -14,15 +14,11 @@ module.exports = {
   // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
   // Window at the default size: the box plus room above it for the speech bubble.
   PET_WINDOW: { width: 208, height: 280 },
-  // Any whole-pixel size within [min, max] (2x to 8x).
+  // Any whole-pixel size within [min, max] (2x to 8x); set with the slider in the menu bar panel.
   PET_SIZE_RANGE: { min: 104, max: 416 },
-  PET_SIZES: [
-    { label: 'Small', size: 156 },
-    { label: 'Medium', size: 208 },
-    { label: 'Large', size: 312 },
-    { label: 'Huge', size: 416 },
-  ],
   DEFAULT_PET_SIZE: 208,
+  // Menu-bar panel: fixed width; the height follows the content (the page reports it).
+  PANEL_WINDOW: { width: 300, height: 360 },
   // Default size is also the minimum: below it the pet step doesn't fit.
   ONBOARDING_WINDOW: { width: 640, height: 860, minWidth: 640, minHeight: 860 },
 
