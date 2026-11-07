@@ -46,7 +46,7 @@ function buildMenu({ status, configured, connected, petVisible, openAtLogin, act
   const header = status
     ? [
         { label: `${status.name} · ${status.stage.name} · ${status.xp} XP`, enabled: false },
-        { label: `This week: ${status.weekScore} pts`, enabled: false },
+        { label: `This week: ${status.weekScore} pts · ${status.streak}-day streak`, enabled: false },
         { type: 'separator' },
       ]
     : [];

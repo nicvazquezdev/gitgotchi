@@ -9,7 +9,7 @@ module.exports = {
   PRELOAD: path.join(ROOT, 'src/preload/preload.js'),
   IS_MAC: process.platform === 'darwin',
 
-  PET_WINDOW: { width: 168, height: 220 },
+  PET_WINDOW: { width: 168, height: 340 },
   // Default size is also the minimum: below it the pet step doesn't fit.
   ONBOARDING_WINDOW: { width: 640, height: 800, minWidth: 640, minHeight: 800 },
 

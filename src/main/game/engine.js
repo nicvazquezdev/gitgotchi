@@ -1,10 +1,9 @@
 // Pure game rules: no I/O, easy to test.
 const { SPECIES, STAGES, WEIGHTS, BASELINE, MOOD_RATIOS, MAX_HEARTS, SLEEP_HOURS } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
+const { stats, dayScore } = require('./stats');
 
 const emptyDay = () => Object.fromEntries(Object.keys(WEIGHTS).map((k) => [k, 0]));
-
-const dayScore = (d) => Object.entries(WEIGHTS).reduce((sum, [k, w]) => sum + (d[k] || 0) * w, 0);
 
 /**
  * Counts activity per day and kind, only for the selected repos.
@@ -141,6 +140,7 @@ function computeStatus({ pet, activity }, now = new Date()) {
     hearts: Math.min(MAX_HEARTS, Math.ceil((ratio / MOOD_RATIOS.happy) * MAX_HEARTS)),
     maxHearts: MAX_HEARTS,
     lastSyncedAt: activity.lastSyncedAt,
+    ...stats(activity.days, now),
   };
 }
 

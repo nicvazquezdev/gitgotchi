@@ -20,6 +20,38 @@ const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
 // ---------- Render ----------
 
+// ----- HUD: streak + 7-day chart -----
+
+const weekdayInitial = (day) => new Date(`${day}T00:00`).toLocaleDateString('en-US', { weekday: 'narrow' });
+const BAR_MAX_PX = 40;
+
+function renderStreak({ streak, bestStreak, history }) {
+  $('#hud-flame').classList.toggle('off', streak === 0);
+  $('#hud-streak').replaceChildren(
+    streak > 0 ? `${streak}-day streak` : 'No streak',
+    bestStreak > streak ? h('small', {}, `Best ${bestStreak}`) : null,
+  );
+  const max = Math.max(...history.map((d) => d.score), 1);
+  $('#hud-chart').replaceChildren(
+    ...history.map(({ day, score }, i) =>
+      h(
+        'div',
+        { class: `chart-col${i === history.length - 1 ? ' today' : ''}`, title: `${day}: ${score} pts` },
+        h(
+          'div',
+          { class: 'chart-track' },
+          h('div', {
+            class: `chart-bar${score ? '' : ' empty'}`,
+            // Whole pixels (steps of 2) keep the bars crisp.
+            style: score ? { height: `${Math.max(4, Math.round((score / max) * (BAR_MAX_PX / 2)) * 2)}px` } : {},
+          }),
+        ),
+        h('span', { class: 'chart-day' }, weekdayInitial(day)),
+      ),
+    ),
+  );
+}
+
 function renderHud() {
   const { name, stage, nextStage, xp, weekScore, hearts, maxHearts, progress, mood, syncing, error } = status;
   $('#hud-name').textContent = name;
@@ -29,6 +61,7 @@ function renderHud() {
   );
   $('#xp-fill').style.width = `${Math.round(progress * 100)}%`;
   $('#hud-xp').textContent = nextStage ? `${xp}/${nextStage.minXp} XP` : `${xp} XP · MAX`;
+  renderStreak(status);
   $('#hud-sync').hidden = !syncing;
   $('#zzz').hidden = mood !== 'sleeping';
   $('#alert').hidden = !error;
