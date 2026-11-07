@@ -323,6 +323,17 @@ describe('computeStatus', () => {
     });
   });
 
+  test('week only counts what the pet earned since its birth day, so it never exceeds the total XP', () => {
+    const days = {
+      '2026-06-10': day({ reviews: 20 }), // before the pet was born
+      '2026-06-14': day({ reviews: 2 }),
+    };
+    const born = computeStatus({ pet: pet(new Date(2026, 5, 13)), activity: activity(days), repos: [] }, NOON);
+    assert.equal(born.week.reviews, 2);
+    assert.equal(born.week.total, 2 * WEIGHTS.reviews);
+    assert.equal(born.week.total, born.xp);
+  });
+
   test('old-shaped days (pushes, comments) give no XP and do not crash', () => {
     const s = status(activity({ '2026-06-15': { pushes: 9, comments: 9, prs: 3, merges: 0, reviews: 0 } }));
     assert.equal(s.xp, 0);

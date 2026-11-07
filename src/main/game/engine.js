@@ -181,9 +181,9 @@ function moodFor({ waiting, mergedRecently, ratio }) {
   return result('neutral');
 }
 
-/** XP and counts per kind for the last 7 days. */
-function weekSummary(days, today) {
-  const weekStart = addDays(today, -6);
+/** XP and counts per kind for the last 7 days, from `since` on (the pet's birth day: what it did not earn is not shown). */
+function weekSummary(days, today, since = '') {
+  const weekStart = addDays(today, -6) > since ? addDays(today, -6) : since;
   const counts = () => Object.fromEntries(KINDS.map((kind) => [kind, 0]));
   const week = { ...counts(), xp: counts(), total: 0 };
   for (const [day, d] of Object.entries(days)) {
@@ -207,7 +207,8 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
   const days = activity.days ?? {};
 
   const xp = Object.entries(days).reduce((sum, [day, d]) => (day >= birthDay ? sum + dayXp(d) : sum), 0);
-  const week = weekSummary(days, today);
+  const week = weekSummary(days, today, birthDay); // what the pet earned, like `xp`
+  const weekRatioXp = weekSummary(days, today).total; // the mood compares the whole week with the baseline
   const baseline = computeBaseline(days, today);
 
   // Level and stage follow the baseline, but what was reached is never lost.
@@ -233,7 +234,7 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
     xp,
     levelXp: Math.min(levelXpNeeded, Math.max(0, xp - levelStart)),
     levelXpNeeded,
-    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: week.total / baseline }),
+    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline }),
     week,
     prs,
     baseline,
