@@ -63,4 +63,5 @@ Eight creature lines with four stages each live in `assets/pets/` (1x PNGs plus 
 - `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
 - `npm run format` / `npm run lint`: Prettier
+- `npm run shots [-- profile popover panel settings evolution pet] [--light] [--mine]`: renders the windows with sample data to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye
 - `npm test`: unit tests (Node built-in runner, files in `test/`)
