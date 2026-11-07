@@ -13,7 +13,7 @@ const evolutionWindow = require('./ui/evolution-window');
 const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
-const { createTray, updateTray } = require('./ui/tray');
+const { createTray } = require('./ui/tray');
 const store = require('./store');
 const prefs = require('./prefs');
 const { registerIpc } = require('./ipc');
@@ -143,7 +143,6 @@ petService.on('status', (status) => {
   panelWindow.send();
   settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();
-  if (tray) updateTray(tray, status);
   actions.flushEvolution();
 });
 petService.on('evolved', (stage) => {
@@ -182,7 +181,6 @@ app.whenReady().then(() => {
   popoverWindow.init(actions.panelState);
   settingsWindow.init(actions.settingsState);
   tray = createTray();
-  updateTray(tray, petService.status());
   const toggleMenu = () => {
     actions.flushEvolution();
     panelWindow.toggle(tray.getBounds());
