@@ -140,11 +140,15 @@ function backupHint({ cloud }) {
     }
     return {
       checked: false,
-      hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers.',
+      hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers. It saves the pet, its achievements and daily XP counts, and your repos as ids: no repo names, PR titles or code.',
     };
   }
   const saved = cloud.lastPushAt ? ` Last saved ${timeAgo(cloud.lastPushAt)}.` : '';
-  return { checked: true, hint: `Saved in your private repo ${cloud.repo}.${saved}`, link: openRepo };
+  return {
+    checked: true,
+    hint: `Saved in your private repo ${cloud.repo}.${saved} No repo names, PR titles or code in it.`,
+    link: openRepo,
+  };
 }
 
 // ---------- Page ----------

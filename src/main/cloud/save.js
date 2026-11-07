@@ -1,26 +1,47 @@
 // Cloud save format and merge rules (pure, no I/O).
 // The save lives in a private repo in the user's own GitHub account: <login>/gitgotchi-save/save.json.
+const crypto = require('node:crypto');
 const { mergeDays, computeStatus } = require('../game/engine');
 
 const SAVE = {
   repo: 'gitgotchi-save',
   path: 'save.json',
   app: 'gitgotchi',
-  schema: 1,
+  schema: 2, // 1 kept the names of the repos; 2 keeps `repoIds` (see repoId). Both are read.
   description: 'Gitgotchi pet save (managed by the Gitgotchi app, safe to delete).',
   // Commits are signed with an address not linked to any account, so they don't count as contributions.
   identity: { name: 'Gitgotchi', email: 'gitgotchi@users.noreply.github.com' },
 };
 
 /**
- * What travels between computers: the pet, the selected repos and the XP history.
- * Device settings (window position, pet size, open at login, sync on/off) stay local.
+ * What stands for a repo in the save, in place of its name: the names of a company's private repos should not sit
+ * readable in a repo of the user's own account. It is the start of a hash of the account and the name, so another
+ * computer can find the repos again by hashing the ones it can see (cloud-sync.js). It is not encryption: whoever can
+ * guess a name can check it, it only stops the names from being read at a glance.
+ */
+function repoId(login, fullName) {
+  return crypto
+    .createHash('sha256')
+    .update(`${login.toLowerCase()}:${fullName.toLowerCase()}`)
+    .digest('hex')
+    .slice(0, 16);
+}
+
+/**
+ * What travels between computers: the pet, which repos were selected (as ids, never names), and the XP history: counts
+ * per day and kind. No PR titles, no code. Device settings (window position, pet size, open at login, sync on/off)
+ * stay local.
  */
 function toSave(state) {
+  const login = state.user?.login ?? '';
   return {
     app: SAVE.app,
     schema: SAVE.schema,
-    profile: { pet: state.pet, repos: state.repos, updatedAt: state.profileUpdatedAt ?? null },
+    profile: {
+      pet: state.pet,
+      repoIds: (state.repos ?? []).map((repo) => repoId(login, repo)),
+      updatedAt: state.profileUpdatedAt ?? null,
+    },
     activity: { days: state.activity.days },
   };
 }
@@ -37,17 +58,24 @@ function mergeAchievements(a, b) {
   return merged;
 }
 
+/** Does the remote profile (pet and repos) win over the local one? When it does, its repos are needed by name. */
+const remoteWins = (state, save) => (save.profile.updatedAt ?? '') > (state.profileUpdatedAt ?? '') || !state.pet;
+
 /**
  * Merges a remote save into the local state. Returns a store patch.
  * - XP history: max per day and kind on both sides, so nothing is lost or counted twice.
  * - Pet and repos: the most recently changed profile wins (last-write-wins on `updatedAt`).
  * - Same pet on both sides: keep the highest stage either computer reached, and the achievements of both.
+ * `remoteRepos`: the names the remote `repoIds` stand for (cloud-sync.js finds them); a save from before schema 2
+ * has the names itself.
  */
-function mergeSave(state, save) {
+function mergeSave(state, save, remoteRepos) {
   const remote = save.profile;
-  const remoteNewer = (remote.updatedAt ?? '') > (state.profileUpdatedAt ?? '');
-  const winner = remoteNewer || !state.pet ? remote : { pet: state.pet, repos: state.repos };
-  const other = winner === remote ? state.pet : remote.pet;
+  const remoteWon = remoteWins(state, save);
+  const winner = remoteWon
+    ? { pet: remote.pet, repos: remoteRepos ?? remote.repos }
+    : { pet: state.pet, repos: state.repos };
+  const other = remoteWon ? state.pet : remote.pet;
 
   let pet = winner.pet;
   if (samePet(pet, other)) {
@@ -61,7 +89,8 @@ function mergeSave(state, save) {
 
   return {
     pet,
-    repos: winner.repos ?? [],
+    // A winning remote profile whose repos could not be found keeps the local ones rather than leaving none.
+    repos: winner.repos ?? (remoteWon && remote.repoIds ? state.repos : []),
     profileUpdatedAt: [remote.updatedAt, state.profileUpdatedAt].filter(Boolean).sort().at(-1) ?? null,
     activity: { ...state.activity, days: mergeDays(state.activity.days, save.activity.days ?? {}) },
   };
@@ -80,4 +109,4 @@ function saveSummary(save) {
   };
 }
 
-module.exports = { SAVE, toSave, isSave, mergeSave, saveSummary };
+module.exports = { SAVE, repoId, toSave, isSave, remoteWins, mergeSave, saveSummary };

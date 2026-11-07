@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+const { test, describe, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 
@@ -15,6 +15,7 @@ const client = {
   createPrivateRepo: async () => (repo.exists = true),
   readJsonFile: async () => null,
   writeJsonFile: async () => 'sha',
+  accessibleRepos: async () => [],
 };
 fake('store.js', {
   get: () => state,
@@ -85,6 +86,82 @@ test('finding a save in the account counts as saved', async () => {
   client.readJsonFile = async () => ({ sha: 's', json: toSave(state) });
   await cloud.restore();
   assert.equal(cloud.status().saved, true);
+});
+
+describe('restoring the repos from a save that only has their ids', () => {
+  const saved = {
+    user: { login: 'me' },
+    pet,
+    repos: ['acme/web-app', 'acme/api', 'acme/gone'],
+    activity: { days: {} },
+  };
+  const newComputer = () => ({ user: { login: 'me' }, pet: null, repos: [], activity: { days: {} }, cloudSync: false });
+  let listed;
+  beforeEach(() => {
+    listed = 0;
+    client.accessibleRepos = async () => (
+      listed++,
+      [{ fullName: 'acme/web-app' }, { fullName: 'Acme/API' }, { fullName: 'acme/unrelated' }]
+    );
+  });
+
+  test('the names are found among the repos the user can see, and the ones they cannot see any more are left out', async () => {
+    state = newComputer();
+    client.readJsonFile = async () => ({ sha: 's', json: toSave(saved) });
+    await cloud.restore();
+    assert.deepEqual(state.repos, ['acme/web-app', 'Acme/API']);
+    assert.deepEqual(state.pet, pet);
+  });
+
+  test('the file in the repo has no repo names', async () => {
+    let written;
+    state = { ...saved, cloudSync: false };
+    repo = { exists: true };
+    client.readJsonFile = async () => null;
+    client.writeJsonFile = async (owner, name, filePath, { json }) => ((written = JSON.stringify(json)), 'sha');
+    await cloud.enable();
+    assert.ok(written);
+    assert.ok(!written.includes('acme') && !written.includes('web-app'));
+  });
+
+  test('a save from before the ids has the names itself: no need to list the repos', async () => {
+    state = newComputer();
+    const legacy = toSave(saved);
+    delete legacy.profile.repoIds;
+    legacy.profile.repos = ['acme/web-app', 'acme/api'];
+    client.readJsonFile = async () => ({ sha: 's', json: legacy });
+    await cloud.restore();
+    assert.deepEqual(state.repos, ['acme/web-app', 'acme/api']);
+    assert.equal(listed, 0);
+  });
+
+  test('when this computer has the newer profile, the repos are not listed at all', async () => {
+    state = { ...saved, cloudSync: true, profileUpdatedAt: '2099-01-01T00:00:00Z' };
+    client.readJsonFile = async () => ({
+      sha: 's',
+      json: toSave({ ...saved, profileUpdatedAt: '2026-01-01T00:00:00Z' }),
+    });
+    await cloud.pull();
+    assert.equal(listed, 0);
+    assert.deepEqual(state.repos, saved.repos);
+  });
+
+  test('if GitHub cannot list the repos, the restore fails with a visible error and nothing is changed', async () => {
+    state = newComputer();
+    client.accessibleRepos = async () => {
+      throw new Error('GitHub 502');
+    };
+    client.readJsonFile = async () => ({ sha: 's', json: toSave(saved) });
+    const originalError = console.error;
+    console.error = () => {};
+    try {
+      await cloud.restore();
+    } finally {
+      console.error = originalError;
+    }
+    assert.equal(cloud.status().error, 'GitHub 502');
+    assert.equal(state.pet, null);
+  });
 });
 
 test('the repo name is "<login>/gitgotchi-save"', () => {

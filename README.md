@@ -33,6 +33,8 @@ npm run dev   # auto-reloads on changes
 
 **Settings** (_Settings…_ in the menu): pet size, speech bubbles, the account and repos (_Change…_ reopens the setup), _Back up pet to GitHub_ and _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
 
+**Backup** (optional, off by default): _Back up pet to GitHub_ keeps a private repo `<you>/gitgotchi-save` in your own GitHub account with one file, `save.json`: the pet (name, species, birth date, stage, achievements), the XP counts per day and kind, and which repos you picked **as ids** (a hash of your account and the repo name). It has no repo names, PR titles or code. The ids keep the names from being read at a glance; they are not encryption, so whoever can guess a name can check it. On another computer, the setup offers to restore the save and finds your repos again among the ones you can see (one that you can no longer see, or that is not among your 300 most recently pushed, is left out: pick it again). Turning the backup off stops syncing but leaves the repo; delete it on GitHub to remove it (the app cannot delete repos). Saves written before the ids existed had the repo names, and they stay in the repo's history: delete the repo and turn the backup on again to get rid of them.
+
 ## Structure
 
 ```

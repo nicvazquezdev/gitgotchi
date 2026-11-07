@@ -8,7 +8,7 @@ const { EventEmitter } = require('node:events');
 const store = require('../store');
 const session = require('../services/session');
 const { CLOUD } = require('../config');
-const { SAVE, toSave, isSave, mergeSave, saveSummary } = require('./save');
+const { SAVE, repoId, toSave, isSave, remoteWins, mergeSave, saveSummary } = require('./save');
 
 class CloudSync extends EventEmitter {
   #sha = null; // blob sha of save.json, needed to replace it
@@ -155,11 +155,24 @@ class CloudSync extends EventEmitter {
     await gh.createPrivateRepo(SAVE.repo, SAVE.description);
   }
 
+  /**
+   * The names of the repos in a save, when the save's profile is going to be used (it wins over the local one) and
+   * only has their ids: the repos the user can see, whose id is in the save. Undefined when it is not needed, or when
+   * the save is from before schema 2 and has the names. A repo the user can no longer see is left out.
+   */
+  async #repoNames(save) {
+    if (!save.profile.repoIds || !remoteWins(store.get(), save)) return undefined;
+    const { gh, owner } = await this.#target();
+    const wanted = new Set(save.profile.repoIds);
+    return (await gh.accessibleRepos()).map((repo) => repo.fullName).filter((name) => wanted.has(repoId(owner, name)));
+  }
+
   async #pull() {
     this.#setPhase('pulling');
     const file = await this.#read();
     if (!file) return;
-    store.update((state) => ({ ...mergeSave(state, file.json), cloudSaved: true }));
+    const repos = await this.#repoNames(file.json);
+    store.update((state) => ({ ...mergeSave(state, file.json, repos), cloudSaved: true }));
     this.#lastSaved = JSON.stringify(file.json);
     this.emit('pulled');
   }
