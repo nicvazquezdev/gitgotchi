@@ -12,6 +12,8 @@ module.exports = {
   // Window size at the default sprite size; it grows with the sprite (see ui/pet-size.js).
   PET_WINDOW: { width: 168, height: 340 },
   // Sprite sizes in px: multiples of the 32 px native sprite keep the pixel art crisp.
+  // Corner resize is continuous within [min, max]; Cmd/Ctrl+scroll moves by `step`. PET_SIZES are the menu presets.
+  PET_SIZE_RANGE: { min: 64, max: 320, step: 32 },
   PET_SIZES: [
     { label: 'Small', size: 96 },
     { label: 'Medium', size: 128 },

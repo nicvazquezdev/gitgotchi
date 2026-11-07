@@ -35,6 +35,21 @@ body {
 .pet.dragging {
   cursor: grabbing;
 }
+
+/* ---------- Corner resize ---------- */
+.pet[data-corner='nw'],
+.pet[data-corner='se'] {
+  cursor: nwse-resize;
+}
+.pet[data-corner='ne'],
+.pet[data-corner='sw'] {
+  cursor: nesw-resize;
+}
+
+body.resizing .hud,
+body.resizing .bubble {
+  display: none;
+}
 .pet.jump {
   animation: jump 0.5s steps(5);
 }
@@ -185,10 +200,6 @@ body.dragging .shadow {
     transform 120ms steps(3);
   pointer-events: none;
 }
-body.hover:not(.dragging) .hud {
-  opacity: 1;
-  transform: none;
-}
 .hud-top {
   display: flex;
   justify-content: space-between;
@@ -264,9 +275,6 @@ body.hover:not(.dragging) .hud {
     0 2px 0 0 var(--ink),
     2px 0 0 0 var(--ink),
     -2px 0 0 0 var(--ink);
-}
-body.hover .bubble {
-  display: none;
 }
 
 /* ---------- Indicators ---------- */

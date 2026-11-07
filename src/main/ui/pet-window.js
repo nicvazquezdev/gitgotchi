@@ -6,7 +6,6 @@ const { IS_MAC } = require('../config');
 const petSize = require('./pet-size');
 
 let win = null;
-let dragTimer = null;
 
 const isOpen = () => Boolean(win && !win.isDestroyed());
 const isVisible = () => isOpen() && win.isVisible();
@@ -80,25 +79,61 @@ function send(channel, payload) {
 }
 
 function setClickThrough(enabled) {
-  if (isOpen() && !dragTimer) win.setIgnoreMouseEvents(enabled, { forward: true });
+  if (isOpen() && !followTimer) win.setIgnoreMouseEvents(enabled, { forward: true });
+}
+
+// ---------- Drag & corner resize: both follow the cursor from the main process ----------
+
+let followTimer = null;
+
+function followCursor(onMove) {
+  stopFollowing();
+  followTimer = setInterval(() => (isOpen() ? onMove(screen.getCursorScreenPoint()) : stopFollowing()), 1000 / 60);
+}
+
+function stopFollowing() {
+  clearInterval(followTimer);
+  followTimer = null;
+}
+
+function saveBounds() {
+  if (!isOpen()) return;
+  const { x, y } = win.getBounds();
+  store.update({ position: { x, y } });
 }
 
 /** While dragging, the window follows the cursor keeping the grab offset. */
 function startDrag({ offsetX, offsetY }) {
-  stopDrag();
-  dragTimer = setInterval(() => {
-    if (!isOpen()) return stopDrag();
-    const p = screen.getCursorScreenPoint();
-    win.setPosition(Math.round(p.x - offsetX), Math.round(p.y - offsetY));
-  }, 1000 / 60);
+  followCursor((p) => win.setPosition(Math.round(p.x - offsetX), Math.round(p.y - offsetY)));
 }
 
 function stopDrag() {
-  clearInterval(dragTimer);
-  dragTimer = null;
-  if (!isOpen()) return;
-  const [x, y] = win.getPosition();
-  store.update({ position: { x, y } });
+  stopFollowing();
+  saveBounds();
+}
+
+let resizing = null; // { size } while a corner is being dragged
+
+/** Resizes from a sprite corner while the opposite corner stays put. */
+function startResize({ corner }) {
+  if (!isOpen() || !/^[ns][we]$/.test(corner)) return;
+  const anchor = petSize.oppositeCorner(win.getBounds(), size(), corner);
+  resizing = { size: size() };
+  followCursor((cursor) => {
+    const next = petSize.sizeFromCursor(anchor, cursor);
+    if (next === resizing.size) return;
+    resizing.size = next;
+    win.setBounds(petSize.boundsFromAnchor(anchor, corner, next));
+    send('pet:size', next);
+  });
+}
+
+function stopResize() {
+  if (!resizing) return;
+  stopFollowing();
+  store.update({ petSize: resizing.size });
+  resizing = null;
+  saveBounds();
 }
 
 /** Resizes the sprite keeping the pet's bottom-center in place, and tells the renderer. */
@@ -128,6 +163,8 @@ module.exports = {
   setClickThrough,
   startDrag,
   stopDrag,
+  startResize,
+  stopResize,
   ensureOnScreen,
   size,
   setSize,

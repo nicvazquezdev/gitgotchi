@@ -1,21 +1,32 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveSize, stepSize, windowSize, anchoredBounds } = require('../src/main/ui/pet-size');
+const {
+  resolveSize,
+  stepSize,
+  windowSize,
+  anchoredBounds,
+  oppositeCorner,
+  sizeFromCursor,
+  boundsFromAnchor,
+} = require('../src/main/ui/pet-size');
 const { PET_WINDOW } = require('../src/main/config');
 
 const area = { x: 0, y: 0, width: 1440, height: 900 };
 
-test('resolveSize falls back to the default for unknown values', () => {
+test('resolveSize keeps whole pixels inside the range, default for junk', () => {
   assert.equal(resolveSize(192), 192);
-  assert.equal(resolveSize(100), 128);
+  assert.equal(resolveSize(100.4), 100);
+  assert.equal(resolveSize(10), 64);
+  assert.equal(resolveSize(9999), 320);
   assert.equal(resolveSize(undefined), 128);
+  assert.equal(resolveSize(NaN), 128);
 });
 
-test('stepSize moves through sizes and stops at both ends', () => {
-  assert.equal(stepSize(128, 1), 192);
+test('stepSize moves one 32 px step and stops at both ends', () => {
+  assert.equal(stepSize(128, 1), 160);
   assert.equal(stepSize(128, -1), 96);
-  assert.equal(stepSize(96, -1), 96);
-  assert.equal(stepSize(256, 1), 256);
+  assert.equal(stepSize(64, -1), 64);
+  assert.equal(stepSize(320, 1), 320);
   assert.equal(stepSize(128, 0), 128);
 });
 
@@ -55,4 +66,36 @@ test('anchoredBounds respects a work area with an offset origin', () => {
   const offset = { x: -1920, y: 25, width: 1920, height: 1055 };
   const next = anchoredBounds({ x: -1920, y: 25, ...PET_WINDOW }, 192, offset);
   assert.deepEqual([next.x, next.y], [-1920, 25]);
+});
+
+// ---------- Corner resize ----------
+
+const spriteBox = (bounds, size) => ({
+  left: bounds.x + (bounds.width - size) / 2,
+  top: bounds.y + bounds.height - size,
+});
+
+test('oppositeCorner returns the sprite corner facing the grabbed one', () => {
+  const bounds = { x: 100, y: 100, ...windowSize(128) };
+  const { left, top } = spriteBox(bounds, 128);
+  assert.deepEqual(oppositeCorner(bounds, 128, 'nw'), { x: left + 128, y: top + 128 });
+  assert.deepEqual(oppositeCorner(bounds, 128, 'se'), { x: left, y: top });
+  assert.deepEqual(oppositeCorner(bounds, 128, 'ne'), { x: left, y: top + 128 });
+});
+
+test('sizeFromCursor follows the larger axis continuously, within the range', () => {
+  assert.equal(sizeFromCursor({ x: 0, y: 0 }, { x: 150, y: 40 }), 150);
+  assert.equal(sizeFromCursor({ x: 0, y: 0 }, { x: -20, y: -190 }), 190);
+  assert.equal(sizeFromCursor({ x: 0, y: 0 }, { x: 5, y: 5 }), 64);
+});
+
+test('boundsFromAnchor keeps the opposite corner fixed for every grabbed corner', () => {
+  const bounds = { x: 400, y: 300, ...windowSize(128) };
+  for (const corner of ['nw', 'ne', 'sw', 'se']) {
+    const anchor = oppositeCorner(bounds, 128, corner);
+    for (const size of [64, 150, 191, 320]) {
+      const next = boundsFromAnchor(anchor, corner, size);
+      assert.deepEqual(oppositeCorner(next, size, corner), anchor, `${corner} @ ${size}`);
+    }
+  }
 });

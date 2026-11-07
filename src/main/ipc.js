@@ -20,7 +20,7 @@ function on(channel, fn) {
   ipcMain.on(channel, (event, payload) => isTrusted(event) && fn(payload));
 }
 
-/** @param {{ finishOnboarding: () => void, showMenu: () => void, stepPetSize: (direction: number) => void, disconnect: () => void }} actions */
+/** @param {{ finishOnboarding: () => void, showMenu: () => void, refreshMenu: () => void, stepPetSize: (direction: number) => void, disconnect: () => void }} actions */
 function registerIpc(actions) {
   // App
   handle('app:bootstrap', () => {
@@ -62,6 +62,11 @@ function registerIpc(actions) {
     petWindow.startDrag({ offsetX: Number(offsetX), offsetY: Number(offsetY) }),
   );
   on('pet:drag-end', () => petWindow.stopDrag());
+  on('pet:resize-start', ({ corner }) => petWindow.startResize({ corner: String(corner) }));
+  on('pet:resize-end', () => {
+    petWindow.stopResize();
+    actions.refreshMenu();
+  });
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());
   on('pet:size-step', (direction) => actions.stepPetSize(Math.sign(Number(direction))));

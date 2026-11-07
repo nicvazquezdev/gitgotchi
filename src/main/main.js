@@ -42,6 +42,7 @@ const actions = {
     refreshMenu();
   },
   stepPetSize: (direction) => actions.setPetSize(stepSize(petWindow.size(), direction)),
+  refreshMenu: () => refreshMenu(),
   showMenu: () => menu().popup({ window: petWindow.window }),
   quit: () => app.quit(),
 };

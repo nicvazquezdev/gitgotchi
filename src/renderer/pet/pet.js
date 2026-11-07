@@ -4,6 +4,7 @@ import { animatePet } from '../shared/sprite.js';
 const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
 const DRAG_THRESHOLD_PX = 4;
+const RESIZE_HANDLE_PX = 14; // corner hot zone, from each corner of the sprite
 
 const LINES = {
   happy: ['What a week! 🔥', 'Yum, fresh pushes!', 'I feel huge today', 'Keep it up!'],
@@ -14,6 +15,7 @@ const LINES = {
 
 let status = null;
 let drag = null;
+let resizing = false;
 let bubbleTimer = null;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -138,24 +140,42 @@ function reactToActivity(delta) {
   say(count > 1 ? `${reaction.text} x${count}` : reaction.text, 4000);
 }
 
-// ---------- Mouse: hover, click and drag ----------
+// ---------- Mouse: hover, click, drag and corner resize ----------
 
 function setHover(active) {
   document.body.classList.toggle('hover', active);
   api.setClickThrough(!active);
 }
 
+/** 'nw' | 'ne' | 'sw' | 'se' when the pointer is on a corner of the sprite, otherwise ''. */
+function cornerAt(e) {
+  const r = canvas.getBoundingClientRect();
+  const x = e.clientX - r.left;
+  const y = e.clientY - r.top;
+  const v = y < RESIZE_HANDLE_PX ? 'n' : y > r.height - RESIZE_HANDLE_PX ? 's' : '';
+  const h = x < RESIZE_HANDLE_PX ? 'w' : x > r.width - RESIZE_HANDLE_PX ? 'e' : '';
+  return v && h ? v + h : '';
+}
+
 canvas.addEventListener('mouseenter', () => setHover(true));
-canvas.addEventListener('mouseleave', () => !drag && setHover(false));
+canvas.addEventListener('mouseleave', () => !drag && !resizing && setHover(false));
 
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0) return;
-  drag = { x: e.screenX, y: e.screenY, moved: false };
   canvas.setPointerCapture(e.pointerId);
+  const corner = cornerAt(e);
+  if (corner) {
+    resizing = true;
+    document.body.classList.add('resizing');
+    api.resizeStart({ corner });
+    return;
+  }
+  drag = { x: e.screenX, y: e.screenY, moved: false };
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
 });
 
 canvas.addEventListener('pointermove', (e) => {
+  if (!drag && !resizing) canvas.dataset.corner = cornerAt(e); // drives the resize cursor in CSS
   if (!drag || drag.moved) return;
   if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) > DRAG_THRESHOLD_PX) {
     drag.moved = true;
@@ -165,13 +185,20 @@ canvas.addEventListener('pointermove', (e) => {
 });
 
 canvas.addEventListener('pointerup', (e) => {
-  if (!drag) return;
-  api.dragEnd();
-  const wasClick = !drag.moved;
-  drag = null;
-  canvas.classList.remove('dragging');
-  document.body.classList.remove('dragging');
-  if (wasClick) reactToClick();
+  if (resizing) {
+    resizing = false;
+    document.body.classList.remove('resizing');
+    api.resizeEnd();
+  } else if (drag) {
+    api.dragEnd();
+    const wasClick = !drag.moved;
+    drag = null;
+    canvas.classList.remove('dragging');
+    document.body.classList.remove('dragging');
+    if (wasClick) reactToClick();
+  } else {
+    return;
+  }
   // If the cursor ended up outside the pet, clicks pass through the window again.
   const r = canvas.getBoundingClientRect();
   const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
