@@ -9,12 +9,19 @@ const {
   applyActivity,
   computeStatus,
 } = require('../src/main/game/engine');
-const { WEIGHTS, BASELINE, MOOD, PR_KEEP_MERGED_DAYS } = require('../src/main/game/catalog');
+const {
+  WEIGHTS,
+  DAILY_CAPS,
+  BASELINE,
+  MOOD,
+  PR_KEEP_MERGED_DAYS,
+  COMMIT_KEEP_DAYS,
+} = require('../src/main/game/catalog');
 const { toDay, addDays } = require('../src/main/dates');
 
 const NOON = new Date(2026, 5, 15, 12);
 const ev = (kind, repo, day) => ({ kind, repo, day });
-const day = (c = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, ...c });
+const day = (c = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...c });
 const activity = (days = {}, extra = {}) => ({ days, prs: [], lastSyncedAt: null, prsSyncedAt: null, ...extra });
 const pet = (bornAt = new Date(2026, 0, 1), extra = {}) => ({
   name: 'Pixel',
@@ -53,8 +60,20 @@ describe('buildDays', () => {
     assert.deepEqual(buildDays({ events, repos: ['A/B'] }), { '2026-06-01': day({ reviews: 2 }) });
   });
 
-  test('other kinds give no XP and are ignored', () => {
-    const events = ['pushes', 'comments', 'issues', 'prs', 'merges', 'stars'].map((k) => ev(k, 'a/b', '2026-06-01'));
+  test('counts opened issues like reviews', () => {
+    const events = [
+      ev('issues', 'a/b', '2026-06-01'),
+      ev('issues', 'x/y', '2026-06-01'),
+      ev('reviews', 'a/b', '2026-06-02'),
+    ];
+    assert.deepEqual(buildDays({ events, repos: ['a/b'] }), {
+      '2026-06-01': day({ issues: 1 }),
+      '2026-06-02': day({ reviews: 1 }),
+    });
+  });
+
+  test('other kinds give no XP here and are ignored (pushes count through their commits)', () => {
+    const events = ['pushes', 'comments', 'prs', 'merges', 'stars'].map((k) => ev(k, 'a/b', '2026-06-01'));
     assert.deepEqual(buildDays({ events, repos: ['a/b'] }), {});
   });
 
@@ -149,7 +168,7 @@ describe('mergeDays', () => {
       { '2026-06-01': { pushes: 9, comments: 3, issues: 1, reviews: 2 } },
       { '2026-06-01': day() },
     );
-    assert.deepEqual(merged['2026-06-01'], day({ reviews: 2 }));
+    assert.deepEqual(merged['2026-06-01'], day({ reviews: 2, issues: 1 }));
   });
 
   test('does not mutate inputs', () => {
@@ -169,6 +188,33 @@ describe('applyActivity', () => {
     assert.deepEqual(result.days[toDay(daysAgo(3))], day({ prs: 2, prsXp: 30 + 5 }));
     assert.deepEqual(result.days[toDay(hoursAgo(2))], day({ merges: 1 }));
     assert.equal(result.prs.length, 2);
+  });
+
+  test('commits fill the ledger on the day of their push and are counted once', () => {
+    const commits = [
+      { key: 'a/b|1|first', day: '2026-06-14' },
+      { key: 'a/b|2|second', day: '2026-06-14' },
+    ];
+    const once = apply(activity(), { commits, pushes: [{ id: '7', day: '2026-06-14' }] });
+    assert.equal(once.days['2026-06-14'].commits, 2);
+    assert.deepEqual(once.pushes, [{ id: '7', day: '2026-06-14' }]);
+    // The same commits arriving again (another push, a rebase) add nothing.
+    const twice = apply(once, { commits: [{ key: 'a/b|1|first', day: '2026-06-15' }] });
+    assert.deepEqual(twice.days, once.days);
+    assert.equal(twice.commits.length, 2);
+  });
+
+  test('old commit and push records are pruned but their XP stays', () => {
+    const old = toDay(daysAgo(COMMIT_KEEP_DAYS + 3));
+    const first = apply(activity(), { commits: [{ key: 'k', day: old }], pushes: [{ id: '1', day: old }] });
+    assert.deepEqual(first.commits, []);
+    assert.deepEqual(first.pushes, []);
+    assert.equal(first.days[old].commits, 1);
+  });
+
+  test('issue events fill the ledger too', () => {
+    const result = apply(activity(), { events: [ev('issues', 'a/b', '2026-06-14')] });
+    assert.deepEqual(result.days['2026-06-14'], day({ issues: 1 }));
   });
 
   test('PRs of unselected repos are ignored', () => {
@@ -240,6 +286,24 @@ describe('computeStatus', () => {
     assert.equal(s.xp, 2 * WEIGHTS.reviews + 20 + WEIGHTS.merges); // the day before birth is out
   });
 
+  test('commits and issues give XP, and commits stop at the daily cap', () => {
+    const cap = DAILY_CAPS.commits;
+    const days = {
+      '2026-06-15': day({ commits: cap + 25, issues: 2 }), // the real count is kept; XP stops at the cap
+      '2026-06-14': day({ commits: 3 }),
+    };
+    const { week, xp } = status(activity(days));
+    assert.equal(week.commits, cap + 25 + 3);
+    assert.deepEqual(week.xp, {
+      prs: 0,
+      reviews: 0,
+      merges: 0,
+      commits: (cap + 3) * WEIGHTS.commits,
+      issues: 2 * WEIGHTS.issues,
+    });
+    assert.equal(xp, (cap + 3) * WEIGHTS.commits + 2 * WEIGHTS.issues);
+  });
+
   test('week covers only the last 7 days, with counts and XP per kind', () => {
     const days = {
       '2026-06-08': day({ reviews: 10 }), // 7 days ago: out
@@ -252,13 +316,15 @@ describe('computeStatus', () => {
       prs: 1,
       reviews: 1,
       merges: 2,
-      xp: { prs: 10, reviews: WEIGHTS.reviews, merges: 2 * WEIGHTS.merges },
+      commits: 0,
+      issues: 0,
+      xp: { prs: 10, reviews: WEIGHTS.reviews, merges: 2 * WEIGHTS.merges, commits: 0, issues: 0 },
       total: 10 + WEIGHTS.reviews + 2 * WEIGHTS.merges,
     });
   });
 
   test('old-shaped days (pushes, comments) give no XP and do not crash', () => {
-    const s = status(activity({ '2026-06-15': { pushes: 9, comments: 9, issues: 9, prs: 3, merges: 0, reviews: 0 } }));
+    const s = status(activity({ '2026-06-15': { pushes: 9, comments: 9, prs: 3, merges: 0, reviews: 0 } }));
     assert.equal(s.xp, 0);
     assert.equal(s.week.total, 0);
   });

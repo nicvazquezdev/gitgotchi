@@ -1,22 +1,35 @@
 // Pure game rules: no I/O, easy to test.
 const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
-const { stats, dayXp, dayXpByKind } = require('./stats');
+const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
 const { xpForLevel, levelAt, stageIndexFor } = require('./levels');
 const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
+const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
 
-/** One ledger day. Old kinds (pushes, comments, issues) from earlier versions are never read or kept. */
-const emptyDay = () => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0 });
+// Old kinds (pushes, comments) from earlier versions are never read or kept.
 const LEDGER_FIELDS = Object.keys(emptyDay());
 
-/** Fresh activity state: day ledger, the user's PRs and the two sync marks. */
-const emptyActivity = () => ({ days: {}, prs: [], lastSyncedAt: null, prsSyncedAt: null });
+/**
+ * Fresh activity state: day ledger, the user's PRs, the commits and pushes already counted (to count each once)
+ * and the two sync marks.
+ */
+const emptyActivity = () => ({
+  days: {},
+  prs: [],
+  commits: [],
+  pushes: [],
+  lastSyncedAt: null,
+  prsSyncedAt: null,
+});
+
+/** Event kinds counted one by one. Pushes give XP through their commits (see commits.js), not here. */
+const COUNTED_EVENTS = new Set(['reviews', 'issues']);
 
 /**
- * Counts review events per day, only for the selected repos. Other event kinds give no XP and are ignored.
+ * Counts review and issue events per day, only for the selected repos. Other event kinds give no XP here.
  * @param {{ events: { kind, repo, day }[], repos: string[] }} input
  * @returns {{ [day: string]: object }}
  */
@@ -24,7 +37,7 @@ function buildDays({ events, repos }) {
   const selected = new Set(repos.map((r) => r.toLowerCase()));
   const days = {};
   for (const { kind, repo, day } of events) {
-    if (kind !== 'reviews' || !selected.has(repo.toLowerCase())) continue;
+    if (!COUNTED_EVENTS.has(kind) || !selected.has(repo.toLowerCase())) continue;
     days[day] ??= emptyDay();
     days[day][kind] += 1;
   }
@@ -87,15 +100,26 @@ function mergeDays(oldDays, newDays) {
 }
 
 /**
- * Applies fresh data to the activity (pure). `events`: normalized review events; `prs`: normalized PRs
- * (client.pullRequests). Both optional. Day counts only ever grow, so partial data never lowers them.
+ * Applies fresh data to the activity (pure). `events`: normalized review and issue events; `prs`: normalized PRs
+ * (client.pullRequests); `commits`: records `{ key, day }` found in `pushes` (`{ id, day }`, the pushes they came from).
+ * All optional. Day counts only ever grow, so partial data never lowers them.
  * @returns the new activity (other fields are kept)
  */
-function applyActivity(activity, { events = [], prs = [], repos, now = new Date() }) {
-  const all = mergePullRequests(activity.prs ?? [], prs, repos);
-  // Days come from the unpruned list: a PR merged long ago is dropped from the stored list but still counts.
-  const days = mergeDays(mergeDays(activity.days ?? {}, buildDays({ events, repos })), pullRequestDays(all));
-  return { ...activity, days, prs: prunePullRequests(all, now) };
+function applyActivity(activity, { events = [], prs = [], commits = [], pushes = [], repos, now = new Date() }) {
+  const allPrs = mergePullRequests(activity.prs ?? [], prs, repos);
+  const allCommits = mergeCommits(activity.commits ?? [], commits);
+  // Days come from the unpruned lists: a PR or commit dropped from the stored list long ago still counts.
+  const days = [buildDays({ events, repos }), pullRequestDays(allPrs), commitDays(allCommits)].reduce(
+    mergeDays,
+    activity.days ?? {},
+  );
+  return {
+    ...activity,
+    days,
+    prs: prunePullRequests(allPrs, now),
+    commits: pruneByDay(allCommits, now),
+    pushes: pruneByDay([...(activity.pushes ?? []), ...pushes], now),
+  };
 }
 
 /**
@@ -160,7 +184,8 @@ function moodFor({ waiting, mergedRecently, ratio }) {
 /** XP and counts per kind for the last 7 days. */
 function weekSummary(days, today) {
   const weekStart = addDays(today, -6);
-  const week = { prs: 0, reviews: 0, merges: 0, xp: { prs: 0, reviews: 0, merges: 0 }, total: 0 };
+  const counts = () => Object.fromEntries(KINDS.map((kind) => [kind, 0]));
+  const week = { ...counts(), xp: counts(), total: 0 };
   for (const [day, d] of Object.entries(days)) {
     if (day < weekStart || day > today) continue;
     const xp = dayXpByKind(d);

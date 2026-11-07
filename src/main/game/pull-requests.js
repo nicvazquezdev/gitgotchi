@@ -1,6 +1,7 @@
 // Pure rules for the user's pull requests: size, XP, the stored list and the UI views.
 const { PR_SIZES, WEIGHTS, PR_KEEP_MERGED_DAYS } = require('./catalog');
 const { toDay } = require('../dates');
+const { emptyDay } = require('./stats');
 
 const DAY_MS = 86400000;
 
@@ -42,7 +43,7 @@ function prunePullRequests(prs, now = new Date()) {
 /** Ledger days the PRs account for: `prs` + `prsXp` on the day each was opened, `merges` on the day it was merged. */
 function pullRequestDays(prs) {
   const days = {};
-  const day = (d) => (days[d] ??= { prs: 0, prsXp: 0, reviews: 0, merges: 0 });
+  const day = (d) => (days[d] ??= emptyDay());
   for (const pr of prs) {
     const opened = day(toDay(pr.createdAt));
     opened.prs += 1;

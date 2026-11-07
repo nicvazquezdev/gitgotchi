@@ -38,22 +38,44 @@ afterEach(() => {
 describe('activity', () => {
   const client = new GitHubClient('tok');
 
-  test("only reviews on someone else's PR count; every other event is skipped", async () => {
+  test("only reviews on someone else's PR, opened issues and pushes to branches come through", async () => {
     stubFetch({
       body: [
-        event('PushEvent'),
+        event('PushEvent'), // no ref or head: nothing to count
         event('PullRequestEvent', { action: 'opened' }),
         event('PullRequestEvent', { action: 'merged' }),
         event('PullRequestReviewEvent', { pull_request: { user: { login: 'someone' } } }),
         event('PullRequestReviewEvent', { pull_request: { user: { login: 'ME' } } }), // own PR
         event('PullRequestReviewCommentEvent'),
         event('IssueCommentEvent'),
+        event('IssuesEvent', { action: 'closed' }),
         event('IssuesEvent', { action: 'opened' }),
         event('WatchEvent'),
       ],
     });
     const kinds = (await client.activity('me')).map((e) => e.kind);
-    assert.deepEqual(kinds, ['reviews']);
+    assert.deepEqual(kinds, ['reviews', 'issues']);
+  });
+
+  describe('pushes', () => {
+    const pushPayload = (over = {}) => ({ push_id: 7, ref: 'refs/heads/feat', before: 'aaa', head: 'bbb', ...over });
+
+    test('a push to a branch carries what is needed to count its commits', async () => {
+      stubFetch({ body: [event('PushEvent', pushPayload(), 'x/y', '2026-06-15T10:00:00Z')] });
+      assert.deepEqual(await client.activity('me'), [
+        { kind: 'pushes', id: '7', repo: 'x/y', day: toDay('2026-06-15T10:00:00Z'), before: 'aaa', head: 'bbb' },
+      ]);
+    });
+
+    test('tags and deleted branches are skipped', async () => {
+      stubFetch({
+        body: [
+          event('PushEvent', pushPayload({ ref: 'refs/tags/v1' })),
+          event('PushEvent', pushPayload({ head: '0000000000000000000000000000000000000000' })),
+        ],
+      });
+      assert.deepEqual(await client.activity('me'), []);
+    });
   });
 
   test('returns repo and local day', async () => {
@@ -102,6 +124,66 @@ describe('activity', () => {
     await client.activity('a b');
     assert.equal(calls[0].url, `${GITHUB.API}/users/a%20b/events?per_page=100`);
     assert.equal(calls[0].opts.headers.Authorization, 'Bearer tok');
+  });
+});
+
+describe('pushCommits', () => {
+  const client = new GitHubClient('tok');
+  const commit = (login, over = {}) => ({
+    author: login && { login },
+    parents: [{}],
+    commit: { author: { date: '2026-06-15T10:00:00Z' }, message: 'A change' },
+    ...over,
+  });
+  const reply = (...commits) => ({ body: { commits } });
+
+  test('lists only the user commits: no merges, no other authors, no unlinked authors', async () => {
+    stubFetch(
+      reply(
+        commit('ME'),
+        commit('someone'),
+        commit('me', { parents: [{}, {}] }), // a merge commit
+        commit(null), // author not linked to a GitHub account
+        commit('me', { commit: { author: { date: '2026-06-15T11:00:00Z' }, message: 'Second\n\nbody' } }),
+      ),
+    );
+    assert.deepEqual(await client.pushCommits('x/y', { before: 'aaa', head: 'bbb' }, 'me'), [
+      { authorDate: '2026-06-15T10:00:00Z', message: 'A change' },
+      { authorDate: '2026-06-15T11:00:00Z', message: 'Second\n\nbody' },
+    ]);
+    assert.equal(calls[0].url, `${GITHUB.API}/repos/x/y/compare/aaa...bbb?per_page=100`);
+  });
+
+  test('a new branch compares with the default branch, which is looked up once per repo', async () => {
+    const zeros = '0'.repeat(40);
+    stubFetch({ body: { default_branch: 'main' } }, reply(commit('me')), reply(commit('me')));
+    await client.pushCommits('new/repo', { before: zeros, head: 'bbb' }, 'me');
+    await client.pushCommits('new/repo', { before: zeros, head: 'ccc' }, 'me');
+    assert.deepEqual(
+      calls.map((c) => c.url.replace(GITHUB.API, '')),
+      [
+        '/repos/new/repo',
+        '/repos/new/repo/compare/main...bbb?per_page=100',
+        '/repos/new/repo/compare/main...ccc?per_page=100',
+      ],
+    );
+  });
+
+  test('a `before` that is gone (force-push) falls back to the default branch', async () => {
+    stubFetch({ status: 404 }, { body: { default_branch: 'main' } }, reply(commit('me')));
+    const found = await client.pushCommits('forced/repo', { before: 'gone', head: 'bbb' }, 'me');
+    assert.equal(found.length, 1);
+    assert.match(calls[2].url, /compare\/main\.\.\.bbb/);
+  });
+
+  test('a push that cannot be found at all counts nothing', async () => {
+    stubFetch({ status: 404 }, { body: { default_branch: 'main' } }, { status: 404 });
+    assert.deepEqual(await client.pushCommits('gone/repo', { before: 'gone', head: 'bbb' }, 'me'), []);
+  });
+
+  test('other failures (rate limit, server errors) throw, so the push is looked up again later', async () => {
+    stubFetch({ status: 403 });
+    await assert.rejects(client.pushCommits('x/y', { before: 'aaa', head: 'bbb' }, 'me'), { status: 403 });
   });
 });
 

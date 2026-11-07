@@ -1,17 +1,25 @@
 // Pure activity stats (XP per day, streaks and recent history): no I/O.
-const { WEIGHTS } = require('./catalog');
+const { WEIGHTS, DAILY_CAPS, KINDS } = require('./catalog');
 const { toDay, addDays } = require('../dates');
 
 const HISTORY_DAYS = 7;
 
+/** One ledger day: a count per kind, plus `prsXp` (the XP of the PRs opened that day, which depends on their size). */
+const emptyDay = () => ({ ...Object.fromEntries(KINDS.map((kind) => [kind, 0])), prsXp: 0 });
+
 /**
  * XP of one ledger day, per kind. Unknown (old) kinds are ignored.
- * Opened PRs carry their own XP (`prsXp`, depends on size); reviews and merges are counts.
+ * Opened PRs carry their own XP (`prsXp`, depends on size); the other kinds are counts times a weight,
+ * and a kind with a daily cap stops giving XP past it.
  */
+const countXp = (d, kind) => Math.min(d[kind] || 0, DAILY_CAPS[kind] ?? Infinity) * WEIGHTS[kind];
+
 const dayXpByKind = (d = {}) => ({
   prs: d.prsXp || 0,
-  reviews: (d.reviews || 0) * WEIGHTS.reviews,
-  merges: (d.merges || 0) * WEIGHTS.merges,
+  reviews: countXp(d, 'reviews'),
+  merges: countXp(d, 'merges'),
+  commits: countXp(d, 'commits'),
+  issues: countXp(d, 'issues'),
 });
 
 /** Total XP of one ledger day. */
@@ -48,4 +56,4 @@ function stats(days, now = new Date()) {
   return { streak, bestStreak, history };
 }
 
-module.exports = { stats, dayXp, dayXpByKind };
+module.exports = { stats, emptyDay, dayXp, dayXpByKind };

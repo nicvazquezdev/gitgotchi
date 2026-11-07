@@ -3,14 +3,27 @@ const { GITHUB } = require('../config');
 const { toDay } = require('../dates');
 
 /**
- * Which Events API events count as activity: only reviews the user submits on someone else's PR.
- * (Opened and merged PRs come from GraphQL, see `pullRequestsSince`.)
+ * Which Events API events count as activity: reviews the user submits on someone else's PR and issues they open.
+ * (Opened and merged PRs come from GraphQL, see `pullRequestsSince`; pushes are handled by `normalizePush`.)
  * https://docs.github.com/rest/using-the-rest-api/github-event-types
  */
 const EVENT_KINDS = {
   PullRequestReviewEvent: (payload, login) =>
     payload.pull_request?.user?.login?.toLowerCase() === login.toLowerCase() ? null : 'reviews',
+  IssuesEvent: (payload) => (payload.action === 'opened' ? 'issues' : null),
 };
+
+const NULL_SHA = /^0+$/;
+
+/**
+ * A push event as `{ kind: 'pushes', id, repo, day, before, head }`, or null when it carries no commits to count
+ * (deleted branch, tags). The event does not say how many commits the push has: see `pushCommits`.
+ */
+function normalizePush(ev) {
+  const { push_id: id, ref, before, head } = ev.payload ?? {};
+  if (!id || !ref?.startsWith('refs/heads/') || !head || NULL_SHA.test(head)) return null;
+  return { kind: 'pushes', id: String(id), repo: ev.repo.name, day: toDay(ev.created_at), before, head };
+}
 
 const PR_FIELDS = `id number title url state isDraft reviewDecision additions deletions createdAt updatedAt mergedAt
   repository { nameWithOwner }`;
@@ -23,6 +36,8 @@ const normalizePullRequest = ({ repository, additions, deletions, ...pr }) => ({
 });
 
 class GitHubClient {
+  #defaultBranches = new Map(); // 'owner/name' -> its default branch, looked up once
+
   constructor(token) {
     this.token = token;
   }
@@ -49,7 +64,7 @@ class GitHubClient {
     const meta = { etag: res.headers.get('etag'), pollInterval: Number(res.headers.get('x-poll-interval')) || null };
     if (res.status === 304) return { notModified: true, ...meta };
     if (res.status === 401) throw new Error('GitHub rejected the gh token. Run `gh auth login`.');
-    if (!res.ok) throw new Error(`GitHub ${res.status} at ${url}`);
+    if (!res.ok) throw Object.assign(new Error(`GitHub ${res.status} at ${url}`), { status: res.status });
     const next = /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') || '')?.[1] ?? null;
     return { data: await res.json(), next, ...meta };
   }
@@ -80,7 +95,8 @@ class GitHubClient {
   }
 
   /**
-   * Review events since `from`, normalized: [{ kind: 'reviews', repo, day }].
+   * Review, issue and push events since `from`, normalized: [{ kind: 'reviews' | 'issues', repo, day }] and
+   * [{ kind: 'pushes', id, repo, day, before, head }] (see `normalizePush`).
    * Includes private repos. GitHub returns at most the latest 300 events.
    *
    * Pass a `poll` object (`{ etag, interval }`) to use conditional requests: the first page is
@@ -99,12 +115,55 @@ class GitHubClient {
     const collect = (events) => {
       for (const ev of events) {
         if (new Date(ev.created_at) < from) return false;
+        if (ev.type === 'PushEvent') {
+          const push = normalizePush(ev);
+          if (push) result.push(push);
+          continue;
+        }
         const kind = EVENT_KINDS[ev.type]?.(ev.payload, login);
         if (kind) result.push({ kind, repo: ev.repo.name, day: toDay(ev.created_at) });
       }
     };
     if (collect(first.data) !== false && first.next) await this.paginate(first.next, GITHUB.EVENT_PAGES - 1, collect);
     return result;
+  }
+
+  async defaultBranch(repo) {
+    if (!this.#defaultBranches.has(repo)) {
+      const { data } = await this.get(`/repos/${repo}`);
+      this.#defaultBranches.set(repo, data.default_branch);
+    }
+    return this.#defaultBranches.get(repo);
+  }
+
+  /**
+   * The user's own commits in a push: `[{ authorDate, message }]`, no merge commits and none by other people
+   * (a push that merges the main branch carries theirs too). Compares the push with what was there before it.
+   * A new branch (no `before`), or a `before` that is gone after a force-push, compares with the default branch
+   * instead: that can list commits counted by an earlier push, which the caller dedupes (see game/commits.js).
+   * Throws on network errors, rate limits and the like, so the push can be looked up again later.
+   */
+  async pushCommits(repo, { before, head }, login) {
+    const compare = async (base) => {
+      const { data } = await this.get(`/repos/${repo}/compare/${base}...${head}?per_page=100`);
+      return data.commits ?? [];
+    };
+    let commits;
+    try {
+      commits = await compare(NULL_SHA.test(before) ? await this.defaultBranch(repo) : before);
+    } catch (err) {
+      if (err.status !== 404 && err.status !== 422) throw err;
+      try {
+        commits = await compare(await this.defaultBranch(repo));
+      } catch (retry) {
+        if (retry.status !== 404 && retry.status !== 422) throw retry;
+        return []; // the push is gone (branch deleted, repo no longer reachable): nothing to count
+      }
+    }
+    const mine = login.toLowerCase();
+    return commits
+      .filter((c) => c.author?.login?.toLowerCase() === mine && (c.parents?.length ?? 1) === 1)
+      .map((c) => ({ authorDate: c.commit.author.date, message: c.commit.message }));
   }
 
   /** Minimal GraphQL call. Throws on transport or GraphQL errors. */

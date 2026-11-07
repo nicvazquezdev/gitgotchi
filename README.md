@@ -17,13 +17,13 @@ npm run dev   # auto-reloads on changes
 
 ## How it works
 
-- **Source:** your GitHub activity (Events API, private repos included), only for the repos you pick.
-- **Points:** push 1 · PR opened 4 · PR merged 3 · review 3 · comment 1 · issue 2.
-- **XP** = points since the pet was adopted. It sets the stage: Baby → Kid → Teen → Adult. Thresholds scale with your own weekly baseline.
+- **Source:** your GitHub activity (private repos included), only for the repos you pick: PRs (GraphQL), reviews, issues and pushes (Events API).
+- **XP:** PR opened 5–30 by size · review 10 · PR merged +15 · issue opened 5 · commit 1 (up to 10 XP a day). Commits are counted per push, only yours (no merge commits), with one extra GitHub request per push.
+- **Level and stage** come from the XP since the pet was adopted: Baby → Kid → Young → Adult. Levels scale with your own weekly baseline.
 - **Mood** has three states: anxious (a PR has waited 2+ days for review), happy (a PR merged in the last 48 h, or a strong week) and neutral (everything else).
 - XP syncs from the Events API every 90 s (GitHub only returns your latest 300 events, so the app keeps its own per-day history).
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds.
-- Points and thresholds live in `src/main/game/catalog.js`.
+- XP rules and thresholds live in `src/main/game/catalog.js`.
 
 **Usage:** drag the pet anywhere. Click: it talks. Right-click the pet or click the menu bar icon: a panel with the pet's level, your PRs and the everyday switches (_Show pet on desktop_, _Do not disturb_).
 

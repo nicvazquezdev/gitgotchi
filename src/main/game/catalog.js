@@ -36,7 +36,7 @@ const SPECIES = SPRITES.map(({ id, title, bg, stages }) => ({
   })),
 }));
 
-// ---------- Rules: XP comes only from pull requests and reviews in the selected repos ----------
+// ---------- Rules: XP comes from pull requests, reviews, commits and issues in the selected repos ----------
 
 // Opening a PR gives XP by size (lines = additions + deletions). The first bucket whose `maxLines` is above the size wins.
 const PR_SIZES = [
@@ -47,11 +47,15 @@ const PR_SIZES = [
 ];
 
 // XP per counted event. (Opening a PR is not here: its XP depends on the size, see PR_SIZES.)
-const WEIGHTS = { reviews: 10, merges: 15 };
+// Commits are the cheap kind: a push of several commits is easy to inflate, so they have a daily cap.
+const WEIGHTS = { reviews: 10, merges: 15, commits: 1, issues: 5 };
+
+// Most events of a kind that give XP in one day (the ledger keeps the real count).
+const DAILY_CAPS = { commits: 10 };
 
 // Kinds kept in the per-day ledger (`activity.days[day]`) and reported in 'activity' deltas.
 // The ledger also keeps `prsXp`: the XP of the PRs opened that day (it depends on each PR's size).
-const KINDS = ['prs', 'reviews', 'merges'];
+const KINDS = ['prs', 'reviews', 'merges', 'commits', 'issues'];
 
 // Levels and stages. Cumulative XP to reach a level is `weeks * baseline`, interpolated linearly between
 // the anchors [level, weeks], so everyone evolves at a similar pace whether they ship 5 or 50 PRs a week.
@@ -89,6 +93,12 @@ const MOOD = {
   strongWeekRatio: 1.25, // happy: week XP / baseline at least this
 };
 
+// Commits come from pushes: each push needs one GitHub lookup. A sync resolves at most this many (newest first);
+// the rest wait for the next sync. Pushes and commits already counted are remembered this many days, to count
+// each only once (a rebase and force-push must not count the same commits again).
+const PUSH_LOOKUPS_PER_SYNC = 25;
+const COMMIT_KEEP_DAYS = 14;
+
 // The PR list in the state keeps open PRs and PRs merged within this many days (older ones live on in the day ledger).
 const PR_KEEP_MERGED_DAYS = 14;
 
@@ -97,6 +107,9 @@ const XP_RULES = {
   sizes: PR_SIZES.map(({ id, maxLines, xp }) => ({ id, maxLines: Number.isFinite(maxLines) ? maxLines : null, xp })),
   review: WEIGHTS.reviews,
   merged: WEIGHTS.merges,
+  commit: WEIGHTS.commits,
+  commitsPerDay: DAILY_CAPS.commits,
+  issue: WEIGHTS.issues,
 };
 
 module.exports = {
@@ -105,6 +118,9 @@ module.exports = {
   LEVELS,
   PR_SIZES,
   WEIGHTS,
+  DAILY_CAPS,
+  PUSH_LOOKUPS_PER_SYNC,
+  COMMIT_KEEP_DAYS,
   KINDS,
   BASELINE,
   MOOD,
