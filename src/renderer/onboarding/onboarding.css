@@ -1,6 +1,8 @@
 /* ---------- Scene ---------- */
 body {
   display: grid;
+  /* minmax(0, 1fr): the column never grows past the window, whatever the content width. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: 28px auto 1fr 56px;
   height: 100vh;
   overflow: hidden;
