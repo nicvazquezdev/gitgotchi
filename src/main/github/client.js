@@ -1,6 +1,7 @@
 // Minimal GitHub REST client with the queries the app needs.
 const { GITHUB } = require('../config');
 const { toDay } = require('../dates');
+const { requestInfo } = require('./review-requests');
 
 /**
  * Which Events API events count as activity: reviews the user submits on someone else's PR and issues they open.
@@ -206,18 +207,44 @@ class GitHubClient {
   }
 
   /**
-   * Open PRs waiting for the viewer's review (at most 50, any repo), as normalized PRs plus `author` (a login).
-   * One search request, 1 point.
+   * Open PRs waiting for the viewer's review (at most 50, any repo), as normalized PRs plus `author` (a login) and
+   * `requestedAt` / `via` (when and through whom the viewer was asked, see review-requests.js).
+   * `me`: `{ login, teams }`, the viewer and the teams they belong to (see `myTeams`). A couple of points.
    */
-  async reviewRequests() {
+  async reviewRequests(me) {
+    const reviewer = '{ __typename ... on User { login } ... on Team { combinedSlug } }';
     const data = await this.graphql(
       `query($q: String!) { search(query: $q, type: ISSUE, first: 50) {
-        nodes { ... on PullRequest { ${PR_FIELDS} author { login } } } } }`,
+        nodes { ... on PullRequest { ${PR_FIELDS} author { login }
+          reviewRequests(first: 30) { nodes { requestedReviewer ${reviewer} } }
+          timelineItems(last: 100, itemTypes: [REVIEW_REQUESTED_EVENT]) {
+            nodes { ... on ReviewRequestedEvent { createdAt requestedReviewer ${reviewer} } } }
+        } } } }`,
       { q: REVIEW_REQUESTS_QUERY },
     );
     return data.search.nodes
       .filter((node) => node?.id)
-      .map(({ author, ...node }) => ({ ...normalizePullRequest(node), author: author?.login ?? null }));
+      .map(({ author, reviewRequests, timelineItems, ...node }) => ({
+        ...normalizePullRequest(node),
+        author: author?.login ?? null,
+        ...requestInfo(
+          {
+            pending: reviewRequests?.nodes?.map((n) => n.requestedReviewer) ?? [],
+            events: timelineItems?.nodes ?? [],
+          },
+          me,
+        ),
+      }));
+  }
+
+  /** The teams ('org/slug', lower case) `login` belongs to, in the organizations they are a member of. One point. */
+  async myTeams(login) {
+    const data = await this.graphql(
+      `query($me: String!) { viewer { organizations(first: 20) { nodes {
+        teams(first: 100, userLogins: [$me]) { nodes { combinedSlug } } } } } }`,
+      { me: login },
+    );
+    return data.viewer.organizations.nodes.flatMap((org) => org.teams.nodes.map((t) => t.combinedSlug.toLowerCase()));
   }
 
   /** The viewer's 30 most recently updated PRs (any state): the 10 s watcher query. */

@@ -32,6 +32,7 @@ class PetService extends EventEmitter {
   #reviewRequests = null;
   #reviewsAt = 0;
   #reviewing = null;
+  #teams = { slugs: [], at: 0 }; // the teams of the user ('org/slug'), read again every LIVE.TEAMS_REFRESH_MS
 
   isConfigured() {
     const { pet, repos } = store.get();
@@ -166,9 +167,22 @@ class PetService extends EventEmitter {
     return this.#reviewing;
   }
 
+  /** The user's teams: a request to one of them is a request to the user. A failure keeps the last list. */
+  async #myTeams(client, login) {
+    if (Date.now() - this.#teams.at < LIVE.TEAMS_REFRESH_MS) return this.#teams.slugs;
+    try {
+      this.#teams = { slugs: await client.myTeams(login), at: Date.now() };
+    } catch (err) {
+      console.error('[sync] teams', err.message); // tried again with the next fetch
+    }
+    return this.#teams.slugs;
+  }
+
   async #fetchReviews(gh) {
     try {
-      const prs = await (gh ?? (await session.client())).reviewRequests();
+      const client = gh ?? (await session.client());
+      const { login } = store.get().user;
+      const prs = await client.reviewRequests({ login, teams: await this.#myTeams(client, login) });
       this.#reviewsAt = Date.now();
       const known = new Set(this.#reviewRequests?.map((pr) => pr.id));
       const first = this.#reviewRequests === null; // the first fetch is the baseline: nothing in it is news

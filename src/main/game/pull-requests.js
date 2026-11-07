@@ -125,15 +125,32 @@ function classify(prs, now = new Date()) {
 }
 
 /**
- * PRs waiting for the user's review, for the UI: only the selected repos (like everything else), oldest first.
- * `xp` is what reviewing gives. `prs`: normalized PRs with an `author` login (client.reviewRequests).
+ * PRs waiting for the user's review, for the UI: only the selected repos (like everything else).
+ * `xp` is what reviewing gives. `prs`: normalized PRs with an `author` login and, when known, `requestedAt` and `via`
+ * (client.reviewRequests).
+ *
+ * The wait that matters is since the user was asked (`waitingDays`), not since the PR was opened (`ageDays`): a PR
+ * can be months old and have asked the user yesterday. It is null when the request date could not be proved, and
+ * those PRs come after the ones that are known, by the age of the PR, so a guess never ranks as urgent.
  */
 function reviewQueue(prs, repos, now = new Date()) {
   const selected = new Set(repos.map((r) => r.toLowerCase()));
   return prs
     .filter((pr) => pr.state === 'OPEN' && !pr.isDraft && selected.has(pr.repo.toLowerCase()))
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
-    .map((pr) => ({ ...toView(pr, now), author: pr.author, xp: WEIGHTS.reviews }));
+    .sort((a, b) => {
+      if (Boolean(a.requestedAt) !== Boolean(b.requestedAt)) return a.requestedAt ? -1 : 1;
+      return (a.requestedAt ?? a.createdAt).localeCompare(b.requestedAt ?? b.createdAt);
+    })
+    .map((pr) => ({
+      ...toView(pr, now),
+      author: pr.author,
+      xp: WEIGHTS.reviews,
+      requestedAt: pr.requestedAt ?? null,
+      via: pr.via ?? null,
+      waitingDays: pr.requestedAt
+        ? Math.max(0, Math.floor((now.getTime() - new Date(pr.requestedAt).getTime()) / DAY_MS))
+        : null,
+    }));
 }
 
 module.exports = {

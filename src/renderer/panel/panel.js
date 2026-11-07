@@ -1,7 +1,7 @@
 // Menu bar dropdown: the pet, its PR summary, everyday toggles and app actions, from the state pushed by main.
 // Preferences that are set once live in the Settings window.
 import { $, h } from '../shared/dom.js';
-import { plural, totalXp, oldestDays, timeAgo } from '../shared/format.js';
+import { plural, totalXp, oldestDays, oldestWaitingDays, timeAgo } from '../shared/format.js';
 import { icon, xpBar, portraitImg } from '../shared/ui.js';
 
 const api = window.gitgotchi.panel;
@@ -55,9 +55,9 @@ const prRow = (dot, label, detail, className = '') =>
 function prSummary({ waiting, approved, mergedToday }, reviewQueue) {
   const rows = [];
   if (reviewQueue?.length) {
-    const days = reviewQueue[0].ageDays;
+    const days = oldestWaitingDays(reviewQueue); // since the user was asked; null when no request has a known date
     const label = reviewQueue.length === 1 ? '1 PR needs your review' : `${reviewQueue.length} PRs need your review`;
-    rows.push(prRow('waiting', label, days ? `oldest ${days}d` : 'opened today'));
+    rows.push(prRow('waiting', label, days === null ? null : days ? `oldest ${days}d` : 'asked today'));
   }
   if (waiting.length) {
     const days = oldestDays(waiting);

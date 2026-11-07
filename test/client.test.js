@@ -282,30 +282,87 @@ describe('review requests', () => {
     ...over,
   });
   const search = (...nodes) => ({ body: { data: { search: { nodes } } } });
+  const me = { login: 'me', teams: ['a/ui'] };
+  const user = (login) => ({ __typename: 'User', login });
+  const team = (combinedSlug) => ({ __typename: 'Team', combinedSlug });
+  const asked = (createdAt, requestedReviewer) => ({ createdAt, requestedReviewer });
 
   test('normalizes the PRs and adds the author', async () => {
     stubFetch(search(node('1')));
-    const [pr] = await client.reviewRequests();
+    const [pr] = await client.reviewRequests(me);
     assert.equal(pr.repo, 'a/b');
     assert.equal(pr.lines, 34);
     assert.equal(pr.author, 'someone');
+    assert.equal(pr.reviewRequests, undefined, 'the raw request data does not leak into the PR');
+    assert.equal(pr.timelineItems, undefined);
+  });
+
+  test('says when the user was asked and through whom, from the requests and their events', async () => {
+    stubFetch(
+      search(
+        node('direct', {
+          reviewRequests: { nodes: [{ requestedReviewer: user('Me') }, { requestedReviewer: user('other') }] },
+          timelineItems: {
+            nodes: [asked('2026-06-14T09:00:00Z', user('me')), asked('2026-06-10T09:00:00Z', user('other'))],
+          },
+        }),
+        node('by-team', {
+          reviewRequests: { nodes: [{ requestedReviewer: team('a/ui') }, { requestedReviewer: team('a/other') }] },
+          timelineItems: {
+            nodes: [asked('2026-06-12T09:00:00Z', team('a/ui')), asked('2026-06-01T09:00:00Z', team('a/other'))],
+          },
+        }),
+        node('unknown', {
+          reviewRequests: { nodes: [{ requestedReviewer: team('a/other') }] },
+          timelineItems: { nodes: [] },
+        }),
+      ),
+    );
+    const [direct, byTeam, unknown] = await client.reviewRequests(me);
+    assert.deepEqual([direct.requestedAt, direct.via], ['2026-06-14T09:00:00Z', null]);
+    assert.deepEqual([byTeam.requestedAt, byTeam.via], ['2026-06-12T09:00:00Z', 'a/ui']);
+    assert.deepEqual([unknown.requestedAt, unknown.via], [null, null]);
   });
 
   test('a deleted author (ghost) is null, and results that are not PRs are skipped', async () => {
     stubFetch(search(node('1', { author: null }), {}, null));
-    const prs = await client.reviewRequests();
+    const prs = await client.reviewRequests(me);
     assert.equal(prs.length, 1);
     assert.equal(prs[0].author, null);
   });
 
   test('asks for open, non-draft PRs where a review was requested from the user or their teams', async () => {
     stubFetch(search());
-    await client.reviewRequests();
+    await client.reviewRequests(me);
     const { q } = JSON.parse(calls[0].opts.body).variables;
     assert.match(q, /is:pr/);
     assert.match(q, /is:open/);
     assert.match(q, /draft:false/);
     assert.match(q, /\breview-requested:@me/);
+  });
+});
+
+describe('my teams', () => {
+  const client = new GitHubClient('tok');
+
+  test('lists the teams of the user in every organization, lower case', async () => {
+    stubFetch({
+      body: {
+        data: {
+          viewer: {
+            organizations: {
+              nodes: [
+                { teams: { nodes: [{ combinedSlug: 'Acme/UI' }, { combinedSlug: 'acme/code' }] } },
+                { teams: { nodes: [] } },
+                { teams: { nodes: [{ combinedSlug: 'other/team' }] } },
+              ],
+            },
+          },
+        },
+      },
+    });
+    assert.deepEqual(await client.myTeams('me'), ['acme/ui', 'acme/code', 'other/team']);
+    assert.equal(JSON.parse(calls[0].opts.body).variables.me, 'me');
   });
 });
 

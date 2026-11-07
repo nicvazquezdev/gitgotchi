@@ -40,6 +40,7 @@ beforeEach(() => {
   gh = {
     activity: async () => [],
     pullRequestsSince: async () => [],
+    myTeams: async () => [],
     reviewRequests: async () => [],
     pushCommits: async () => [],
   };

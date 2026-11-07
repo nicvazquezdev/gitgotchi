@@ -1,5 +1,5 @@
 import { $, h, replayClass } from '../shared/dom.js';
-import { plural, oldestDays } from '../shared/format.js';
+import { plural, oldestDays, oldestWaitingDays } from '../shared/format.js';
 import { PetView, PX_PER_SCALE } from './pet-view.js';
 
 const { pet: api } = window.gitgotchi;
@@ -83,10 +83,11 @@ const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
 function waitingMessage() {
   const queue = status?.reviewQueue ?? [];
   if (queue.length) {
-    const days = queue[0].ageDays; // oldest first
+    const days = oldestWaitingDays(queue); // since the user was asked; null when no request has a known date
+    const wait = days === null ? '' : days > 0 ? `The oldest has waited ${plural(days, 'day')}. ` : 'Asked today. ';
     return {
       title: queue.length === 1 ? '1 PR needs your review' : `${queue.length} PRs need your review`,
-      sub: `${days > 0 ? `The oldest has waited ${plural(days, 'day')}` : 'All opened today'}. Click me to see them.`,
+      sub: `${wait}Click me to see them.`,
       dot: 'waiting',
     };
   }

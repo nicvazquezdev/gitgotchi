@@ -13,6 +13,9 @@ const TABS = ['review', 'mine'];
 
 const days = (n) => (n > 0 ? plural(n, 'day') : 'today');
 const shortAge = (n) => (n > 0 ? `${n}d` : 'today');
+const ago = (n) => (n > 0 ? `${n}d ago` : 'today');
+/** 'acme/code' -> 'code' when the team is in the same organization as the repo (it is the usual case). */
+const teamName = (pr) => (pr.via?.startsWith(`${pr.fullRepo.split('/')[0]}/`) ? pr.via.split('/')[1] : pr.via);
 
 // The last state received, and the tab the user picked (null: the default, see `currentTab`).
 let latest = {};
@@ -120,7 +123,7 @@ function tabs(status) {
  * One PR row. `badge` is the left chip, `meta` the second line, `end` the right-hand text.
  * Hovering swaps the end text for the "open" icon.
  */
-function prRow(pr, { badge, meta, end, endClass = 'xp-text', done = false }) {
+function prRow(pr, { badge, meta, end, endClass = 'xp-text', endTitle, done = false }) {
   return h(
     'button',
     { class: 'pr', type: 'button', title: pr.title, onclick: () => api.openPullRequest(pr.url) },
@@ -131,7 +134,7 @@ function prRow(pr, { badge, meta, end, endClass = 'xp-text', done = false }) {
       h('span', { class: `pr-title${done ? ' done' : ''}` }, pr.title),
       h('span', { class: 'meta' }, meta),
     ),
-    end ? h('span', { class: `pr-end ${endClass}` }, end) : null,
+    end ? h('span', { class: `pr-end ${endClass}`, title: endTitle }, end) : null,
     h('span', { class: 'pr-open' }, icon('external')),
   );
 }
@@ -184,15 +187,19 @@ function reviewTab(queue) {
   return h(
     'section',
     { class: 'prs' },
-    h('div', { class: 'list-note meta' }, `Oldest first · each review gives +${earned} XP`),
-    ...queue.map((pr) =>
-      prRow(pr, {
+    h('div', { class: 'list-note meta' }, `Oldest request first · each review gives +${earned} XP`),
+    ...queue.map((pr) => {
+      // The wait counts from when the user was asked. When that date could not be proved, say how old the PR is
+      // instead, and do not flag it as late: it would be a guess.
+      const known = pr.waitingDays !== null;
+      return prRow(pr, {
         badge: queueBadge(),
-        meta: metaLine(pr, pr.author),
-        end: shortAge(pr.ageDays),
-        endClass: pr.ageDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',
-      }),
-    ),
+        meta: metaLine(pr, pr.author, pr.via && `via ${teamName(pr)}`, !known && `opened ${ago(pr.ageDays)}`),
+        end: known ? shortAge(pr.waitingDays) : null,
+        endClass: pr.waitingDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',
+        endTitle: known ? `Asked ${ago(pr.waitingDays)}${pr.via ? ` through ${pr.via}` : ''}` : undefined,
+      });
+    }),
   );
 }
 

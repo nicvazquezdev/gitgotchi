@@ -53,6 +53,7 @@ beforeEach(() => {
   activities = [];
   sessionCalls = 0;
   gh = {
+    myTeams: async () => ['a/ui'],
     reviewRequests: async () => requests,
     activity: async () => [],
     pullRequestsSince: async () => [],
@@ -114,6 +115,41 @@ test('with maxAgeMs a recent queue is not fetched again, and the client is only 
   assert.equal(sessionCalls, 1);
   await petService.refreshReviews(); // no limit: always fetches
   assert.equal(fetches, 2);
+});
+
+test('the request is told who the user is and which teams they are in, and the teams are read once an hour', async () => {
+  const asks = [];
+  let teamReads = 0;
+  gh.myTeams = async (login) => (teamReads++, login === 'me' ? ['a/ui', 'a/code'] : []);
+  gh.reviewRequests = async (me) => (asks.push(me), requests);
+  await petService.refreshReviews({ gh });
+  await petService.refreshReviews({ gh });
+  assert.deepEqual(asks, [
+    { login: 'me', teams: ['a/ui', 'a/code'] },
+    { login: 'me', teams: ['a/ui', 'a/code'] },
+  ]);
+  assert.equal(teamReads, 1);
+});
+
+test('when the teams cannot be read the queue still loads, and the teams are tried again next time', async () => {
+  let teamReads = 0;
+  gh.myTeams = async () => {
+    teamReads++;
+    throw new Error('GitHub 403');
+  };
+  const asks = [];
+  gh.reviewRequests = async (me) => (asks.push(me.teams), requests);
+  const originalError = console.error;
+  console.error = () => {};
+  try {
+    await petService.refreshReviews({ gh });
+    await petService.refreshReviews({ gh });
+  } finally {
+    console.error = originalError;
+  }
+  assert.deepEqual(asks, [[], []]);
+  assert.equal(teamReads, 2);
+  assert.deepEqual(queueIds(), ['1']);
 });
 
 test('a sync fetches the queue along with the rest', async () => {

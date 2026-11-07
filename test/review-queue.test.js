@@ -62,6 +62,43 @@ describe('reviewQueue', () => {
     assert.equal(entry.url, 'https://github.com/a/b/pull/7');
   });
 
+  test('how long the user has been asked comes first: PRs with a known request date, oldest request first', () => {
+    const queue = reviewQueue(
+      [
+        pr({ id: 'old-pr-new-ask', createdAt: hoursAgo(24 * 100), requestedAt: hoursAgo(5), via: 'a/ui' }),
+        pr({ id: 'unknown-old', createdAt: hoursAgo(24 * 200) }),
+        pr({ id: 'asked-long-ago', createdAt: hoursAgo(24 * 30), requestedAt: hoursAgo(24 * 20) }),
+        pr({ id: 'unknown-new', createdAt: hoursAgo(24 * 2) }),
+      ],
+      ['a/b'],
+      NOW,
+    );
+    assert.deepEqual(ids(queue), ['asked-long-ago', 'old-pr-new-ask', 'unknown-old', 'unknown-new']);
+  });
+
+  test('waitingDays counts from the request, not from the PR; it is null when the date is not known', () => {
+    const [asked, unknown] = reviewQueue(
+      [
+        pr({ id: 'a', createdAt: hoursAgo(24 * 157), requestedAt: hoursAgo(24 * 52 + 3), via: 'a/code' }),
+        pr({ id: 'b', createdAt: hoursAgo(24 * 9) }),
+      ],
+      ['a/b'],
+      NOW,
+    );
+    assert.equal(asked.ageDays, 157);
+    assert.equal(asked.waitingDays, 52);
+    assert.equal(asked.via, 'a/code');
+    assert.equal(asked.requestedAt, hoursAgo(24 * 52 + 3));
+    assert.equal(unknown.waitingDays, null);
+    assert.equal(unknown.via, null);
+    assert.equal(unknown.requestedAt, null);
+  });
+
+  test('a request dated in the future (clock skew) counts as today', () => {
+    const [entry] = reviewQueue([pr({ requestedAt: hoursAgo(-2) })], ['a/b'], NOW);
+    assert.equal(entry.waitingDays, 0);
+  });
+
   test('a PR with no known author keeps a null author', () => {
     const [entry] = reviewQueue([pr({ author: null })], ['a/b'], NOW);
     assert.equal(entry.author, null);

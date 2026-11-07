@@ -19,6 +19,7 @@ fake('services/session.js', { isConnected: () => true, client: async () => gh })
 const SERVICE = src('services/pet-service.js');
 
 const gh = {
+  myTeams: async () => [],
   reviewRequests: async () => [],
   activity: async () => events,
   pullRequestsSince: async () => [],
