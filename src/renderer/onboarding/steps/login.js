@@ -47,6 +47,7 @@ export function createLoginStep({ api, catalog, state, go }) {
   nextBtn.addEventListener('click', () => go('repos'));
 
   return {
-    enter: () => (state.user ? showUser() : connect()),
+    // Always re-check `gh`: the saved user may be stale if gh was logged out since.
+    enter: connect,
   };
 }

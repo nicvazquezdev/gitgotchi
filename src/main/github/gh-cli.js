@@ -10,8 +10,9 @@ class GhError extends Error {
   }
 }
 
+/** `GITGOTCHI_GH_PATH` overrides the binary (custom installs, or `/usr/bin/false` to simulate a logout). */
 function findGh() {
-  return GITHUB.GH_PATHS.find((p) => fs.existsSync(p)) ?? 'gh';
+  return process.env.GITGOTCHI_GH_PATH || GITHUB.GH_PATHS.find((p) => fs.existsSync(p)) || 'gh';
 }
 
 function token() {
