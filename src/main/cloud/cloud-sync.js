@@ -17,17 +17,23 @@ class CloudSync extends EventEmitter {
   #timer = null;
   #queue = Promise.resolve(); // one GitHub write/read at a time
   #error = null;
+  #phase = null; // what the current job is doing, for the Settings window (see `status().phase`)
 
   isEnabled() {
     return Boolean(store.get().cloudSync);
   }
 
-  /** `repo`: where the save lives ("<login>/gitgotchi-save"); `lastPushAt`: last write in this session. */
+  /**
+   * `repo`: where the save lives ("<login>/gitgotchi-save"); `lastPushAt`: last write in this session;
+   * `phase`: null when idle, else 'checking' (is there a repo?), 'creating' (the repo),
+   * 'pulling' (the remote save) or 'saving' (writing the save).
+   */
   status() {
     const login = store.get().user?.login;
     return {
       enabled: this.isEnabled(),
       repo: login ? `${login}/${SAVE.repo}` : null,
+      phase: this.#phase,
       error: this.#error,
       lastPushAt: this.#lastPushAt || null,
     };
@@ -49,6 +55,7 @@ class CloudSync extends EventEmitter {
 
   enable() {
     store.update({ cloudSync: true });
+    this.#setPhase('checking'); // right away: the queue may be busy with another job
     return this.#run(async () => {
       await this.#ensureRepo();
       await this.#pull();
@@ -60,6 +67,11 @@ class CloudSync extends EventEmitter {
     clearTimeout(this.#timer);
     store.update({ cloudSync: false });
     this.#setError(null);
+  }
+
+  /** True while a job is running: the switch must not be flipped halfway. */
+  isBusy() {
+    return this.#phase !== null;
   }
 
   /** Merges the remote save into this computer. */
@@ -91,18 +103,32 @@ class CloudSync extends EventEmitter {
   /** Serializes GitHub calls and turns failures into a visible error instead of throwing. */
   #run(task) {
     this.#queue = this.#queue.then(task).then(
-      () => this.#setError(null),
+      () => this.#finish(null),
       (err) => {
         console.error('[cloud]', err);
-        this.#setError(err.message);
+        this.#finish(err.message);
       },
     );
     return this.#queue;
   }
 
+  /** Ends a job: back to idle, with the error if it failed. One status event for both changes. */
+  #finish(error) {
+    const changed = this.#phase !== null || this.#error !== error;
+    this.#phase = null;
+    this.#error = error;
+    if (changed) this.emit('status', this.status());
+  }
+
   #setError(message) {
     if (this.#error === message) return;
     this.#error = message;
+    this.emit('status', this.status());
+  }
+
+  #setPhase(phase) {
+    if (this.#phase === phase) return;
+    this.#phase = phase;
     this.emit('status', this.status());
   }
 
@@ -120,11 +146,15 @@ class CloudSync extends EventEmitter {
   }
 
   async #ensureRepo() {
+    this.#setPhase('checking');
     const { gh, owner } = await this.#target();
-    if (!(await gh.repoExists(owner, SAVE.repo))) await gh.createPrivateRepo(SAVE.repo, SAVE.description);
+    if (await gh.repoExists(owner, SAVE.repo)) return;
+    this.#setPhase('creating');
+    await gh.createPrivateRepo(SAVE.repo, SAVE.description);
   }
 
   async #pull() {
+    this.#setPhase('pulling');
     const file = await this.#read();
     if (!file) return;
     store.update((state) => mergeSave(state, file.json));
@@ -133,6 +163,7 @@ class CloudSync extends EventEmitter {
   }
 
   async #push(retry = true) {
+    this.#setPhase('saving');
     const { gh, owner } = await this.#target();
     const json = toSave(store.get());
     try {
@@ -150,8 +181,7 @@ class CloudSync extends EventEmitter {
       return this.#push(false);
     }
     this.#lastSaved = JSON.stringify(json);
-    this.#lastPushAt = Date.now();
-    this.emit('status', this.status());
+    this.#lastPushAt = Date.now(); // the status event comes from #finish
   }
 }
 

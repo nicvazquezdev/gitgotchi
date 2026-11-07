@@ -73,6 +73,7 @@ const actions = {
     settingsWindow.send();
   },
   toggleCloudSync: () => {
+    if (cloud.isBusy()) return; // wait for the current step to finish
     if (cloud.isEnabled()) cloud.disable();
     else cloud.enable();
     settingsWindow.send();

@@ -80,7 +80,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, doNotDisturb, openAtLogin, cloud: { enabled, repo, error, lastPushAt },
+    // -> { login, repoCount, speechBubbles, doNotDisturb, openAtLogin, cloud: { enabled, repo, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),

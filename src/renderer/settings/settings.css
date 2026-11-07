@@ -59,6 +59,13 @@ body {
 .hint.error {
   color: var(--warning-text);
 }
+.hint.busy {
+  color: var(--accent-text);
+}
+.switch:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
 
 /* ---------- Size slider ---------- */
 .size-control {
