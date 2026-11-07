@@ -31,7 +31,7 @@ function on(channel, fn) {
 const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleDoNotDisturb', 'openPopover', 'openProfile', 'openSettings', 'quit'];
 const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleDoNotDisturb']);
 // Popover buttons and header: they close the popover first.
-const POPOVER_ACTIONS = ['nudgeReviewers', 'reviewOldest', 'openProfile', 'openSettings'];
+const POPOVER_ACTIONS = ['reviewOldest', 'openProfile', 'openSettings'];
 // ---- end everyday UI ----
 
 // Settings window controls.

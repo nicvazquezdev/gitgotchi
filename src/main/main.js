@@ -23,9 +23,6 @@ const cloud = require('./cloud/cloud-sync');
 
 let tray = null;
 
-// "Nudge reviewers" opens at most this many PRs at once (a long waiting list must not flood the browser).
-const MAX_NUDGE_TABS = 10;
-
 // ---------- App actions ----------
 
 // --- Profile & evolution windows ---
@@ -113,8 +110,6 @@ const actions = {
     const [oldest] = petService.status().reviewQueue ?? [];
     if (oldest) openGithub(oldest.url);
   },
-  nudgeReviewers: () =>
-    (petService.status().prs?.waiting ?? []).slice(0, MAX_NUDGE_TABS).forEach(({ url }) => openGithub(url)),
   openPullRequest: (url) => openGithub(url),
   // --- end everyday UI ---
   panelState: () => ({

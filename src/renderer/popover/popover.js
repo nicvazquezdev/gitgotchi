@@ -211,17 +211,22 @@ function minePrsTab({ waiting, approved, mergedToday }) {
 
 // ---------- Footer ----------
 
-/** The main action depends on the tab: review the oldest request, or nudge the reviewers of my PRs. */
-function footer(tab, { reviewQueue, prs }) {
+/**
+ * To review has a main action: open the oldest request. My PRs has none: its rows already open each PR.
+ * "View profile" is always there (alone, it takes the whole row).
+ */
+function footer(tab, { reviewQueue }) {
   const [oldest] = reviewQueue ?? [];
-  const primary =
-    tab === 'review'
-      ? {
-          label: oldest ? `Review oldest · ${shortAge(oldest.ageDays)}` : 'Review oldest',
-          action: 'reviewOldest',
-          on: Boolean(oldest),
-        }
-      : { label: 'Nudge reviewers', action: 'nudgeReviewers', on: Boolean(prs?.waiting.length) };
+  const profile = h(
+    'button',
+    {
+      class: `btn sm pixel-cut${tab === 'review' ? '' : ' grow'}`,
+      type: 'button',
+      onclick: () => api.action('openProfile'),
+    },
+    'View profile',
+  );
+  if (tab !== 'review') return h('div', { class: 'actions' }, profile);
   return h(
     'div',
     { class: 'actions' },
@@ -230,16 +235,12 @@ function footer(tab, { reviewQueue, prs }) {
       {
         class: 'btn primary sm pixel-cut grow',
         type: 'button',
-        disabled: !primary.on,
-        onclick: () => api.action(primary.action),
+        disabled: !oldest,
+        onclick: () => api.action('reviewOldest'),
       },
-      primary.label,
+      oldest ? `Review oldest · ${shortAge(oldest.ageDays)}` : 'Review oldest',
     ),
-    h(
-      'button',
-      { class: 'btn sm pixel-cut', type: 'button', onclick: () => api.action('openProfile') },
-      'View profile',
-    ),
+    profile,
   );
 }
 
