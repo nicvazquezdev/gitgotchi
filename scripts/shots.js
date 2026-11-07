@@ -11,10 +11,13 @@ const ROOT = path.join(__dirname, '..');
 const config = require(path.join(ROOT, 'src/main/config.js'));
 const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
+const { earnedSince } = require(path.join(ROOT, 'src/main/game/collection.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
 const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
+// Its own profile folder, so a run never waits for the lock of the real app's (or touches its data).
+app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-shots-profile'));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const light = process.argv.includes('--light');
@@ -86,10 +89,30 @@ const prs = [
   }),
 ];
 const repos = ['acme/web-app', 'acme/cli'];
-const pet = { name: 'Mergon', species: 'phoenix', bornAt: ago(20 * 24 * H), stageIndex: 1, level: 6 };
+// A collection of four: the phoenix is the one being raised (it earned what the ledger above gave), the koi is a young
+// one, the mushroom is fully grown and the geode just hatched. The other four species are still to hatch.
+// `--fresh`: only a phoenix that has done nothing yet.
 const history = fresh ? { days: {}, prs: [], commits: [] } : { days, prs, commits: [] };
-if (complete) pet.achievements = Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)]));
-const status = computeStatus({ pet, activity: history, repos }, NOW);
+const pet = (species, name, daysOld, earned, extra) => ({
+  species,
+  name,
+  bornAt: ago(daysOld * 24 * H),
+  earned,
+  ...extra,
+});
+const phoenix = pet('phoenix', 'Mergon', 20, {}, { stageIndex: 1, level: 6 });
+phoenix.earned = earnedSince(history.days, phoenix.bornAt);
+const pets = fresh
+  ? { phoenix: { ...phoenix, stageIndex: null, level: undefined } }
+  : {
+      phoenix,
+      koi: pet('koi', 'Finn', 40, { [dayKey(12)]: 380, [dayKey(20)]: 180 }, { stageIndex: 2, level: 10 }),
+      mushroom: pet('mushroom', 'Moss', 90, { [dayKey(30)]: 900, [dayKey(50)]: 600 }, { stageIndex: 3, level: 18 }),
+      geode: pet('geode', 'Pebbit', 3, { [dayKey(8)]: 30 }, { stageIndex: 0, level: 2 }),
+    };
+if (pets.mushroom) pets.mushroom.matureAt = dayKey(30);
+const achievements = complete ? Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)])) : undefined;
+const status = computeStatus({ pets, activePet: 'phoenix', achievements, activity: history, repos }, NOW);
 status.reviewQueue = reviewQueue(
   [
     { ...pr(11, 'Fix flaky editor selection test', 'acme/web-app', 35), author: 'ana-dev', requestedAt: ago(5 * H) },
@@ -200,7 +223,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

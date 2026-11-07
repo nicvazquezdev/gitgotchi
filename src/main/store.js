@@ -11,7 +11,9 @@ const defaults = () => ({
   schema: SCHEMA,
   user: null, // { login, name, avatarUrl }
   repos: [], // ['owner/name']
-  pet: null, // { species, name, bornAt, stageIndex }
+  pets: {}, // the collection, one pet per species: { [species]: { species, name, bornAt, earned, level, stageIndex } }
+  activePet: null, // species id of the pet being raised: the only one that earns XP
+  achievements: undefined, // { [id]: day } reached by the person (undefined until the first check records them)
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
@@ -22,7 +24,7 @@ const defaults = () => ({
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
   cloudSync: false, // optional cloud save in the user's GitHub account (device setting)
   cloudSaved: false, // a save exists in the user's GitHub account (written or found by this app)
-  profileUpdatedAt: null, // when the pet or repos last changed here (cloud save: last change wins)
+  profileUpdatedAt: null, // when the pets or repos last changed here (cloud save: last change wins)
 });
 
 let state = null;

@@ -1,5 +1,7 @@
 // Upgrades a saved state.json to the current schema (pure, no I/O).
-const SCHEMA = 4;
+const { fromSinglePet } = require('./game/collection');
+
+const SCHEMA = 5;
 
 // v1 placeholder species → closest v2 sprite line.
 const V1_SPECIES = { blob: 'hongo', cat: 'carnero', dragon: 'fenix', bot: 'geoda' };
@@ -43,10 +45,20 @@ function toV4(state) {
   return { ...state, activity: { days, prs: [], lastSyncedAt: null, prsSyncedAt: null } };
 }
 
+/**
+ * v4 → v5: a collection of pets instead of one. The pet becomes the one pet of the collection, active, keyed by its
+ * species and with the XP it has earned: what its days since birth gave, which is what its XP was until now.
+ * Its achievements become the person's.
+ */
+function toV5({ pet, ...state }) {
+  return { ...state, ...fromSinglePet(pet, state.activity?.days) };
+}
+
 const STEPS = [
   [2, toV2],
   [3, toV3],
   [4, toV4],
+  [5, toV5],
 ];
 
 /** @returns the state upgraded to SCHEMA (unknown fields are kept). */

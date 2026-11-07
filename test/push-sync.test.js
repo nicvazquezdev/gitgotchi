@@ -34,7 +34,10 @@ beforeEach(() => {
   state = {
     user: { login: 'me' },
     repos: ['a/b'],
-    pet: { species: 'phoenix', name: 'Pixel', bornAt: '2026-01-01T00:00:00Z', stageIndex: null },
+    pets: {
+      phoenix: { species: 'phoenix', name: 'Pixel', bornAt: '2026-01-01T00:00:00Z', stageIndex: null, earned: {} },
+    },
+    activePet: 'phoenix',
     activity: emptyActivity(),
   };
   gh = {

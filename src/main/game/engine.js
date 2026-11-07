@@ -2,7 +2,7 @@
 const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
 const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
-const { xpForLevel, levelAt, stageIndexFor } = require('./levels');
+const { startDay, progressOf, collectionView, petFacts } = require('./collection');
 const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { achievementProgress, groupAchievements } = require('./achievements');
@@ -74,12 +74,12 @@ function syncStartDay({ activity }, now = new Date()) {
 
 /**
  * What to fetch from GraphQL: PRs updated since this moment. `backfill` is true until the first PR sync:
- * then it reaches back to the pet's birth minus the baseline window, so the baseline has real history.
+ * then it reaches back to the day the first pet hatched minus the baseline window, so the baseline has real history.
  * Afterwards it is the last PR sync minus a small overlap.
  */
-function prSyncStart({ pet, activity }) {
+function prSyncStart({ pets, activity }) {
   if (!activity.prsSyncedAt) {
-    return { backfill: true, since: fromDay(addDays(toDay(pet.bornAt), -BASELINE.windowDays)) };
+    return { backfill: true, since: fromDay(addDays(startDay(pets), -BASELINE.windowDays)) };
   }
   return { backfill: false, since: new Date(new Date(activity.prsSyncedAt).getTime() - PR_SYNC_OVERLAP_MS) };
 }
@@ -199,26 +199,26 @@ function weekSummary(days, today, since = '') {
   return week;
 }
 
-/** Derived pet status consumed by the UI. `repos`: the selected repos (the PR list is filtered by them). */
-function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
+/**
+ * Derived status consumed by the UI: the active pet (name, species, stage, level and XP) and, around it, what belongs
+ * to the person and not to one pet: mood, PRs, the week, streaks and achievements (all counted from the day the first
+ * pet hatched), plus the whole `collection`. `repos`: the selected repos (the PR list is filtered by them).
+ */
+function computeStatus({ pets = {}, activePet, achievements, activity, repos = [] }, now = new Date()) {
+  const pet = pets[activePet];
   if (!pet) return null;
 
   const today = toDay(now);
-  const birthDay = toDay(pet.bornAt);
+  const start = startDay(pets);
   const days = activity.days ?? {};
 
-  const sinceBirth = Object.fromEntries(Object.entries(days).filter(([day]) => day >= birthDay));
-  const xp = Object.entries(days).reduce((sum, [day, d]) => (day >= birthDay ? sum + dayXp(d) : sum), 0);
-  const week = weekSummary(days, today, birthDay); // what the pet earned, like `xp`
+  const sinceStart = Object.fromEntries(Object.entries(days).filter(([day]) => day >= start));
+  const week = weekSummary(days, today, start); // what the person did since the first pet hatched
   const weekRatioXp = weekSummary(days, today).total; // the mood compares the whole week with the baseline
   const baseline = computeBaseline(days, today);
 
   // Level and stage follow the baseline, but what was reached is never lost.
-  const stageFloor = pet.stageIndex ?? 0;
-  const level = Math.max(levelAt(xp, baseline), pet.level ?? 1, STAGES[stageFloor].level);
-  const stageIndex = Math.max(stageIndexFor(level), stageFloor);
-  const levelStart = xpForLevel(level, baseline);
-  const levelXpNeeded = xpForLevel(level + 1, baseline) - levelStart;
+  const progress = progressOf(pet, baseline);
   const stageView = (i) => ({ id: STAGES[i].id, name: STAGES[i].name, index: i, level: STAGES[i].level });
 
   const selected = new Set(repos.map((r) => r.toLowerCase()));
@@ -230,21 +230,22 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
   return {
     name: pet.name,
     species: SPECIES.find((s) => s.id === pet.species) ?? SPECIES[0],
-    stage: stageView(stageIndex),
-    nextStage: stageIndex + 1 < STAGES.length ? stageView(stageIndex + 1) : null,
-    level,
-    xp,
-    levelXp: Math.min(levelXpNeeded, Math.max(0, xp - levelStart)),
-    levelXpNeeded,
+    stage: stageView(progress.stageIndex),
+    nextStage: progress.stageIndex + 1 < STAGES.length ? stageView(progress.stageIndex + 1) : null,
+    level: progress.level,
+    xp: progress.xp,
+    levelXp: progress.levelXp,
+    levelXpNeeded: progress.levelXpNeeded,
     ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline }),
     week,
     prs,
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
-    ...stats(sinceBirth, now), // streaks and the 7-day chart are the pet's, like its XP
-    // What the pet has achieved: derived from its history, plus what was recorded as reached (`pet.achievements`).
+    ...stats(sinceStart, now),
+    collection: collectionView({ pets, activePet, baseline, now }),
+    // What the person has achieved: derived from their history, plus what was recorded as reached (`achievements`).
     achievements: groupAchievements(
-      achievementProgress({ days: sinceBirth, prs: mine, since: birthDay, stored: pet.achievements }),
+      achievementProgress({ days: sinceStart, prs: mine, since: start, stored: achievements, pets: petFacts(pets) }),
     ),
   };
 }

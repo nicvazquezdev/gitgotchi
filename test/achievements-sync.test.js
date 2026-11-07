@@ -34,7 +34,10 @@ beforeEach(() => {
   state = {
     user: { login: 'me' },
     repos: ['a/b'],
-    pet: { species: 'phoenix', name: 'Pixel', bornAt: '2026-01-01T00:00:00Z', stageIndex: null },
+    pets: {
+      phoenix: { species: 'phoenix', name: 'Pixel', bornAt: '2026-01-01T00:00:00Z', stageIndex: null, earned: {} },
+    },
+    activePet: 'phoenix',
     activity: emptyActivity(),
   };
   events = [];
@@ -44,7 +47,7 @@ beforeEach(() => {
   petService.on('achievements', (list) => announced.push(list));
 });
 
-const recorded = () => Object.keys(state.pet.achievements ?? {}).sort();
+const recorded = () => Object.keys(state.achievements ?? {}).sort();
 
 test('the first check only records what the pet already has: no celebration', async () => {
   state.activity.days = { '2026-05-01': { prs: 1, prsXp: 10, reviews: 3, merges: 0, commits: 0, issues: 0 } };
@@ -55,7 +58,7 @@ test('the first check only records what the pet already has: no celebration', as
 
 test('with nothing yet it records an empty set, so the next ones are announced', async () => {
   await petService.sync();
-  assert.deepEqual(state.pet.achievements, {});
+  assert.deepEqual(state.achievements, {});
   events = [review()];
   await petService.sync();
   assert.deepEqual(announced, [
@@ -70,7 +73,7 @@ test('with nothing yet it records an empty set, so the next ones are announced',
       },
     ],
   ]);
-  assert.equal(state.pet.achievements['first-review'], '2026-06-15');
+  assert.equal(state.achievements['first-review'], '2026-06-15');
 });
 
 test('an achievement is announced once', async () => {

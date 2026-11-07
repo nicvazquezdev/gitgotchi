@@ -133,17 +133,22 @@ test('groupAchievements keeps the catalog order and counts what is unlocked', ()
   );
 });
 
-test('the pet status carries the achievements, counted since its birth day only', () => {
-  const pet = { name: 'Pixel', species: 'phoenix', bornAt: new Date(2026, 2, 5, 12).toISOString() };
+test('the status carries the achievements, counted since the first pet hatched only', () => {
+  const pet = { name: 'Pixel', species: 'phoenix', bornAt: new Date(2026, 2, 5, 12).toISOString(), earned: {} };
   const days = { '2026-03-01': day({ prs: 3, reviews: 9 }), '2026-03-06': day({ reviews: 1 }) };
   const now = new Date(2026, 2, 7, 12);
-  const status = computeStatus({ pet, activity: { days, prs: [] }, repos: [] }, now);
+  const status = computeStatus({ pets: { phoenix: pet }, activePet: 'phoenix', activity: { days, prs: [] } }, now);
   assert.deepEqual(
     unlockedOf(status.achievements).map((a) => a.id),
     ['first-review'],
-  ); // not the PRs before birth
+  ); // not the PRs before the pet hatched
   const withStored = computeStatus(
-    { pet: { ...pet, achievements: { 'first-pr': '2026-03-06' } }, activity: { days, prs: [] } },
+    {
+      pets: { phoenix: pet },
+      activePet: 'phoenix',
+      achievements: { 'first-pr': '2026-03-06' },
+      activity: { days, prs: [] },
+    },
     now,
   );
   assert.deepEqual(
@@ -151,6 +156,20 @@ test('the pet status carries the achievements, counted since its birth day only'
       .map((a) => a.id)
       .sort(),
     ['first-pr', 'first-review'],
+  );
+});
+
+test('a second pet does not move the start: the achievements keep counting from the first one', () => {
+  const first = { name: 'Pixel', species: 'phoenix', bornAt: new Date(2026, 2, 5, 12).toISOString(), earned: {} };
+  const second = { name: 'Finn', species: 'koi', bornAt: new Date(2026, 2, 7, 9).toISOString(), earned: {} };
+  const days = { '2026-03-06': day({ prs: 1 }) }; // after the first pet, before the second
+  const status = computeStatus(
+    { pets: { phoenix: first, koi: second }, activePet: 'koi', activity: { days, prs: [] } },
+    new Date(2026, 2, 8, 12),
+  );
+  assert.deepEqual(
+    unlockedOf(status.achievements).map((a) => a.id),
+    ['first-pr'],
   );
 });
 

@@ -25,7 +25,8 @@ fake('services/session.js', { client: async () => client });
 const cloud = require('../src/main/cloud/cloud-sync');
 
 const { toSave } = require('../src/main/cloud/save');
-const pet = { species: 'phoenix', name: 'Cindle', bornAt: '2026-11-01T00:00:00Z', stageIndex: 0 };
+const pet = { species: 'phoenix', name: 'Cindle', bornAt: '2026-11-01T00:00:00Z', stageIndex: 0, earned: {} };
+const one = { pets: { phoenix: pet }, activePet: 'phoenix' }; // a collection of one
 
 /** Runs `job` and returns the phases the status reported, in order, ending with the idle state. */
 async function phasesOf(job) {
@@ -38,7 +39,7 @@ async function phasesOf(job) {
 }
 
 test('turning the backup on reports each step, creating the repo when it is missing', async () => {
-  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  state = { user: { login: 'me' }, ...one, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
   repo = { exists: false };
   const phases = await phasesOf(() => cloud.enable());
   assert.deepEqual(phases, ['checking', 'creating', 'pulling', 'saving', null]);
@@ -47,13 +48,13 @@ test('turning the backup on reports each step, creating the repo when it is miss
 });
 
 test('an existing repo skips the creating step', async () => {
-  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  state = { user: { login: 'me' }, ...one, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
   repo = { exists: true };
   assert.deepEqual(await phasesOf(() => cloud.enable()), ['checking', 'pulling', 'saving', null]);
 });
 
 test('a failing step ends idle with the error, and the switch can be used again', async () => {
-  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  state = { user: { login: 'me' }, ...one, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
   repo = { exists: true };
   client.writeJsonFile = async () => {
     throw new Error('boom');
@@ -71,7 +72,7 @@ test('a failing step ends idle with the error, and the switch can be used again'
 });
 
 test('the save is remembered after the backup is turned off, because the repo stays', async () => {
-  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  state = { user: { login: 'me' }, ...one, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
   repo = { exists: false };
   client.writeJsonFile = async () => 'sha';
   assert.equal(cloud.status().saved, false);
@@ -82,7 +83,7 @@ test('the save is remembered after the backup is turned off, because the repo st
 });
 
 test('finding a save in the account counts as saved', async () => {
-  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  state = { user: { login: 'me' }, ...one, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
   client.readJsonFile = async () => ({ sha: 's', json: toSave(state) });
   await cloud.restore();
   assert.equal(cloud.status().saved, true);
@@ -91,11 +92,18 @@ test('finding a save in the account counts as saved', async () => {
 describe('restoring the repos from a save that only has their ids', () => {
   const saved = {
     user: { login: 'me' },
-    pet,
+    ...one,
     repos: ['acme/web-app', 'acme/api', 'acme/gone'],
     activity: { days: {} },
   };
-  const newComputer = () => ({ user: { login: 'me' }, pet: null, repos: [], activity: { days: {} }, cloudSync: false });
+  const newComputer = () => ({
+    user: { login: 'me' },
+    pets: {},
+    activePet: null,
+    repos: [],
+    activity: { days: {} },
+    cloudSync: false,
+  });
   let listed;
   beforeEach(() => {
     listed = 0;
@@ -110,7 +118,7 @@ describe('restoring the repos from a save that only has their ids', () => {
     client.readJsonFile = async () => ({ sha: 's', json: toSave(saved) });
     await cloud.restore();
     assert.deepEqual(state.repos, ['acme/web-app', 'Acme/API']);
-    assert.deepEqual(state.pet, pet);
+    assert.deepEqual([state.pets, state.activePet], [{ phoenix: pet }, 'phoenix']);
   });
 
   test('the file in the repo has no repo names', async () => {
@@ -160,7 +168,7 @@ describe('restoring the repos from a save that only has their ids', () => {
       console.error = originalError;
     }
     assert.equal(cloud.status().error, 'GitHub 502');
-    assert.equal(state.pet, null);
+    assert.deepEqual(state.pets, {});
   });
 });
 

@@ -53,11 +53,11 @@ const SETTINGS_ACTIONS = [
 function registerIpc(actions) {
   // App
   handle('app:bootstrap', () => {
-    const { user, repos, pet } = store.get();
+    const { user, repos, pets, activePet } = store.get();
     return {
       user,
       repos,
-      pet,
+      pet: pets[activePet] ?? null, // the active pet: the setup flow preselects it
       catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
       status: petService.status(),
     };

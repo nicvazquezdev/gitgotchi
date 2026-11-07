@@ -17,6 +17,7 @@ const {
   PR_KEEP_MERGED_DAYS,
   COMMIT_KEEP_DAYS,
 } = require('../src/main/game/catalog');
+const { earnedSince } = require('../src/main/game/collection');
 const { toDay, addDays } = require('../src/main/dates');
 
 const NOON = new Date(2026, 5, 15, 12);
@@ -47,8 +48,14 @@ const pr = (o = {}) => ({
   mergedAt: null,
   ...o,
 });
-const status = (acts, extra = {}, now = NOON) =>
-  computeStatus({ pet: pet(undefined, extra.pet), activity: acts, repos: ['a/b'] }, now);
+/** A state with one pet, active, that has earned what the ledger gave since its birth (like a migrated pet). */
+const stateOf = (acts, p = pet(), repos = ['a/b']) => ({
+  pets: { [p.species]: { ...p, earned: p.earned ?? earnedSince(acts.days, p.bornAt) } },
+  activePet: p.species,
+  activity: acts,
+  repos,
+});
+const status = (acts, extra = {}, now = NOON) => computeStatus(stateOf(acts, pet(undefined, extra.pet)), now);
 
 describe('buildDays', () => {
   test('counts review events per day for the selected repos only', () => {
@@ -135,14 +142,14 @@ describe('syncStartDay', () => {
 
 describe('prSyncStart', () => {
   test('first sync backfills from birth minus the baseline window', () => {
-    const { backfill, since } = prSyncStart({ pet: pet(new Date(2026, 5, 10, 9)), activity: activity() });
+    const { backfill, since } = prSyncStart(stateOf(activity(), pet(new Date(2026, 5, 10, 9))));
     assert.equal(backfill, true);
     assert.equal(toDay(since), addDays('2026-06-10', -BASELINE.windowDays));
   });
 
   test('later syncs are incremental from the last PR sync, with a small overlap', () => {
     const prsSyncedAt = new Date(2026, 5, 15, 11).toISOString();
-    const { backfill, since } = prSyncStart({ pet: pet(), activity: activity({}, { prsSyncedAt }) });
+    const { backfill, since } = prSyncStart(stateOf(activity({}, { prsSyncedAt })));
     assert.equal(backfill, false);
     assert.ok(since < new Date(prsSyncedAt) && new Date(prsSyncedAt) - since <= 3600000);
   });
@@ -272,8 +279,9 @@ describe('applyActivity', () => {
 });
 
 describe('computeStatus', () => {
-  test('returns null without a pet', () => {
-    assert.equal(computeStatus({ pet: null, activity: activity() }, NOON), null);
+  test('returns null without an active pet', () => {
+    assert.equal(computeStatus({ pets: {}, activePet: null, activity: activity() }, NOON), null);
+    assert.equal(computeStatus({ pets: { koi: pet() }, activePet: 'phoenix', activity: activity() }, NOON), null);
   });
 
   test('xp counts only days since birth, by the XP rules', () => {
@@ -282,7 +290,7 @@ describe('computeStatus', () => {
       '2026-06-14': day({ reviews: 2, prs: 1, prsXp: 20 }),
       '2026-06-15': day({ merges: 1 }),
     };
-    const s = computeStatus({ pet: pet(new Date(2026, 5, 14, 9)), activity: activity(days) }, NOON);
+    const s = computeStatus(stateOf(activity(days), pet(new Date(2026, 5, 14, 9))), NOON);
     assert.equal(s.xp, 2 * WEIGHTS.reviews + 20 + WEIGHTS.merges); // the day before birth is out
   });
 
@@ -323,12 +331,12 @@ describe('computeStatus', () => {
     });
   });
 
-  test('week only counts what the pet earned since its birth day, so it never exceeds the total XP', () => {
+  test('week only counts what happened since the first pet hatched, so it never exceeds the total XP', () => {
     const days = {
       '2026-06-10': day({ reviews: 20 }), // before the pet was born
       '2026-06-14': day({ reviews: 2 }),
     };
-    const born = computeStatus({ pet: pet(new Date(2026, 5, 13)), activity: activity(days), repos: [] }, NOON);
+    const born = computeStatus(stateOf(activity(days), pet(new Date(2026, 5, 13)), []), NOON);
     assert.equal(born.week.reviews, 2);
     assert.equal(born.week.total, 2 * WEIGHTS.reviews);
     assert.equal(born.week.total, born.xp);
@@ -412,8 +420,7 @@ describe('PR lists', () => {
 
   test('a PR view carries repo, size, XP and age', () => {
     const prs = [pr({ repo: 'webflow/app-web', lines: 250, createdAt: daysAgo(3) })];
-    const [view] = computeStatus({ pet: pet(), activity: activity({}, { prs }), repos: ['webflow/app-web'] }, NOON).prs
-      .waiting;
+    const [view] = computeStatus(stateOf(activity({}, { prs }), pet(), ['webflow/app-web']), NOON).prs.waiting;
     assert.equal(view.repo, 'app-web');
     assert.equal(view.fullRepo, 'webflow/app-web');
     assert.equal(view.size, 'M');

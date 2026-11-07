@@ -41,7 +41,7 @@ class CloudSync extends EventEmitter {
     };
   }
 
-  /** Onboarding: is there a saved pet in this account? → `{ found, pet? }` */
+  /** Onboarding: is there a saved collection in this account? → `{ found, pet? }` (the active pet, and how many) */
   async find() {
     const file = await this.#read();
     return file ? { found: true, pet: saveSummary(file.json) } : { found: false };
@@ -99,7 +99,7 @@ class CloudSync extends EventEmitter {
 
   #hasChanges() {
     const state = store.get();
-    return this.isEnabled() && Boolean(state.pet) && JSON.stringify(toSave(state)) !== this.#lastSaved;
+    return this.isEnabled() && Object.keys(state.pets).length > 0 && JSON.stringify(toSave(state)) !== this.#lastSaved;
   }
 
   /** Serializes GitHub calls and turns failures into a visible error instead of throwing. */

@@ -7,16 +7,19 @@
 // `reviewRequests` is not XP: someone asked the user for a review),
 // 'attention' (what the user may want a system notification for: `[{ kind, id, title, repo, number, url, author, via }]`,
 // kind: 'reviewRequested' | 'approved' | 'changesRequested' | 'checksFailed'),
-// 'configured' (setup saved: repos may have changed).
+// 'companion' (the user hatched or switched to a pet: `{ kind: 'hatched' | 'switched', species, name }`),
+// 'configured' (the profile was saved: repos or pets may have changed).
+// The user has a collection of pets, one per species, and only the active one earns XP (see game/collection.js).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
 const session = require('./session');
 const engine = require('../game/engine');
-const { SPECIES, PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
+const { PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
+const { speciesOf, newPet, cleanName, creditXp } = require('../game/collection');
 const { commitKey, pendingPushes } = require('../game/commits');
 const { reviewQueue, attentionOf } = require('../game/pull-requests');
 const { unlockedOf } = require('../game/achievements');
-const { fromDay } = require('../dates');
+const { fromDay, toDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
 
@@ -37,8 +40,8 @@ class PetService extends EventEmitter {
   #teams = { slugs: [], at: 0 }; // the teams of the user ('org/slug'), read again every LIVE.TEAMS_REFRESH_MS
 
   isConfigured() {
-    const { pet, repos } = store.get();
-    return session.isConnected() && Boolean(pet) && repos.length > 0;
+    const { pets, activePet, repos } = store.get();
+    return session.isConnected() && Boolean(pets[activePet]) && repos.length > 0;
   }
 
   status() {
@@ -65,33 +68,76 @@ class PetService extends EventEmitter {
     return engine.rankRepos(events, accessible);
   }
 
-  /** Saves the onboarding choice. Changing species hatches a new pet. */
+  /**
+   * Saves what the setup flow chose: the repos and, when `species` is given, the pet to raise. A species that is not
+   * in the collection hatches (and becomes the active pet); one that is becomes the active pet. `name` renames it.
+   * The first setup needs a species. New repos rebuild the history; nothing the pets earned is lost.
+   */
   async configure({ repos, species, name }) {
     if (!Array.isArray(repos) || repos.length === 0) throw new Error('Pick at least one repo');
-    const speciesInfo = SPECIES.find((s) => s.id === species);
-    if (!speciesInfo) throw new Error('Unknown pet species');
+    const info = species == null ? null : speciesOf(species);
+    if (species != null && !info) throw new Error('Unknown pet species');
+    const { pets, activePet, repos: prevRepos } = store.get();
+    if (!info && !pets[activePet]) throw new Error('Pick a companion');
 
-    const { pet: prev, repos: prevRepos } = store.get();
-    const isNewPet = prev?.species !== species;
     const reposChanged = [...repos].sort().join() !== [...prevRepos].sort().join();
-    const cleanName =
-      String(name ?? '')
-        .trim()
-        .slice(0, 16) || speciesInfo.stages[0].name;
-
+    let next = pets;
+    if (info) {
+      const current = pets[info.id];
+      next = {
+        ...pets,
+        [info.id]: current ? { ...current, name: cleanName(name ?? current.name, info) } : newPet(info, name),
+      };
+    }
     store.update({
       profileUpdatedAt: new Date().toISOString(),
       repos,
-      pet: isNewPet
-        ? { species, name: cleanName, bornAt: new Date().toISOString(), stageIndex: null }
-        : { ...prev, name: cleanName },
-      // New repos or a new pet: history is rebuilt from scratch.
-      ...((isNewPet || reposChanged) && { activity: engine.emptyActivity() }),
+      pets: next,
+      activePet: info?.id ?? activePet,
+      ...(reposChanged && { activity: engine.emptyActivity() }),
     });
-    if (isNewPet || reposChanged) this.#resetBaseline();
+    if (reposChanged) this.#resetBaseline();
     this.notify();
     this.emit('configured');
     this.sync();
+  }
+
+  /** Hatches a new pet (a species the user does not have yet). It becomes the active pet. */
+  hatch({ species, name }) {
+    const info = speciesOf(species);
+    if (!info) throw new Error('Unknown pet species');
+    const { pets } = store.get();
+    if (pets[info.id]) throw new Error(`${pets[info.id].name} is already in your collection`);
+    this.#changeCollection(
+      { pets: { ...pets, [info.id]: newPet(info, name) }, activePet: info.id },
+      { kind: 'hatched', species: info.id, name: cleanName(name, info) },
+    );
+  }
+
+  /** Makes a pet of the collection the active one: from now on it earns the new XP. Nothing is lost by the other. */
+  activate(species) {
+    const { pets, activePet } = store.get();
+    if (!pets[species]) throw new Error('That pet is not in your collection');
+    if (species === activePet) return;
+    this.#changeCollection({ activePet: species }, { kind: 'switched', species, name: pets[species].name });
+  }
+
+  rename({ species, name }) {
+    const { pets } = store.get();
+    if (!pets[species]) throw new Error('That pet is not in your collection');
+    const clean = cleanName(name, speciesOf(species));
+    if (clean === pets[species].name) return;
+    this.#changeCollection({ pets: { ...pets, [species]: { ...pets[species], name: clean } } });
+  }
+
+  /** Saves a change to the pets, records what it changes (level, achievements) and tells everyone. */
+  #changeCollection(patch, companion) {
+    store.update({ ...patch, profileUpdatedAt: new Date().toISOString() });
+    this.#checkProgress();
+    this.#checkAchievements();
+    this.notify();
+    this.emit('configured');
+    if (companion) this.emit('companion', companion);
   }
 
   /** The one sync loop: syncs every SYNC_INTERVAL_MS, or GitHub's X-Poll-Interval if that is longer. */
@@ -253,10 +299,12 @@ class PetService extends EventEmitter {
    * yet (`delta`, see live/credits.js) and whether the stored activity changed.
    */
   #absorb({ events, prs, commits, pushes }, marks = {}) {
-    const { activity: before, repos } = store.get();
+    const { activity: before, repos, pets, activePet } = store.get();
     const activity = { ...engine.applyActivity(before, { events, prs, commits, pushes, repos }), ...marks };
-    const changed = JSON.stringify(activity) !== JSON.stringify(before);
-    if (changed) store.update({ activity });
+    // The XP that is new goes to the pet being raised (see creditXp).
+    const credited = creditXp({ pets, activePet, days: activity.days });
+    const changed = credited !== pets || JSON.stringify(activity) !== JSON.stringify(before);
+    if (changed) store.update({ activity, pets: credited });
     const { delta, credits } = subtractCredits(
       this.#credits,
       engine.diffDays(before.days, activity.days),
@@ -267,33 +315,42 @@ class PetService extends EventEmitter {
     return { delta, changed };
   }
 
-  /** Stores the level and stage reached (they never go down) and announces growth. */
+  /**
+   * Stores the level and stage every pet has reached (they never go down) and, for the day a pet is fully grown,
+   * when. Announces the growth of the active pet: the others only change when the person's pace does.
+   */
   #checkProgress() {
-    const { stage, level } = this.status();
-    const { pet } = store.get();
-    if (pet.stageIndex === stage.index && pet.level === level) return;
-    store.update((s) => ({ pet: { ...s.pet, stageIndex: stage.index, level } }));
+    const { stage, level, collection } = this.status();
+    const { pets, activePet } = store.get();
+    const today = toDay(new Date());
+    const changes = {};
+    for (const entry of collection.entries.filter((e) => e.hatched)) {
+      const pet = pets[entry.id];
+      const matureAt = entry.mastered ? (pet.matureAt ?? today) : pet.matureAt;
+      if (pet.level === entry.level && pet.stageIndex === entry.stageIndex && pet.matureAt === matureAt) continue;
+      changes[entry.id] = { ...pet, level: entry.level, stageIndex: entry.stageIndex, ...(matureAt && { matureAt }) };
+    }
+    if (!Object.keys(changes).length) return;
+    store.update({ pets: { ...pets, ...changes } });
+    const before = pets[activePet];
     // First time we only record where the pet is, no celebration.
-    if (pet.level != null && level > pet.level) this.emit('levelUp', level);
-    if (pet.stageIndex != null && stage.index > pet.stageIndex) this.emit('evolved', stage);
+    if (before.level != null && level > before.level) this.emit('levelUp', level);
+    if (before.stageIndex != null && stage.index > before.stageIndex) this.emit('evolved', stage);
   }
 
   /**
    * Records the achievements reached (they are never lost, even if the history is rebuilt) and announces the new
-   * ones. The first time it only records them, so a pet that already had some (an update, a restored save)
+   * ones. The first time it only records them, so a person that already had some (an update, a restored save)
    * does not celebrate them all at once.
    */
   #checkAchievements() {
     const status = engine.computeStatus(store.get());
     if (!status) return;
-    const known = store.get().pet.achievements;
+    const known = store.get().achievements;
     const fresh = unlockedOf(status.achievements).filter((a) => !known || !(a.id in known));
     if (known && fresh.length === 0) return;
     store.update((s) => ({
-      pet: {
-        ...s.pet,
-        achievements: { ...s.pet.achievements, ...Object.fromEntries(fresh.map((a) => [a.id, a.unlockedAt])) },
-      },
+      achievements: { ...s.achievements, ...Object.fromEntries(fresh.map((a) => [a.id, a.unlockedAt])) },
     }));
     if (known)
       this.emit(

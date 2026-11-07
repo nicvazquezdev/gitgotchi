@@ -4,6 +4,7 @@ const { xpForLevel, levelAt, stageIndexFor } = require('../src/main/game/levels'
 const { computeStatus, computeBaseline } = require('../src/main/game/engine');
 const { BASELINE, STAGES, PR_SIZES } = require('../src/main/game/catalog');
 const { sizeOf, openXp } = require('../src/main/game/pull-requests');
+const { earnedSince } = require('../src/main/game/collection');
 const { toDay, addDays } = require('../src/main/dates');
 
 const NOW = new Date(2026, 5, 15, 14, 0, 0); // afternoon, the pet is awake
@@ -14,8 +15,17 @@ const BORN = new Date(2026, 0, 1).toISOString();
 const history = (weeks, reviews) =>
   Object.fromEntries(Array.from({ length: weeks * 7 }, (_, i) => [addDays(TODAY, -i), { reviews }]));
 
-const status = (days, pet = {}) =>
-  computeStatus({ pet: { name: 'T', species: 'phoenix', bornAt: BORN, ...pet }, activity: { days, prs: [] } }, NOW);
+const status = (days, pet = {}) => {
+  const own = { name: 'T', species: 'phoenix', bornAt: BORN, ...pet };
+  return computeStatus(
+    {
+      pets: { phoenix: { ...own, earned: earnedSince(days, BORN) } },
+      activePet: 'phoenix',
+      activity: { days, prs: [] },
+    },
+    NOW,
+  );
+};
 
 test('PR size buckets: XS < 10, S < 100, M < 500, L from 500; XP 5/10/20/30', () => {
   const cases = [

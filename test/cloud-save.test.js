@@ -2,9 +2,11 @@ const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { repoId, toSave, isSave, remoteWins, mergeSave, saveSummary } = require('../src/main/cloud/save');
 
-const pet = { species: 'phoenix', name: 'Cindle', bornAt: '2026-11-01T00:00:00Z', stageIndex: 0 };
+const pet = { species: 'phoenix', name: 'Cindle', bornAt: '2026-11-01T00:00:00Z', stageIndex: 0, earned: {} };
+const koi = { species: 'koi', name: 'Finn', bornAt: '2026-11-04T00:00:00Z', stageIndex: 0, earned: {} };
 const state = (over = {}) => ({
-  pet,
+  pets: { phoenix: pet },
+  activePet: 'phoenix',
   repos: ['me/app'],
   profileUpdatedAt: '2026-11-02T00:00:00Z',
   activity: { days: { '2026-11-03': { reviews: 2 } }, lastSyncedAt: 'local' },
@@ -12,22 +14,24 @@ const state = (over = {}) => ({
   petSize: 300,
   ...over,
 });
+const fresh = { pets: {}, activePet: null, repos: [], profileUpdatedAt: null, activity: { days: {} } };
 
-test('toSave keeps the pet, which repos and the history, not device settings', () => {
+test('toSave keeps the pets, which repos and the history, not device settings', () => {
   const save = toSave(state({ user: { login: 'me' } }));
   assert.ok(isSave(save));
+  assert.deepEqual(save.profile.pets, { phoenix: pet });
+  assert.equal(save.profile.activePet, 'phoenix');
   assert.deepEqual(save.profile.repoIds, [repoId('me', 'me/app')]);
   assert.equal(save.position, undefined);
   assert.equal(save.petSize, undefined);
   assert.equal(save.activity.lastSyncedAt, undefined);
 });
 
-test('restoring into a fresh computer takes the remote pet and history', () => {
-  const remote = toSave(state());
-  const merged = mergeSave({ pet: null, repos: [], profileUpdatedAt: null, activity: { days: {} } }, remote, [
-    'me/app',
-  ]);
-  assert.deepEqual(merged.pet, pet);
+test('restoring into a fresh computer takes the remote pets, the active one and the history', () => {
+  const remote = toSave(state({ pets: { phoenix: pet, koi }, activePet: 'koi' }));
+  const merged = mergeSave(fresh, remote, ['me/app']);
+  assert.deepEqual(merged.pets, { phoenix: pet, koi });
+  assert.equal(merged.activePet, 'koi');
   assert.deepEqual(merged.repos, ['me/app']);
   assert.equal(merged.activity.days['2026-11-03'].reviews, 2);
 });
@@ -40,69 +44,97 @@ test('history merges with the max per day and kind', () => {
   assert.equal(merged.activity.lastSyncedAt, 'local');
 });
 
-test('the most recently changed profile wins, keeping the highest stage of the same pet', () => {
-  const remote = toSave(
-    state({
-      pet: { ...pet, name: 'Ember', stageIndex: 1 },
-      repos: ['me/app', 'me/api'],
-      profileUpdatedAt: '2026-11-05T00:00:00Z',
-    }),
-  );
-  const merged = mergeSave(state({ pet: { ...pet, stageIndex: 2 } }), remote, ['me/app', 'me/api']);
-  assert.equal(merged.pet.name, 'Ember');
-  assert.equal(merged.pet.stageIndex, 2);
+describe('the collections of two computers', () => {
+  const remoteOf = (over) => toSave(state({ profileUpdatedAt: '2026-11-05T00:00:00Z', ...over }));
+
+  test('are both kept: a pet that is only on one computer is never lost', () => {
+    const merged = mergeSave(state(), remoteOf({ pets: { koi }, activePet: 'koi' }));
+    assert.deepEqual(Object.keys(merged.pets).sort(), ['koi', 'phoenix']);
+    assert.equal(merged.activePet, 'koi'); // the remote profile is the newer one
+    const local = state({ pets: { phoenix: pet, koi }, activePet: 'koi', profileUpdatedAt: '2026-11-09T00:00:00Z' });
+    const older = mergeSave(local, remoteOf({ pets: { phoenix: pet }, activePet: 'phoenix' }));
+    assert.deepEqual(Object.keys(older.pets).sort(), ['koi', 'phoenix']);
+    assert.equal(older.activePet, 'koi'); // the local profile is the newer one
+  });
+
+  test('a pet on both keeps the XP of each day (max), the highest level and stage, and the winner’s name', () => {
+    const local = state({
+      pets: {
+        phoenix: { ...pet, name: 'Local', earned: { '2026-11-02': 30, '2026-11-03': 10 }, level: 4, stageIndex: 0 },
+      },
+    });
+    const remote = remoteOf({
+      pets: {
+        phoenix: { ...pet, name: 'Remote', earned: { '2026-11-03': 25, '2026-11-04': 5 }, level: 6, stageIndex: 1 },
+      },
+    });
+    const { phoenix } = mergeSave(local, remote).pets;
+    assert.equal(phoenix.name, 'Remote'); // its profile is the newer one
+    assert.deepEqual(phoenix.earned, { '2026-11-02': 30, '2026-11-03': 25, '2026-11-04': 5 });
+    assert.deepEqual([phoenix.level, phoenix.stageIndex], [6, 1]);
+    assert.equal(mergeSave({ ...local, profileUpdatedAt: '2026-11-09T00:00:00Z' }, remote).pets.phoenix.name, 'Local');
+  });
+
+  test('a pet never recorded (no level, no stage yet) stays that way, and the earliest birth and maturity win', () => {
+    const merged = mergeSave(
+      state({ pets: { phoenix: { ...pet, stageIndex: null } } }),
+      remoteOf({ pets: { phoenix: { ...pet, stageIndex: null, bornAt: '2026-10-30T00:00:00Z' } } }),
+    ).pets.phoenix;
+    assert.equal(merged.stageIndex, null);
+    assert.equal('level' in merged, false);
+    assert.equal(merged.bornAt, '2026-10-30T00:00:00Z');
+    const grown = mergeSave(
+      state({ pets: { phoenix: { ...pet, matureAt: '2026-11-20' } } }),
+      remoteOf({ pets: { phoenix: { ...pet, matureAt: '2026-11-18' } } }),
+    ).pets.phoenix;
+    assert.equal(grown.matureAt, '2026-11-18');
+  });
+
+  test('the active pet follows the newest profile, and falls back to a pet that exists', () => {
+    const local = state({ pets: { phoenix: pet, koi }, activePet: 'phoenix' });
+    assert.equal(mergeSave(local, remoteOf({ pets: { koi }, activePet: 'koi' })).activePet, 'koi');
+    // A remote profile that points at a pet nobody has keeps the local choice.
+    assert.equal(mergeSave(local, remoteOf({ activePet: 'ram' })).activePet, 'phoenix');
+    assert.equal(mergeSave(fresh, remoteOf({ activePet: 'ram' })).activePet, 'phoenix');
+  });
+});
+
+test('the most recently changed profile wins the repos', () => {
+  const remote = toSave(state({ repos: ['me/app', 'me/api'], profileUpdatedAt: '2026-11-05T00:00:00Z' }));
+  const merged = mergeSave(state(), remote, ['me/app', 'me/api']);
   assert.deepEqual(merged.repos, ['me/app', 'me/api']);
   assert.equal(merged.profileUpdatedAt, '2026-11-05T00:00:00Z');
 });
 
-test('a newer local pet is kept over an older remote one', () => {
-  const remote = toSave(state({ profileUpdatedAt: '2026-11-01T00:00:00Z' }));
-  const local = state({
-    pet: { ...pet, species: 'koi', bornAt: '2026-11-06T00:00:00Z' },
-    profileUpdatedAt: '2026-11-06T00:00:00Z',
-  });
-  assert.equal(mergeSave(local, remote).pet.species, 'koi');
-});
-
-test('saveSummary describes the saved pet', () => {
-  const summary = saveSummary(toSave(state()));
-  assert.equal(summary.name, 'Cindle');
-  assert.equal(summary.speciesId, 'phoenix');
+test('saveSummary describes the active pet and how many there are', () => {
+  const summary = saveSummary(toSave(state({ pets: { phoenix: pet, koi }, activePet: 'koi' })));
+  assert.equal(summary.name, 'Finn');
+  assert.equal(summary.speciesId, 'koi');
+  assert.equal(summary.count, 2);
   assert.ok(summary.level >= 1);
   assert.equal(isSave({ app: 'other' }), false);
+  assert.equal(saveSummary(toSave(state({ pets: {}, activePet: null }))), null);
 });
 
-test('achievements travel with the pet, and the same pet on two computers keeps both sets (earliest day)', () => {
-  const local = state({ pet: { ...pet, achievements: { 'first-pr': '2026-11-03', 'review-10': '2026-11-05' } } });
+test('achievements belong to the person: both computers’ sets are kept (earliest day)', () => {
+  const local = state({ achievements: { 'first-pr': '2026-11-03', 'review-10': '2026-11-05' } });
   const remote = toSave(
     state({
-      pet: { ...pet, achievements: { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' } },
+      achievements: { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' },
       profileUpdatedAt: '2026-11-04T00:00:00Z',
     }),
   );
-  assert.deepEqual(remote.profile.pet.achievements, { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' });
-  const merged = mergeSave(local, remote);
-  assert.deepEqual(merged.pet.achievements, {
+  assert.deepEqual(remote.profile.achievements, { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' });
+  assert.deepEqual(mergeSave(local, remote).achievements, {
     'first-pr': '2026-11-02',
     'first-merge': '2026-11-04',
     'review-10': '2026-11-05',
   });
 });
 
-test('a pet without achievements on both sides stays without them (the first check records silently)', () => {
+test('without achievements on both sides there are none (the first check records silently)', () => {
   const merged = mergeSave(state(), toSave(state({ profileUpdatedAt: '2026-11-04T00:00:00Z' })));
-  assert.equal('achievements' in merged.pet, false);
-});
-
-test('another pet does not inherit the achievements of the one that lost the merge', () => {
-  const remote = toSave(
-    state({
-      pet: { ...pet, species: 'koi', bornAt: '2026-11-06T00:00:00Z', achievements: { 'first-pr': '2026-11-07' } },
-      profileUpdatedAt: '2026-11-06T00:00:00Z',
-    }),
-  );
-  const merged = mergeSave(state({ pet: { ...pet, achievements: { 'first-merge': '2026-11-03' } } }), remote);
-  assert.deepEqual(merged.pet.achievements, { 'first-pr': '2026-11-07' });
+  assert.equal('achievements' in merged, false);
 });
 
 test('the save never contains the name of a repo, only ids', () => {
@@ -112,7 +144,7 @@ test('the save never contains the name of a repo, only ids', () => {
   assert.equal(save.profile.repos, undefined);
   assert.equal(save.profile.repoIds.length, 2);
   assert.ok(save.profile.repoIds.every((id) => /^[0-9a-f]{16}$/.test(id)));
-  assert.equal(save.schema, 2);
+  assert.equal(save.schema, 3);
 });
 
 describe('repoId', () => {
@@ -126,34 +158,59 @@ describe('repoId', () => {
   });
 });
 
-describe('a save from before the ids (schema 1, with the names)', () => {
-  const legacy = () => ({
+describe('a save from before the collection (one `pet`, schemas 1 and 2)', () => {
+  const legacyPet = { ...pet, level: 3, achievements: { 'first-pr': '2026-11-03' } };
+  delete legacyPet.earned;
+  const legacy = (extra = {}) => ({
     app: 'gitgotchi',
     schema: 1,
-    profile: { pet, repos: ['me/app', 'me/api'], updatedAt: '2026-11-05T00:00:00Z' },
-    activity: { days: { '2026-11-03': { reviews: 2 } } },
+    profile: { pet: legacyPet, repos: ['me/app', 'me/api'], updatedAt: '2026-11-05T00:00:00Z', ...extra },
+    activity: { days: { '2026-10-30': { reviews: 9 }, '2026-11-03': { reviews: 2 } } },
   });
-  const fresh = { pet: null, repos: [], profileUpdatedAt: null, activity: { days: {} } };
 
-  test('is still read: its names are used when no ids were resolved', () => {
+  test('is still read: a collection of one, active, with the XP its days since birth gave', () => {
     assert.ok(isSave(legacy()));
-    assert.deepEqual(mergeSave(fresh, legacy()).repos, ['me/app', 'me/api']);
+    const merged = mergeSave(fresh, legacy());
+    assert.deepEqual(Object.keys(merged.pets), ['phoenix']);
+    assert.equal(merged.activePet, 'phoenix');
+    assert.deepEqual(merged.pets.phoenix.earned, { '2026-11-03': 20 }); // the review before its birth is not its XP
+    assert.equal(merged.pets.phoenix.level, 3);
+    assert.deepEqual(merged.achievements, { 'first-pr': '2026-11-03' }); // now the person's
+    assert.equal('achievements' in merged.pets.phoenix, false);
   });
 
-  test('and the next save is written with ids, so the names leave the file', () => {
+  test('its repo names are used when no ids were resolved, and the next save has ids only', () => {
     const merged = mergeSave(fresh, legacy());
+    assert.deepEqual(merged.repos, ['me/app', 'me/api']);
     const next = toSave({ ...fresh, ...merged, user: { login: 'me' } });
     assert.equal(next.profile.repos, undefined);
+    assert.equal(next.profile.pet, undefined);
     assert.deepEqual(next.profile.repoIds, [repoId('me', 'me/app'), repoId('me', 'me/api')]);
+    assert.equal(next.schema, 3);
+  });
+
+  test('describes the pet in the restore prompt', () => {
+    assert.deepEqual([saveSummary(legacy()).name, saveSummary(legacy()).count], ['Cindle', 1]);
+  });
+
+  test('merging it into a collection that has the same species keeps one pet and does not count its XP again', () => {
+    // The old save's pet was the only one: its XP is all the XP of the person, part of it earned by the koi here.
+    const local = state({
+      pets: { phoenix: { ...pet, earned: { '2026-11-03': 5 } }, koi: { ...koi, earned: { '2026-11-03': 15 } } },
+    });
+    const merged = mergeSave(local, legacy({ updatedAt: '2026-01-01T00:00:00Z' }));
+    assert.deepEqual(Object.keys(merged.pets).sort(), ['koi', 'phoenix']);
+    assert.deepEqual(merged.pets.phoenix.earned, { '2026-11-03': 5 });
+    assert.deepEqual(merged.pets.koi.earned, { '2026-11-03': 15 });
   });
 });
 
 describe('remoteWins and the repos', () => {
   const remote = (updatedAt) => toSave(state({ profileUpdatedAt: updatedAt }));
 
-  test('the remote profile wins when it is newer or when there is no local pet', () => {
+  test('the remote profile wins when it is newer or when there are no local pets', () => {
     assert.equal(remoteWins(state({ profileUpdatedAt: '2026-11-01T00:00:00Z' }), remote('2026-11-05T00:00:00Z')), true);
-    assert.equal(remoteWins(state({ pet: null }), remote('2026-10-01T00:00:00Z')), true);
+    assert.equal(remoteWins(state({ pets: {}, activePet: null }), remote('2026-10-01T00:00:00Z')), true);
     assert.equal(
       remoteWins(state({ profileUpdatedAt: '2026-11-09T00:00:00Z' }), remote('2026-11-05T00:00:00Z')),
       false,
