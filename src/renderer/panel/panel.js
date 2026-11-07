@@ -2,7 +2,7 @@
 // Preferences that are set once live in the Settings window.
 import { $, h } from '../shared/dom.js';
 import { plural, totalXp, oldestDays, timeAgo } from '../shared/format.js';
-import { xpBar, portraitImg } from '../shared/ui.js';
+import { icon, xpBar, portraitImg } from '../shared/ui.js';
 
 const api = window.gitgotchi.panel;
 const app = $('#app');
@@ -14,7 +14,13 @@ let state = null;
 
 const divider = () => h('hr', { class: 'divider' });
 
-function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
+/** "75 XP to level 5", plus a hint when that level evolves the pet. */
+function xpLine({ level, levelXp, levelXpNeeded, nextStage }) {
+  const evolves = nextStage?.level === level + 1;
+  return `${levelXpNeeded - levelXp} XP to level ${level + 1}${evolves ? ` · evolves into ${nextStage.name}` : ''}`;
+}
+
+function header({ name, species, stage, nextStage, level, levelXp, levelXpNeeded }) {
   return h(
     'div',
     { class: 'head' },
@@ -29,11 +35,7 @@ function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
         h('span', { class: 'meta' }, `${stage.name} · Lv ${level}`),
       ),
       xpBar(levelXp / levelXpNeeded, 'sm'),
-      h(
-        'div',
-        { class: 'meta xp-line' },
-        `${levelXp} / ${levelXpNeeded} XP · ${levelXpNeeded - levelXp} to level ${level + 1}`,
-      ),
+      h('div', { class: 'meta xp-line' }, xpLine({ level, levelXp, levelXpNeeded, nextStage })),
     ),
   );
 }
@@ -46,6 +48,7 @@ const prRow = (dot, label, detail, className = '') =>
     h('span', { class: `dot ${dot}` }),
     h('span', { class: 'grow' }, label),
     detail ? h('span', { class: `detail ${className}` }, detail) : null,
+    icon('chevron', { size: 12, stroke: 2.5 }),
   );
 
 function prSummary({ waiting, approved, mergedToday }) {

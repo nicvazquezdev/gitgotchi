@@ -121,3 +121,8 @@ button.row:disabled {
   margin: 6px 2px 2px;
   font-size: 12px;
 }
+
+/* The chevron marks a row that opens something. */
+.pr-row > svg {
+  color: var(--text-3);
+}

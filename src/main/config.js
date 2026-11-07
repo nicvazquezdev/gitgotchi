@@ -25,7 +25,7 @@ module.exports = {
   POPOVER_WINDOW: { width: 360, height: 400 },
   // Profile, settings and evolution windows; the native traffic lights overlay the 40 px page title bar.
   PROFILE_WINDOW: { width: 960, height: 500 },
-  SETTINGS_WINDOW: { width: 520, height: 560 },
+  SETTINGS_WINDOW: { width: 520, height: 580 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the steps don't fit.
   ONBOARDING_WINDOW: { width: 960, height: 640, minWidth: 960, minHeight: 640 },
