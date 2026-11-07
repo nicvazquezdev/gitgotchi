@@ -24,12 +24,13 @@ function portrait({ species, stage, mood }) {
 
 function petCard(status) {
   const { name, level, levelXp, levelXpNeeded, stage, species, moodLabel, moodReason } = status;
+  const creatureName = species.stages[stage.index].name;
   return h(
     'section',
     { class: 'card pet-card' },
     portrait(status),
     h('div', { class: 'pixel-name pet-name' }, name),
-    h('div', { class: 'pet-sub' }, `${stage.name} · Level ${level} · ${species.line}`),
+    h('div', { class: 'pet-sub' }, `${creatureName} · ${stage.name} · Level ${level}`),
     xpBar(levelXp / levelXpNeeded, 'lg'),
     h(
       'div',
@@ -71,7 +72,7 @@ function evolutionCard({ species, stage }) {
       'div',
       { class: 'card-head' },
       h('h2', {}, 'Evolution'),
-      h('span', { class: 'meta' }, `Stage ${stage.index + 1} of ${species.stages.length}`),
+      h('span', { class: 'meta' }, `${species.line} · Stage ${stage.index + 1} of ${species.stages.length}`),
     ),
     h('div', { class: 'stages' }, line),
   );
@@ -110,14 +111,14 @@ function rulesCard({ prBySize, review, merged }) {
     h(
       'div',
       { class: 'rule-list' },
-      rule('Open a PR', `${Math.min(...points)} to ${Math.max(...points)} by size`),
+      rule('Open a PR', `+${Math.min(...points)} to +${Math.max(...points)} by size`),
       h(
         'div',
         { class: 'sizes' },
         Object.entries(prBySize).map(([size, xp]) => h('span', { class: 'size-badge' }, `${size} ${xp}`)),
       ),
       h('hr'),
-      rule('Review a PR', review),
+      rule('Review a PR', `+${review}`),
       rule('Get a PR merged', `+${merged}`),
     ),
   );
