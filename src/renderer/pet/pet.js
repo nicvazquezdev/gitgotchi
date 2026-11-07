@@ -53,7 +53,7 @@ const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
 
 // ---------- Bubble ----------
 // A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
-// and the PR reminder (when the number of PRs waiting changes, or on hover; click to see them).
+// and the PR reminder (when the number of PRs waiting changes; click to see them).
 // Off with Speech bubbles or Do not disturb.
 
 const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
@@ -185,7 +185,6 @@ const isOverBubble = (e) => {
 function setHover(active) {
   if (document.body.classList.contains('hover') === active) return;
   document.body.classList.toggle('hover', active);
-  if (active && !waitingVisible) showWaiting(6000); // hovering the pet brings the reminder back
   api.setClickThrough(!active);
 }
 
