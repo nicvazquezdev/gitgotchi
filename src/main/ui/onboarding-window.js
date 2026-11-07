@@ -19,8 +19,6 @@ function open({ onClosed } = {}) {
   win = createWindow('onboarding', {
     ...ONBOARDING_WINDOW,
     title: 'Gitgotchi',
-    resizable: false,
-    fullscreenable: false,
     backgroundColor: '#14102a',
     titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
   });

@@ -10,7 +10,8 @@ module.exports = {
   IS_MAC: process.platform === 'darwin',
 
   PET_WINDOW: { width: 168, height: 220 },
-  ONBOARDING_WINDOW: { width: 640, height: 800 },
+  // Default size is also the minimum: below it the pet step doesn't fit.
+  ONBOARDING_WINDOW: { width: 640, height: 800, minWidth: 640, minHeight: 800 },
 
   SYNC_INTERVAL_MS: 15 * 60 * 1000,
   // Recomputes mood (e.g. sleeping at night) without hitting GitHub.
