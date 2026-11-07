@@ -12,7 +12,7 @@ const SPECIES = [
   {
     id: 'cat',
     name: 'Bytecat',
-    blurb: 'Naps when you don\'t push.',
+    blurb: "Naps when you don't push.",
     palette: { body: '#f6b26b', shade: '#c27c35', accent: '#ffe7c7' },
   },
   {
