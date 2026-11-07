@@ -1,6 +1,6 @@
 // Entry point: app lifecycle and wiring between services and UI.
 const { app, screen, powerMonitor } = require('electron');
-const { IS_MAC, PET_SIZE_RANGE, TICK_INTERVAL_MS, CLOUD } = require('./config');
+const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD } = require('./config');
 
 const session = require('./services/session');
 const petService = require('./services/pet-service');
@@ -8,11 +8,13 @@ const petWindow = require('./ui/pet-window');
 const onboardingWindow = require('./ui/onboarding-window');
 const panelWindow = require('./ui/panel-window');
 const profileWindow = require('./ui/profile-window');
+const settingsWindow = require('./ui/settings-window');
 const evolutionWindow = require('./ui/evolution-window');
 const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
 const { createTray, updateTray } = require('./ui/tray');
+const store = require('./store');
 const prefs = require('./prefs');
 const { registerIpc } = require('./ipc');
 const loginItem = require('./login-item');
@@ -49,11 +51,14 @@ const actions = {
     else petWindow.show();
     panelWindow.send();
   },
-  openSettings: () =>
+  // Setup flow (onboarding): connect GitHub, pick repos and the pet.
+  openSetup: () =>
     onboardingWindow.open({
       // Closing before finishing the first setup leaves nothing to show.
       onClosed: () => !petService.isConfigured() && app.quit(),
     }),
+  // Until the first setup is done, there is nothing to set: Settings opens the setup flow.
+  openSettings: () => (petService.isConfigured() ? settingsWindow.open() : actions.openSetup()),
   finishOnboarding: () => {
     onboardingWindow.close();
     petWindow.show();
@@ -61,19 +66,22 @@ const actions = {
   disconnect: () => {
     session.disconnect();
     petWindow.close();
-    actions.openSettings();
+    actions.openSetup();
   },
   toggleOpenAtLogin: () => {
     loginItem.setEnabled(!loginItem.isEnabled());
-    panelWindow.send();
+    settingsWindow.send();
   },
   toggleCloudSync: () => {
     if (cloud.isEnabled()) cloud.disable();
     else cloud.enable();
-    panelWindow.send();
+    settingsWindow.send();
   },
-  // Live while dragging the panel slider (`persist` false); saved on release.
-  setPetSize: (size, persist = true) => petWindow.setSize(size, { persist }),
+  // Live while dragging the Settings slider (`persist` false); saved on release.
+  setPetSize: (size, persist = true) => {
+    petWindow.setSize(size, { persist });
+    if (persist) settingsWindow.send();
+  },
   showMenu: () => {
     actions.flushEvolution();
     const { x, y } = screen.getCursorScreenPoint();
@@ -99,14 +107,22 @@ const actions = {
     configured: petService.isConfigured(),
     connected: session.isConnected(),
     petVisible: petWindow.isVisible(),
-    speechBubbles: prefs.speechBubbles(),
     doNotDisturb: prefs.doNotDisturb(),
-    openAtLogin: loginItem.isEnabled(),
-    cloudSync: cloud.isEnabled(),
-    cloudError: cloud.status().error,
-    petSize: petWindow.size(),
-    sizeRange: PET_SIZE_RANGE,
   }),
+  settingsState: () => {
+    const { user, repos } = store.get();
+    return {
+      login: user?.login ?? null,
+      repoCount: repos.length,
+      speechBubbles: prefs.speechBubbles(),
+      doNotDisturb: prefs.doNotDisturb(),
+      openAtLogin: loginItem.isEnabled(),
+      cloud: cloud.status(),
+      petSize: petWindow.size(),
+      sizeRange: PET_SIZE_RANGE,
+      defaultPetSize: DEFAULT_PET_SIZE,
+    };
+  },
   quit: () => app.quit(),
 };
 
@@ -115,6 +131,7 @@ const trayAnchor = () => tray.getBounds();
 function togglePref(key) {
   prefs.toggle(key);
   panelWindow.send();
+  settingsWindow.send();
   petWindow.send('pet:prefs', prefs.petPrefs());
 }
 
@@ -124,6 +141,7 @@ petService.on('status', (status) => {
   petWindow.send('pet:status', status);
   profileWindow.send('profile:status', status);
   panelWindow.send();
+  settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();
   if (tray) updateTray(tray, status);
   actions.flushEvolution();
@@ -138,7 +156,7 @@ petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
 petService.on('status', () => cloud.schedulePush());
 petService.on('configured', () => cloud.schedulePush({ now: true }));
 cloud.on('pulled', () => petService.notify());
-cloud.on('status', () => panelWindow.send());
+cloud.on('status', () => settingsWindow.send());
 
 // Write pending changes before quitting, without hanging if GitHub is slow.
 let flushedOnQuit = false;
@@ -154,7 +172,7 @@ app.on('before-quit', (event) => {
 // ---------- Lifecycle ----------
 
 if (!app.requestSingleInstanceLock()) app.quit();
-app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : actions.openSettings()));
+app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : actions.openSetup()));
 
 app.whenReady().then(() => {
   if (IS_MAC) app.dock?.hide();
@@ -162,6 +180,7 @@ app.whenReady().then(() => {
   loginItem.applyDefault();
   panelWindow.init(actions.panelState);
   popoverWindow.init(actions.panelState);
+  settingsWindow.init(actions.settingsState);
   tray = createTray();
   updateTray(tray, petService.status());
   const toggleMenu = () => {
@@ -175,7 +194,7 @@ app.whenReady().then(() => {
     petWindow.show();
     cloud.pull().finally(() => petService.sync());
   } else {
-    actions.openSettings();
+    actions.openSetup();
   }
 
   petService.startPolling();

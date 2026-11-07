@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { GLYPH, glyphBitmap, trayTitle } = require('../src/main/ui/tray-glyph');
+const { GLYPH, glyphBitmap, scaleNearest } = require('../src/main/ui/tray-glyph');
 
 const alphaAt = ({ buffer, width }, x, y) => buffer[(y * width + x) * 4 + 3];
 
@@ -25,7 +25,9 @@ test('glyphBitmap fills each glyph pixel as a solid square and leaves the gaps t
   assert.equal(alphaAt(bmp, 8, 11), 255); // row 2, column 2: filled
 });
 
-test('trayTitle shows the waiting count only when there is one', () => {
-  assert.equal(trayTitle(0), '');
-  assert.equal(trayTitle(3), '3');
+test('scaleNearest repeats each source pixel without blending', () => {
+  const src = Buffer.from([1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4]); // 2x2
+  const out = scaleNearest(src, 2, 4);
+  assert.equal(out.length, 4 * 4 * 4);
+  assert.deepEqual([out[0], out[4 * 4 - 4], out[4 * 4 * 3], out[out.length - 1]], [1, 2, 3, 4]);
 });

@@ -19,7 +19,19 @@ function glyphBitmap(scaleFactor, art = GLYPH) {
   return { width, height, buffer, scaleFactor };
 }
 
-/** Text next to the icon: the number of PRs waiting for review, nothing when there are none. */
-const trayTitle = (waitingCount) => (waitingCount > 0 ? String(waitingCount) : '');
+/**
+ * Nearest-neighbor scale of a square 4-byte-per-pixel bitmap (keeps pixel art sharp; channel order is untouched).
+ * @param {Buffer} src  side x side pixels
+ * @returns {Buffer}    target x target pixels
+ */
+function scaleNearest(src, side, target) {
+  const out = Buffer.alloc(target * target * 4);
+  for (let y = 0; y < target; y++)
+    for (let x = 0; x < target; x++) {
+      const from = (Math.floor((y * side) / target) * side + Math.floor((x * side) / target)) * 4;
+      src.copy(out, (y * target + x) * 4, from, from + 4);
+    }
+  return out;
+}
 
-module.exports = { GLYPH, glyphBitmap, trayTitle };
+module.exports = { GLYPH, glyphBitmap, scaleNearest };

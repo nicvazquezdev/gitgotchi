@@ -17,14 +17,15 @@ module.exports = {
   // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
   // Window at the default size: the box plus room around it for the speech bubble card (268 px wide).
   PET_WINDOW: { width: 288, height: 320 },
-  // Any whole-pixel size within [min, max] (2x to 8x); set with the slider in the menu bar panel.
+  // Any whole-pixel size within [min, max] (2x to 8x); set with the slider in the Settings window.
   PET_SIZE_RANGE: { min: 104, max: 416 },
   DEFAULT_PET_SIZE: 208,
   // Menu-bar dropdown and PR popover: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 320, height: 360 },
   POPOVER_WINDOW: { width: 360, height: 400 },
-  // Profile and evolution windows; the native traffic lights overlay the 40 px page title bar.
+  // Profile, settings and evolution windows; the native traffic lights overlay the 40 px page title bar.
   PROFILE_WINDOW: { width: 960, height: 500 },
+  SETTINGS_WINDOW: { width: 520, height: 560 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the steps don't fit.
   ONBOARDING_WINDOW: { width: 960, height: 640, minWidth: 960, minHeight: 640 },
