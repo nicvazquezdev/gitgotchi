@@ -125,19 +125,22 @@ function weekCard({ week }) {
   );
 }
 
-const sizeLimit = (sizes, i) => (sizes[i].maxLines === null ? `${sizes[i - 1].maxLines}+` : `≤${sizes[i].maxLines}`);
+const SIZE_NAMES = { XS: 'Tiny', S: 'Small', M: 'Medium', L: 'Large' };
+
+/** "up to 10 lines" / "over 500 lines" */
+const sizeLimit = (sizes, i) =>
+  sizes[i].maxLines === null ? `over ${sizes[i - 1].maxLines} lines` : `up to ${sizes[i].maxLines} lines`;
 
 function rulesCard({ sizes, review, merged }) {
-  const sizeTile = ({ id, xp }, i) =>
+  const xpPill = (xp) => h('b', { class: 'xp-pill' }, `+${xp} XP`);
+  const sizeRow = ({ id, xp }, i) =>
     h(
       'div',
-      { class: 'size-tile' },
-      h('span', { class: 'size-badge' }, id),
-      h('b', { class: 'size-xp' }, `+${xp}`),
-      h('span', { class: 'size-lines' }, sizeLimit(sizes, i)),
+      { class: 'rule' },
+      h('span', {}, h('b', {}, SIZE_NAMES[id] ?? id), h('span', { class: 'rule-hint' }, ` · ${sizeLimit(sizes, i)}`)),
+      xpPill(xp),
     );
-  const row = (label, xp) =>
-    h('div', { class: 'rule' }, h('span', {}, label), h('b', { class: 'xp-pill' }, `+${xp} XP`));
+  const row = (label, xp) => h('div', { class: 'rule' }, h('span', {}, label), xpPill(xp));
   return h(
     'section',
     { class: 'card rules' },
@@ -145,12 +148,10 @@ function rulesCard({ sizes, review, merged }) {
     h(
       'div',
       { class: 'rule-list' },
-      h('div', { class: 'rule-group' }, h('span', {}, 'Open a PR'), h('span', { class: 'meta' }, 'XP by size')),
-      h('div', { class: 'size-grid' }, sizes.map(sizeTile)),
-      h('div', { class: 'rule-note' }, 'Size = lines added + removed'),
-      h('hr'),
-      row('Review a PR', review),
-      row('Get a PR merged', merged),
+      h('div', { class: 'rule-group' }, 'Open a PR', h('span', { class: 'meta' }, 'The bigger, the more XP')),
+      h('div', { class: 'size-list' }, sizes.map(sizeRow)),
+      h('div', { class: 'rule-group' }, 'Review and merge'),
+      h('div', { class: 'size-list' }, row('Review a PR', review), row('Get a PR merged', merged)),
     ),
   );
 }
