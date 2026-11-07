@@ -19,6 +19,9 @@ let prefs = { speechBubbles: true, doNotDisturb: false };
 let drag = null;
 let spoken = null; // the line being said right now: { title, sub, dot }
 let bubbleTimer = null;
+let waitingVisible = false; // the PR reminder is only up for a moment, so the pet never nags
+let waitingTimer = null;
+let waitingCount = null;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -31,6 +34,11 @@ function setStatus(next) {
   if (!next) return;
   const moodChanged = status && status.mood !== next.mood;
   status = next;
+  const count = status.prs?.waiting?.length ?? 0;
+  if (count !== waitingCount) {
+    waitingCount = count;
+    if (count > 0) showWaiting(); // first status or the number changed
+  }
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
   $('#zzz').hidden = status.mood !== 'sleeping';
@@ -44,8 +52,9 @@ const spriteOptions = () => status && { species: status.species, stageIndex: sta
 const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
 
 // ---------- Bubble ----------
-// A card with a dot, a bold line and a secondary line. While PRs wait for review it says so (click to see them);
-// otherwise it only speaks for a moment (mood changes, live reactions). Off with Speech bubbles or Do not disturb.
+// A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
+// and the PR reminder (when the number of PRs waiting changes, or on hover; click to see them).
+// Off with Speech bubbles or Do not disturb.
 
 const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
 
@@ -63,7 +72,7 @@ function waitingMessage() {
 
 function renderBubble() {
   const bubble = $('#bubble');
-  const message = quiet() ? null : (spoken ?? waitingMessage());
+  const message = quiet() ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
   bubble.hidden = !message;
   if (!message) return;
   const key = `${message.title}|${message.sub}`;
@@ -74,6 +83,17 @@ function renderBubble() {
     message.sub ? h('div', { class: 'bubble-sub' }, message.sub) : null,
   );
   replayClass(bubble, 'bubble');
+}
+
+/** Shows the PR reminder for a few seconds. */
+function showWaiting(ms = 8000) {
+  waitingVisible = true;
+  renderBubble();
+  clearTimeout(waitingTimer);
+  waitingTimer = setTimeout(() => {
+    waitingVisible = false;
+    renderBubble();
+  }, ms);
 }
 
 /** Says a line for a moment; the standing message comes back afterwards. */
@@ -165,6 +185,7 @@ const isOverBubble = (e) => {
 function setHover(active) {
   if (document.body.classList.contains('hover') === active) return;
   document.body.classList.toggle('hover', active);
+  if (active && !waitingVisible) showWaiting(6000); // hovering the pet brings the reminder back
   api.setClickThrough(!active);
 }
 
