@@ -41,7 +41,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
       alwaysOnTop: true,
       hasShadow: true,
     });
-    win.setAlwaysOnTop(true, level);
+    win.setAlwaysOnTop(true, level, 1); // relative level 1: above the pet window, which sits on the same level
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     win.on('blur', hide);
     win.webContents.on('before-input-event', (event, input) => {

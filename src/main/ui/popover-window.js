@@ -7,7 +7,7 @@ const popup = createPopup({
   page: 'popover',
   channel: 'popover:state',
   size: POPOVER_WINDOW,
-  level: 'pop-up-menu',
+  level: 'screen-saver', // same level as the pet window; popup-window raises it one step above
   boundsFor: popoverBounds,
 });
 

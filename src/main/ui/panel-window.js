@@ -7,6 +7,6 @@ module.exports = createPopup({
   page: 'panel',
   channel: 'panel:state',
   size: PANEL_WINDOW,
-  level: 'pop-up-menu',
+  level: 'screen-saver', // same level as the pet window; popup-window raises it one step above
   boundsFor: panelBounds,
 });
