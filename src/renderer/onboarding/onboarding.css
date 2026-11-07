@@ -81,7 +81,7 @@ body {
 
 .logo {
   margin: 0;
-  font-size: 26px;
+  font-size: var(--pixel-xl);
   color: var(--gold);
   letter-spacing: 2px;
   text-shadow:
@@ -101,7 +101,7 @@ body {
   align-items: center;
   gap: 8px;
   color: var(--muted);
-  font: 400 8px var(--font-display);
+  font: 400 var(--pixel-sm) var(--font-display);
   text-transform: uppercase;
 }
 .stepper li + li::before {
@@ -118,7 +118,7 @@ body {
   height: 24px;
   background: var(--night-2);
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--pixel-sm);
   box-shadow:
     0 -3px 0 0 var(--ink),
     0 3px 0 0 var(--ink),
@@ -196,14 +196,14 @@ body {
 
 .title {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--pixel-md);
   color: var(--text);
 }
 p {
   margin: 0;
 }
 .small {
-  font-size: 15px;
+  font-size: var(--text-sm);
 }
 .center {
   text-align: center;
@@ -266,7 +266,7 @@ b {
   padding: 14px 16px;
   background: var(--ink);
   color: var(--green);
-  font: 400 11px var(--font-display);
+  font: 400 var(--pixel-md) var(--font-display);
   user-select: text;
 }
 .terminal .prompt {
@@ -287,7 +287,7 @@ b {
   box-shadow: 0 0 0 3px var(--ink);
 }
 .user-login {
-  font-size: 12px;
+  font-size: var(--pixel-md);
   color: var(--gold);
 }
 
@@ -386,14 +386,14 @@ b {
   transform: translateY(-3px);
 }
 .species-card canvas {
-  width: 96px;
-  height: 96px;
+  width: 64px;
+  height: 64px;
 }
 .species-card .name {
-  font: 400 9px var(--font-display);
+  font: 400 var(--pixel-sm) var(--font-display);
 }
 .species-card .blurb {
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.2;
   color: var(--muted);
 }
@@ -415,7 +415,7 @@ b {
   height: 22px;
   background: var(--gold);
   color: var(--ink);
-  font-size: 13px;
+  font-size: var(--pixel-md);
   box-shadow: 0 0 0 3px var(--ink);
   animation: pop-in 160ms steps(3);
 }
@@ -435,7 +435,7 @@ b {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font: 400 7px var(--font-display);
+  font: 400 var(--pixel-sm) var(--font-display);
   color: var(--muted);
 }
 .evo-stage canvas {
@@ -454,7 +454,7 @@ b {
   gap: 16px;
 }
 .field .label {
-  font-size: 9px;
+  font-size: var(--pixel-sm);
   color: var(--muted);
 }
 

@@ -6,25 +6,25 @@ const SPECIES = [
   {
     id: 'blob',
     name: 'Blobby',
-    blurb: 'A little drop of code. Calm and loyal.',
+    blurb: 'Calm and loyal.',
     palette: { body: '#7bd88f', shade: '#3e9e5a', accent: '#ffffff' },
   },
   {
     id: 'cat',
     name: 'Bytecat',
-    blurb: 'Curious. Naps a lot when there are no pushes.',
+    blurb: 'Naps when you don\'t push.',
     palette: { body: '#f6b26b', shade: '#c27c35', accent: '#ffe7c7' },
   },
   {
     id: 'dragon',
     name: 'Mergon',
-    blurb: 'Feeds on pull requests.',
+    blurb: 'Feeds on PRs.',
     palette: { body: '#a78bfa', shade: '#6d4fd1', accent: '#fde68a' },
   },
   {
     id: 'bot',
     name: 'Botty',
-    blurb: 'Retro robot. Loves code reviews.',
+    blurb: 'Loves code reviews.',
     palette: { body: '#7dd3fc', shade: '#3b8fb8', accent: '#f87171' },
   },
 ];

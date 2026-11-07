@@ -9,7 +9,7 @@
   --night-2: #2a2257;
   --line: #3d3478;
   --text: #f1ecff;
-  --muted: #a39ad1;
+  --muted: #c3bbec;
   --gold: #fde047;
   --gold-dark: #c9a516;
   --green: #7bd88f;
@@ -21,6 +21,15 @@
   --px: 4px; /* size of one "pixel" in borders and shadows */
   --font-display: 'Press Start 2P', 'Pixelify Sans', monospace; /* fallback for missing glyphs */
   --font-body: 'Pixelify Sans', ui-monospace, monospace;
+
+  /* Pixel font sizes: multiples of 4 keep Press Start 2P's 8-unit grid crisp on retina. */
+  --pixel-sm: 8px;
+  --pixel-md: 12px;
+  --pixel-lg: 16px;
+  --pixel-xl: 24px;
+  /* Body text sizes (anti-aliased, any size works). */
+  --text-sm: 16px;
+  --text-md: 18px;
 }
 
 *,
@@ -30,13 +39,13 @@
 }
 
 html {
-  -webkit-font-smoothing: none;
+  -webkit-font-smoothing: antialiased;
 }
 
 body {
   margin: 0;
   color: var(--text);
-  font: 400 17px/1.45 var(--font-body);
+  font: 400 var(--text-md) / 1.45 var(--font-body);
   user-select: none;
 }
 
@@ -78,7 +87,7 @@ canvas {
   border: 0;
   background: var(--bg);
   color: var(--fg);
-  font: 400 10px/1 var(--font-display);
+  font: 400 var(--pixel-md) / 1 var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   cursor: pointer;
@@ -111,14 +120,14 @@ canvas {
 }
 .btn.big {
   padding: 18px 26px;
-  font-size: 12px;
+  font-size: var(--pixel-lg);
 }
 .btn.ghost {
   padding: 6px 4px;
   background: none;
   box-shadow: none;
   color: var(--muted);
-  font-size: 9px;
+  font-size: var(--pixel-sm);
 }
 .btn.ghost:hover:not(:disabled) {
   color: var(--gold);
@@ -132,7 +141,7 @@ canvas {
   border: 0;
   background: var(--ink);
   color: var(--text);
-  font: 400 17px var(--font-body);
+  font: 400 var(--text-md) var(--font-body);
   box-shadow:
     inset var(--px) var(--px) 0 0 rgba(0, 0, 0, 0.4),
     0 calc(var(--px) * -1) 0 0 var(--line),
@@ -187,7 +196,7 @@ canvas {
   align-items: center;
   gap: 4px;
   padding: 3px 6px;
-  font: 400 8px/1 var(--font-display);
+  font: 400 var(--pixel-sm) / 1 var(--font-display);
   color: var(--ink);
   background: var(--sky);
 }
