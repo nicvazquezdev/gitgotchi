@@ -223,32 +223,50 @@ body {
 .rule-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 10px;
+  gap: 10px;
+  margin-top: 12px;
   font-size: 13px;
   line-height: 1.25;
 }
-.rule {
+.rule-group {
   display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.rule-label {
-  flex: 1;
-  white-space: nowrap;
-  color: var(--text-2);
-}
-.rule b {
+  justify-content: space-between;
+  align-items: baseline;
   font-weight: 600;
-  white-space: nowrap;
 }
-.rule .size-badge {
-  flex: none;
+.rule-group .meta {
+  font-weight: 400;
+}
+.size-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.size-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.size-tile .size-badge {
   min-width: 26px;
   height: 20px;
 }
-.rule-group {
-  font-weight: 600;
+.size-xp {
+  font: 600 16px/18px var(--font-pixel);
+  color: var(--accent-text);
+}
+.size-lines {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.rule-note {
+  margin-top: -4px;
+  font-size: 11px;
+  color: var(--text-3);
 }
 .rule-list hr {
   width: 100%;
@@ -256,4 +274,20 @@ body {
   margin: 0;
   border: 0;
   background: var(--divider);
+}
+.rule {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-2);
+}
+.xp-pill {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }

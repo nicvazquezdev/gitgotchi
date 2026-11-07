@@ -125,12 +125,19 @@ function weekCard({ week }) {
   );
 }
 
-const sizeLimit = (sizes, i) =>
-  sizes[i].maxLines === null ? `Over ${sizes[i - 1].maxLines} lines` : `Up to ${sizes[i].maxLines} lines`;
+const sizeLimit = (sizes, i) => (sizes[i].maxLines === null ? `${sizes[i - 1].maxLines}+` : `≤${sizes[i].maxLines}`);
 
 function rulesCard({ sizes, review, merged }) {
-  const row = (label, xp, lead) =>
-    h('div', { class: 'rule' }, lead ?? null, h('span', { class: 'rule-label' }, label), h('b', {}, `+${xp} XP`));
+  const sizeTile = ({ id, xp }, i) =>
+    h(
+      'div',
+      { class: 'size-tile' },
+      h('span', { class: 'size-badge' }, id),
+      h('b', { class: 'size-xp' }, `+${xp}`),
+      h('span', { class: 'size-lines' }, sizeLimit(sizes, i)),
+    );
+  const row = (label, xp) =>
+    h('div', { class: 'rule' }, h('span', {}, label), h('b', { class: 'xp-pill' }, `+${xp} XP`));
   return h(
     'section',
     { class: 'card rules' },
@@ -138,8 +145,9 @@ function rulesCard({ sizes, review, merged }) {
     h(
       'div',
       { class: 'rule-list' },
-      h('div', { class: 'rule-group' }, 'Open a PR, by size'),
-      sizes.map(({ id, xp }, i) => row(sizeLimit(sizes, i), xp, h('span', { class: 'size-badge' }, id))),
+      h('div', { class: 'rule-group' }, h('span', {}, 'Open a PR'), h('span', { class: 'meta' }, 'XP by size')),
+      h('div', { class: 'size-grid' }, sizes.map(sizeTile)),
+      h('div', { class: 'rule-note' }, 'Size = lines added + removed'),
       h('hr'),
       row('Review a PR', review),
       row('Get a PR merged', merged),
