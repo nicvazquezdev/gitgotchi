@@ -136,8 +136,25 @@ function prRow(pr, { badge, meta, end, endClass = 'xp-text', done = false }) {
   );
 }
 
-const sizeBadge = (pr) => h('span', { class: 'size-badge' }, pr.size ?? 'M');
-const doneBadge = () => h('span', { class: 'size-badge done' }, icon('check', { size: 14, stroke: 3 }));
+// The left chip says what the PR needs: a state icon, never an unexplained letter. The size is spelled out in the text.
+const STATUS_ICONS = { changes: 'alert', failing: 'x', ready: 'check', running: 'clock', review: 'clock' };
+const statusBadge = (pr) =>
+  h(
+    'span',
+    { class: `badge ${pr.status?.kind ?? 'review'}`, title: pr.status?.label },
+    icon(STATUS_ICONS[pr.status?.kind] ?? 'clock', { size: 14, stroke: 2.6 }),
+  );
+const doneBadge = () => h('span', { class: 'badge ready' }, icon('check', { size: 14, stroke: 3 }));
+const queueBadge = () => h('span', { class: 'badge review' }, icon('search', { size: 14, stroke: 2.6 }));
+
+const FLAGGED = ['changes', 'failing', 'running']; // states worth a line of their own
+
+/** Detail lines: the PR's state when it needs attention (own line), then repo, size and the rest. */
+function metaLine(pr, ...rest) {
+  const flag = FLAGGED.includes(pr.status?.kind) ? pr.status : null;
+  const text = [repoRef(pr), pr.sizeName ?? 'Medium', ...rest].filter(Boolean).join(' · ');
+  return [flag ? h('span', { class: `flag ${flag.kind}` }, flag.label) : null, text];
+}
 const repoRef = (pr) => `${pr.repo} #${pr.number}`;
 const xpText = (pr, suffix = 'XP') => (pr.xp ? `+${pr.xp} ${suffix}` : null);
 
@@ -170,8 +187,8 @@ function reviewTab(queue) {
     h('div', { class: 'list-note meta' }, `Oldest first · each review gives +${earned} XP`),
     ...queue.map((pr) =>
       prRow(pr, {
-        badge: sizeBadge(pr),
-        meta: [repoRef(pr), pr.author].filter(Boolean).join(' · '),
+        badge: queueBadge(),
+        meta: metaLine(pr, pr.author),
         end: shortAge(pr.ageDays),
         endClass: pr.ageDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',
       }),
@@ -187,12 +204,16 @@ function minePrsTab({ waiting, approved, mergedToday }) {
     'div',
     {},
     section('Waiting for review', waiting, (pr) =>
-      prRow(pr, { badge: sizeBadge(pr), meta: `${repoRef(pr)} · ${days(pr.ageDays)}`, end: xpText(pr) }),
+      prRow(pr, {
+        badge: statusBadge(pr),
+        meta: metaLine(pr, days(pr.ageDays)),
+        end: xpText(pr),
+      }),
     ),
     section('Approved', approved, (pr) =>
       prRow(pr, {
-        badge: sizeBadge(pr),
-        meta: `${repoRef(pr)} · ready to merge`,
+        badge: statusBadge(pr),
+        meta: metaLine(pr),
         end: xpText(pr, 'on merge'),
         endClass: 'success',
       }),
@@ -200,7 +221,7 @@ function minePrsTab({ waiting, approved, mergedToday }) {
     section('Merged today', mergedToday, (pr) =>
       prRow(pr, {
         badge: doneBadge(),
-        meta: `${repoRef(pr)} · ${timeAgo(pr.mergedAt)}`,
+        meta: `${repoRef(pr)} · ${pr.sizeName ?? 'Medium'} · ${timeAgo(pr.mergedAt)}`,
         end: xpText(pr),
         endClass: 'quiet',
         done: true,

@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('node:fs');
@@ -11,10 +11,11 @@ const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
-const args = process.argv.slice(2).filter((a) => !a.startsWith('--') || a === '--light');
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const light = process.argv.includes('--light');
+const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
 const PAGES = {
   profile: { size: config.PROFILE_WINDOW },
   evolution: { size: config.EVOLUTION_WINDOW },
@@ -86,6 +87,7 @@ status.reviewQueue = reviewQueue(
   NOW,
 );
 
+if (mine) status.reviewQueue = [];
 const fixtures = {
   status,
   catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
@@ -138,7 +140,7 @@ async function shot(name) {
   const overflowing = await win.webContents.executeJavaScript(
     `[...document.querySelectorAll('.card')].filter((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1).map((c) => c.className)`,
   );
-  const file = path.join(outDir, `${name}${light ? '-light' : ''}.png`);
+  const file = path.join(outDir, `${name}${mine ? '-mine' : ''}${light ? '-light' : ''}.png`);
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };
 }

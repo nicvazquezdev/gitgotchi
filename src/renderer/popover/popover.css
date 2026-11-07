@@ -209,13 +209,37 @@ body {
 .pr:focus-visible .pr-end {
   display: none;
 }
-.size-badge {
+.badge {
   flex: none;
+  display: grid;
+  place-items: center;
   width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  background: var(--chip);
+  color: var(--chip-text);
 }
-.size-badge.done {
+.badge.ready {
   background: var(--success-bg);
   color: var(--success);
+}
+.badge.changes,
+.badge.failing {
+  background: var(--warning-bg);
+  color: var(--warning-icon);
+}
+.flag {
+  display: block;
+  font-weight: 600;
+}
+.flag.running {
+  color: var(--text-2);
+}
+.flag.changes {
+  color: var(--warning-icon);
+}
+.flag.failing {
+  color: var(--fx-red, #e5484d);
 }
 .empty {
   margin: 0;

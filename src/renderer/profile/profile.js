@@ -163,8 +163,6 @@ function weekCard({ week }) {
   );
 }
 
-const SIZE_NAMES = { XS: 'Tiny', S: 'Small', M: 'Medium', L: 'Large' };
-
 /** "up to 10 lines" / "over 500 lines" */
 const sizeLimit = (sizes, i) =>
   sizes[i].maxLines === null ? `over ${sizes[i - 1].maxLines} lines` : `up to ${sizes[i].maxLines} lines`;
@@ -177,7 +175,7 @@ function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
       h('div', {}, h('b', {}, name), h('div', { class: 'rule-hint' }, hint)),
       h('b', { class: 'xp-pill' }, `+${xp} XP`),
     );
-  const sizeRule = ({ id, xp }, i) => rule(SIZE_NAMES[id] ?? id, sizeLimit(sizes, i), xp);
+  const sizeRule = ({ name, xp }, i) => rule(name, sizeLimit(sizes, i), xp);
   return h(
     'section',
     { class: 'card rules' },
