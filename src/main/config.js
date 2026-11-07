@@ -42,6 +42,8 @@ module.exports = {
     // Used when the system has been idle longer than IDLE_AFTER_S.
     PR_POLL_IDLE_MS: 60 * 1000,
     IDLE_AFTER_S: 5 * 60,
+    // The review queue is also fetched when the popover or the menu opens, at most this often.
+    REVIEW_QUEUE_OPEN_REFRESH_MS: 20 * 1000,
     // A live reaction hides the same activity from the Events diff for this long.
     CREDIT_TTL_MS: 10 * 60 * 1000,
     // Local clone discovery: folders under the home dir, scanned to a limited depth and size.

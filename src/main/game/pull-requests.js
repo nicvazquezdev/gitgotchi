@@ -95,4 +95,24 @@ function classify(prs, now = new Date()) {
   };
 }
 
-module.exports = { sizeOf, openXp, mergePullRequests, prunePullRequests, pullRequestDays, classify };
+/**
+ * PRs waiting for the user's review, for the UI: only the selected repos (like everything else), oldest first.
+ * `xp` is what reviewing gives. `prs`: normalized PRs with an `author` login (client.reviewRequests).
+ */
+function reviewQueue(prs, repos, now = new Date()) {
+  const selected = new Set(repos.map((r) => r.toLowerCase()));
+  return prs
+    .filter((pr) => pr.state === 'OPEN' && !pr.isDraft && selected.has(pr.repo.toLowerCase()))
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+    .map((pr) => ({ ...toView(pr, now), author: pr.author, xp: WEIGHTS.reviews }));
+}
+
+module.exports = {
+  sizeOf,
+  openXp,
+  mergePullRequests,
+  prunePullRequests,
+  pullRequestDays,
+  classify,
+  reviewQueue,
+};

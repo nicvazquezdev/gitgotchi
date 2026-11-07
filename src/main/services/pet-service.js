@@ -2,7 +2,8 @@
 // XP comes from the user's PRs (GraphQL), reviews, issues and pushes (Events API; a push is worth its commits,
 // found with one lookup each) in the selected repos, see game/catalog.js.
 // Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level; also fires on the level that evolves),
-// 'activity' (new activity per kind, e.g. { merges: 1 }; a live `pushes` reaction is animation only),
+// 'activity' (new activity per kind, e.g. { merges: 1 }; a live `pushes` reaction is animation only;
+// `reviewRequests` is not XP: someone asked the user for a review),
 // 'configured' (setup saved: repos may have changed).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
@@ -10,6 +11,7 @@ const session = require('./session');
 const engine = require('../game/engine');
 const { SPECIES, PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
 const { commitKey, pendingPushes } = require('../game/commits');
+const { reviewQueue } = require('../game/pull-requests');
 const { fromDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
@@ -23,6 +25,11 @@ class PetService extends EventEmitter {
   #baselined = false;
   // Live reactions the Events diff has not reported yet (see live/credits.js).
   #credits = [];
+  // Open PRs waiting for the user's review, as fetched (every repo); null until the first fetch. Not saved:
+  // it is only the current queue. `status().reviewQueue` is the selected repos' part of it.
+  #reviewRequests = null;
+  #reviewsAt = 0;
+  #reviewing = null;
 
   isConfigured() {
     const { pet, repos } = store.get();
@@ -30,8 +37,16 @@ class PetService extends EventEmitter {
   }
 
   status() {
-    const status = engine.computeStatus(store.get());
-    return status && { ...status, syncing: Boolean(this.#syncing), error: this.#error };
+    const state = store.get();
+    const status = engine.computeStatus(state);
+    return (
+      status && {
+        ...status,
+        reviewQueue: this.#reviewRequests && reviewQueue(this.#reviewRequests, state.repos),
+        syncing: Boolean(this.#syncing),
+        error: this.#error,
+      }
+    );
   }
 
   notify() {
@@ -92,6 +107,7 @@ class PetService extends EventEmitter {
 
   #resetBaseline() {
     this.#credits = [];
+    this.#reviewRequests = null; // a new baseline: the requests that are already there do not count as new
     this.#poll.etag = null;
     this.#baselined = false;
   }
@@ -116,6 +132,7 @@ class PetService extends EventEmitter {
       const [events, prs] = await Promise.all([
         gh.activity(state.user.login, from, this.#poll), // reviews, issues, pushes; null = 304, nothing new
         gh.pullRequestsSince(since, { backfill }),
+        this.refreshReviews({ gh }), // never rejects: a failure keeps the last queue
       ]);
       this.#error = null;
       const { commits, pushes, incomplete } = await this.#resolvePushes(gh, state, events ?? []);
@@ -133,6 +150,31 @@ class PetService extends EventEmitter {
       console.error('[sync]', err);
       this.#poll.etag = null; // a failed sync must not hide events behind a 304
       this.#error = err.message;
+    }
+  }
+
+  /**
+   * Fetches the PRs waiting for the user's review. A failure is logged and the last queue stays.
+   * `maxAgeMs`: skip when the queue is fresher than that. Reuses the in-flight fetch. Never rejects.
+   */
+  refreshReviews({ gh, maxAgeMs = 0 } = {}) {
+    if (!this.isConfigured() || Date.now() - this.#reviewsAt < maxAgeMs) return Promise.resolve();
+    this.#reviewing ??= this.#fetchReviews(gh).finally(() => (this.#reviewing = null));
+    return this.#reviewing;
+  }
+
+  async #fetchReviews(gh) {
+    try {
+      const prs = await (gh ?? (await session.client())).reviewRequests();
+      this.#reviewsAt = Date.now();
+      const known = new Set(this.#reviewRequests?.map((pr) => pr.id));
+      const first = this.#reviewRequests === null; // the first fetch is the baseline: nothing in it is news
+      this.#reviewRequests = prs;
+      const added = first ? 0 : reviewQueue(prs, store.get().repos).filter((pr) => !known.has(pr.id)).length;
+      if (added > 0) this.emit('activity', { reviewRequests: added });
+      this.notify();
+    } catch (err) {
+      console.error('[sync] review requests', err.message);
     }
   }
 

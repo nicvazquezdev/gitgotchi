@@ -1,6 +1,6 @@
 // Entry point: app lifecycle and wiring between services and UI.
 const { app, screen, powerMonitor } = require('electron');
-const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD } = require('./config');
+const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD, LIVE } = require('./config');
 
 const session = require('./services/session');
 const petService = require('./services/pet-service');
@@ -90,6 +90,7 @@ const actions = {
   },
   showMenu: () => {
     actions.flushEvolution();
+    actions.refreshReviews();
     const { x, y } = screen.getCursorScreenPoint();
     panelWindow.show({ x, y, width: 0, height: 0 });
   },
@@ -100,10 +101,18 @@ const actions = {
   openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : popoverWindow.show(trayAnchor())),
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
+    actions.refreshReviews();
     const win = petWindow.window;
     popoverWindow.toggle(win && petWindow.isVisible() ? toScreenRect(win.getBounds(), rect) : trayAnchor());
   },
+  // The review queue is also fetched when a window that shows it opens (not more than every few seconds).
+  refreshReviews: () => petService.refreshReviews({ maxAgeMs: LIVE.REVIEW_QUEUE_OPEN_REFRESH_MS }),
   // Only opens PR pages in the browser; it never writes to GitHub.
+  // The review queue is sorted oldest first: the one that has waited longest is the first to open.
+  reviewOldest: () => {
+    const [oldest] = petService.status().reviewQueue ?? [];
+    if (oldest) openGithub(oldest.url);
+  },
   nudgeReviewers: () =>
     (petService.status().prs?.waiting ?? []).slice(0, MAX_NUDGE_TABS).forEach(({ url }) => openGithub(url)),
   openPullRequest: (url) => openGithub(url),
@@ -189,6 +198,7 @@ app.whenReady().then(() => {
   tray = createTray();
   const toggleMenu = () => {
     actions.flushEvolution();
+    actions.refreshReviews();
     panelWindow.toggle(tray.getBounds());
   };
   tray.on('click', toggleMenu);

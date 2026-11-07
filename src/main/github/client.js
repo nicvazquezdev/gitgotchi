@@ -28,6 +28,10 @@ function normalizePush(ev) {
 const PR_FIELDS = `id number title url state isDraft reviewDecision additions deletions createdAt updatedAt mergedAt
   repository { nameWithOwner }`;
 
+// Open PRs, not drafts, where the user (or a team they are in) was asked for a review. GitHub drops the user from the
+// request once they review, so a PR leaves this list by itself. `review-requested` also covers team requests.
+const REVIEW_REQUESTS_QUERY = 'is:pr is:open archived:false draft:false review-requested:@me';
+
 /** GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, lines, createdAt, updatedAt, mergedAt, repo }`. */
 const normalizePullRequest = ({ repository, additions, deletions, ...pr }) => ({
   ...pr,
@@ -194,6 +198,21 @@ class GitHubClient {
     );
     const { nodes, pageInfo } = data.viewer.pullRequests;
     return { prs: nodes.map(normalizePullRequest), next: pageInfo.hasNextPage ? pageInfo.endCursor : null };
+  }
+
+  /**
+   * Open PRs waiting for the viewer's review (at most 50, any repo), as normalized PRs plus `author` (a login).
+   * One search request, 1 point.
+   */
+  async reviewRequests() {
+    const data = await this.graphql(
+      `query($q: String!) { search(query: $q, type: ISSUE, first: 50) {
+        nodes { ... on PullRequest { ${PR_FIELDS} author { login } } } } }`,
+      { q: REVIEW_REQUESTS_QUERY },
+    );
+    return data.search.nodes
+      .filter((node) => node?.id)
+      .map(({ author, ...node }) => ({ ...normalizePullRequest(node), author: author?.login ?? null }));
   }
 
   /** The viewer's 30 most recently updated PRs (any state): the 10 s watcher query. */

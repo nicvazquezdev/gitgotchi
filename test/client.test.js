@@ -244,6 +244,53 @@ describe('pull requests (GraphQL)', () => {
   });
 });
 
+describe('review requests', () => {
+  const client = new GitHubClient('tok');
+  const node = (id, over = {}) => ({
+    id,
+    number: 7,
+    title: 'Add a thing',
+    url: `https://github.com/a/b/pull/${id}`,
+    state: 'OPEN',
+    isDraft: false,
+    reviewDecision: null,
+    additions: 30,
+    deletions: 4,
+    createdAt: '2026-06-15T10:00:00Z',
+    updatedAt: '2026-06-15T11:00:00Z',
+    mergedAt: null,
+    repository: { nameWithOwner: 'a/b' },
+    author: { login: 'someone' },
+    ...over,
+  });
+  const search = (...nodes) => ({ body: { data: { search: { nodes } } } });
+
+  test('normalizes the PRs and adds the author', async () => {
+    stubFetch(search(node('1')));
+    const [pr] = await client.reviewRequests();
+    assert.equal(pr.repo, 'a/b');
+    assert.equal(pr.lines, 34);
+    assert.equal(pr.author, 'someone');
+  });
+
+  test('a deleted author (ghost) is null, and results that are not PRs are skipped', async () => {
+    stubFetch(search(node('1', { author: null }), {}, null));
+    const prs = await client.reviewRequests();
+    assert.equal(prs.length, 1);
+    assert.equal(prs[0].author, null);
+  });
+
+  test('asks for open, non-draft PRs where a review was requested from the user or their teams', async () => {
+    stubFetch(search());
+    await client.reviewRequests();
+    const { q } = JSON.parse(calls[0].opts.body).variables;
+    assert.match(q, /is:pr/);
+    assert.match(q, /is:open/);
+    assert.match(q, /draft:false/);
+    assert.match(q, /\breview-requested:@me/);
+  });
+});
+
 describe('errors', () => {
   test('401 explains how to re-authenticate', async () => {
     stubFetch({ status: 401 });
