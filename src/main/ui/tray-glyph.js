@@ -34,4 +34,28 @@ function scaleNearest(src, side, target) {
   return out;
 }
 
-module.exports = { GLYPH, glyphBitmap, scaleNearest };
+const EYE_DEPTH = 2; // a dark pixel only becomes a hole when this many pixels away from the sprite's edge
+const EYE_LUMA = 60; // darker than this (0-255) counts as dark
+
+/**
+ * Template-image mask of a sprite: its silhouette with the dark inner details (eyes, mouth) cut out, so they show
+ * the menu bar background. The outline stays solid. Output is black with alpha only, same size as the input.
+ * @param {Buffer} bgra  side x side pixels in BGRA order (what nativeImage.toBitmap returns on macOS)
+ */
+function detailMask(bgra, side) {
+  const alphaAt = (x, y) => (x >= 0 && y >= 0 && x < side && y < side ? bgra[(y * side + x) * 4 + 3] : 0);
+  const out = Buffer.alloc(side * side * 4);
+  for (let y = 0; y < side; y++)
+    for (let x = 0; x < side; x++) {
+      const i = (y * side + x) * 4;
+      if (bgra[i + 3] < 128) continue;
+      let deep = true;
+      for (let dy = -EYE_DEPTH; dy <= EYE_DEPTH && deep; dy++)
+        for (let dx = -EYE_DEPTH; dx <= EYE_DEPTH; dx++) if (alphaAt(x + dx, y + dy) < 128) deep = false;
+      const luma = 0.114 * bgra[i] + 0.587 * bgra[i + 1] + 0.299 * bgra[i + 2];
+      if (!(deep && luma < EYE_LUMA)) out[i + 3] = 255;
+    }
+  return out;
+}
+
+module.exports = { GLYPH, glyphBitmap, scaleNearest, detailMask };

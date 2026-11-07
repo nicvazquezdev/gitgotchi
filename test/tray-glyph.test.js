@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { GLYPH, glyphBitmap, scaleNearest } = require('../src/main/ui/tray-glyph');
+const { GLYPH, glyphBitmap, scaleNearest, detailMask } = require('../src/main/ui/tray-glyph');
 
 const alphaAt = ({ buffer, width }, x, y) => buffer[(y * width + x) * 4 + 3];
 
@@ -30,4 +30,16 @@ test('scaleNearest repeats each source pixel without blending', () => {
   const out = scaleNearest(src, 2, 4);
   assert.equal(out.length, 4 * 4 * 4);
   assert.deepEqual([out[0], out[4 * 4 - 4], out[4 * 4 * 3], out[out.length - 1]], [1, 2, 3, 4]);
+});
+
+test('detailMask cuts dark inner pixels but keeps the dark outline', () => {
+  const side = 7;
+  const px = Buffer.alloc(side * side * 4);
+  for (let i = 0; i < side * side; i++) px.set([200, 200, 200, 255], i * 4); // light sprite filling the grid
+  px.set([0, 0, 0, 255], (3 * side + 3) * 4); // dark pixel in the middle (an eye)
+  px.set([0, 0, 0, 255], (0 * side + 3) * 4); // dark pixel on the edge (outline)
+  const mask = detailMask(px, side);
+  assert.equal(mask[(3 * side + 3) * 4 + 3], 0);
+  assert.equal(mask[(0 * side + 3) * 4 + 3], 255);
+  assert.equal(mask[(3 * side + 2) * 4 + 3], 255);
 });
