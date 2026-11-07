@@ -12,6 +12,9 @@ const os = require('node:os');
 const path = require('node:path');
 const { compareBitmaps, MAX_DIFFERENT_RATIO } = require('./visual-compare');
 
+// Its own profile folder: the real app may hold the lock on the default one, and this would wait for it.
+app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-visual-profile'));
+
 const ROOT = path.join(__dirname, '..');
 const BASELINES = path.join(ROOT, 'test/visual');
 const FAILURES = path.join(BASELINES, '__failures__');
@@ -24,6 +27,10 @@ const CASES = [
   { name: 'profile-dark', page: 'profile', flags: [] },
   { name: 'profile-light', page: 'profile', flags: ['--light'] },
   { name: 'profile-achievements-dark', page: 'profile', flags: ['--tab', 'achievements'] },
+  { name: 'profile-collection-dark', page: 'profile', flags: ['--tab', 'collection'] },
+  { name: 'profile-collection-light', page: 'profile', flags: ['--tab', 'collection', '--light'] },
+  { name: 'profile-collection-benched-dark', page: 'profile', flags: ['--tab', 'collection/koi'] },
+  { name: 'profile-collection-locked-dark', page: 'profile', flags: ['--tab', 'collection/ram'] },
   { name: 'popover-review-dark', page: 'popover', flags: [] },
   { name: 'popover-review-light', page: 'popover', flags: ['--light'] },
   { name: 'popover-mine-dark', page: 'popover', flags: ['--mine'] },
@@ -32,6 +39,7 @@ const CASES = [
   { name: 'settings-dark', page: 'settings', flags: [] },
   { name: 'settings-light', page: 'settings', flags: ['--light'] },
   { name: 'evolution-dark', page: 'evolution', flags: [] },
+  { name: 'evolution-final-dark', page: 'evolution', flags: ['--final'] },
 ];
 
 /** Renders one case with shots.js. Returns the PNG path, or an error message. */
