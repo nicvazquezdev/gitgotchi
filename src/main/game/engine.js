@@ -1,6 +1,7 @@
 // Pure game rules: no I/O, easy to test.
 const { SPECIES, STAGES, WEIGHTS, MOOD_THRESHOLDS, MAX_HEARTS, SLEEP_HOURS } = require('./catalog');
 const { toDay, addDays } = require('../dates');
+const { stats } = require('./stats');
 
 const emptyDay = () => Object.fromEntries(Object.keys(WEIGHTS).map((k) => [k, 0]));
 
@@ -104,6 +105,7 @@ function computeStatus({ pet, activity }, now = new Date()) {
     hearts: Math.min(MAX_HEARTS, Math.ceil((weekScore / MOOD_THRESHOLDS.happy) * MAX_HEARTS)),
     maxHearts: MAX_HEARTS,
     lastSyncedAt: activity.lastSyncedAt,
+    ...stats(activity.days, now),
   };
 }
 
