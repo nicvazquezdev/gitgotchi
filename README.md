@@ -56,3 +56,4 @@ The current sprites are code-generated placeholders (`src/renderer/shared/sprite
 - `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
 - `npm run format` / `npm run lint`: Prettier
+- `npm test`: unit tests (Node built-in runner, files in `test/`)
