@@ -137,6 +137,8 @@ function reactToClick() {
 // Most exciting first. `anim` is a CSS class on the pet, `fx` the particle style.
 const REACTIONS = [
   { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉', dot: 'approved' },
+  { kind: 'approvals', anim: 'party', fx: 'confetti', text: 'Your PR got approved! 🎉', dot: 'approved' },
+  { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
   { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
   { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!', dot: 'approved' },

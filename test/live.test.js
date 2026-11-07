@@ -127,3 +127,21 @@ test('credits: expire after the TTL', () => {
   assert.deepEqual(subtractCredits(credits, { merges: 1 }, 1000 + TTL, TTL).delta, { merges: 1 });
   assert.deepEqual(addCredits(credits, {}, 1000 + TTL, TTL), []);
 });
+
+test('diffPullRequests: an open PR that gets approved or gets changes requested is reported once (animation only)', () => {
+  const open = (decision) => pr('1', 'OPEN', { reviewDecision: decision, createdAt: '2025-12-01T00:00:00Z' });
+  const { snapshot } = diffPullRequests(null, [open(null)], REPOS, NOW);
+  const approved = diffPullRequests(snapshot, [open('APPROVED')], REPOS, NOW + 10_000);
+  assert.deepEqual(approved.delta, { approvals: 1 });
+  assert.deepEqual(diffPullRequests(approved.snapshot, [open('APPROVED')], REPOS, NOW + 20_000).delta, {});
+
+  const changes = diffPullRequests(approved.snapshot, [open('CHANGES_REQUESTED')], REPOS, NOW + 30_000);
+  assert.deepEqual(changes.delta, { changesRequested: 1 });
+  assert.deepEqual(diffPullRequests(changes.snapshot, [open('REVIEW_REQUIRED')], REPOS, NOW + 40_000).delta, {});
+});
+
+test('diffPullRequests: a PR entering the window with a decision already set is not news', () => {
+  const { snapshot } = diffPullRequests(null, [], REPOS, NOW);
+  const old = pr('1', 'OPEN', { reviewDecision: 'APPROVED', createdAt: '2025-12-01T00:00:00Z' });
+  assert.deepEqual(diffPullRequests(snapshot, [old], REPOS, NOW + 10_000).delta, {});
+});
