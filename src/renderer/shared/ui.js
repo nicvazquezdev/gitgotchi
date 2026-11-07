@@ -1,0 +1,57 @@
+// Small shared UI builders for the app design (use with tokens.css + components.css).
+import { h } from './dom.js';
+
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const ASSETS = new URL('../../../assets/pets/', import.meta.url);
+
+// Stroke icons from the design (24×24 viewBox), drawn in currentColor.
+const ICON_PATHS = {
+  check: '<path d="M5 12l4 4 10-10"/>',
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  gear: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>',
+  external: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
+  chevron: '<path d="M9 5l7 7-7 7"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  hand: '<path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5L4 14a2 2 0 0 1 3.5-2L9 14"/>',
+};
+
+/** Inline SVG icon (decorative unless `label` is given). */
+export function icon(name, { size = 16, stroke = 2 } = {}) {
+  const svg = document.createElementNS(SVG_NS, 'svg');
+  for (const [k, v] of Object.entries({
+    width: size,
+    height: size,
+    viewBox: '0 0 24 24',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': stroke,
+    'stroke-linecap': 'round',
+    'stroke-linejoin': 'round',
+    'aria-hidden': 'true',
+  }))
+    svg.setAttribute(k, v);
+  svg.innerHTML = ICON_PATHS[name]; // static, trusted markup
+  return svg;
+}
+
+/** Segmented XP bar: 20 blocks, `fraction` (0..1) of them filled. */
+export function xpBar(fraction, size = '') {
+  const on = Math.round(Math.max(0, Math.min(1, fraction)) * 20);
+  return h(
+    'div',
+    { class: `xp-bar ${size}`.trim(), role: 'progressbar', ariaValueNow: Math.round(fraction * 100) },
+    Array.from({ length: 20 }, (_, i) => h('i', { class: i < on ? 'on' : '' })),
+  );
+}
+
+/** A creature PNG at an integer multiple of its native size (crisp pixels). */
+export function spriteImg(file, nativeSize, scale, alt = '') {
+  return h('img', {
+    class: 'sprite',
+    src: new URL(file, ASSETS).href,
+    alt,
+    width: nativeSize * scale,
+    height: nativeSize * scale,
+  });
+}

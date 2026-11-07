@@ -12,7 +12,7 @@ const v1 = {
 test('v1 maps placeholder species, shifts stages down and drops the old size', () => {
   const state = migrate(v1);
   assert.equal(state.schema, SCHEMA);
-  assert.equal(state.pet.species, 'fenix');
+  assert.equal(state.pet.species, 'phoenix');
   assert.equal(state.pet.stageIndex, 0);
   assert.equal(state.petSize, undefined);
   assert.deepEqual(state.position, v1.position);
@@ -23,6 +23,13 @@ test('v1 without a pet or with an unset stage', () => {
   assert.equal(migrate({ user: null, pet: null }).pet, undefined);
   assert.equal(migrate({ pet: { ...v1.pet, stageIndex: null } }).pet.stageIndex, null);
   assert.equal(migrate({ pet: { ...v1.pet, stageIndex: 0 } }).pet.stageIndex, 0);
+});
+
+test('v2 renames the sprite lines', () => {
+  const state = migrate({ schema: 2, pet: { species: 'hongo', stageIndex: 1 }, petSize: 208 });
+  assert.equal(state.pet.species, 'mushroom');
+  assert.equal(state.pet.stageIndex, 1);
+  assert.equal(state.petSize, 208);
 });
 
 test('current schema is left untouched', () => {

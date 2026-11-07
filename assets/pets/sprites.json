@@ -1,16 +1,16 @@
 [
   {
-    "id": "fenix",
-    "title": "Línea fénix",
-    "description": "El polluelo de brasa que renace en llamas hasta coronarse fénix",
+    "id": "phoenix",
+    "title": "Phoenix line",
+    "description": "An ember chick reborn as a sun phoenix",
     "bg": "#fbe3cf",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Brasín",
-        "file": "fenix_1.png",
-        "shadow": "fenix_1_shadow.png",
+        "stage": "baby",
+        "name": "Cindle",
+        "file": "phoenix_1.png",
+        "shadow": "phoenix_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -21,10 +21,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Chispín",
-        "file": "fenix_2.png",
-        "shadow": "fenix_2_shadow.png",
+        "stage": "kid",
+        "name": "Kindlet",
+        "file": "phoenix_2.png",
+        "shadow": "phoenix_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -35,10 +35,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Alaskua",
-        "file": "fenix_3.png",
-        "shadow": "fenix_3_shadow.png",
+        "stage": "young",
+        "name": "Pyrrow",
+        "file": "phoenix_3.png",
+        "shadow": "phoenix_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -49,10 +49,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Fenixol",
-        "file": "fenix_4.png",
-        "shadow": "fenix_4_shadow.png",
+        "stage": "adult",
+        "name": "Solphyre",
+        "file": "phoenix_4.png",
+        "shadow": "phoenix_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -65,17 +65,17 @@
     ]
   },
   {
-    "id": "carnero",
-    "title": "Línea carnero",
-    "description": "Un corderito-nube que crece hasta ser el carnero del trueno",
+    "id": "ram",
+    "title": "Thunder ram line",
+    "description": "A cloud lamb that grows into the ram of the storm",
     "bg": "#e3defa",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Nubín",
-        "file": "carnero_1.png",
-        "shadow": "carnero_1_shadow.png",
+        "stage": "baby",
+        "name": "Nimbaa",
+        "file": "ram_1.png",
+        "shadow": "ram_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -86,10 +86,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Brumín",
-        "file": "carnero_2.png",
-        "shadow": "carnero_2_shadow.png",
+        "stage": "kid",
+        "name": "Drizzlamb",
+        "file": "ram_2.png",
+        "shadow": "ram_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -100,10 +100,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Truenero",
-        "file": "carnero_3.png",
-        "shadow": "carnero_3_shadow.png",
+        "stage": "young",
+        "name": "Voltram",
+        "file": "ram_3.png",
+        "shadow": "ram_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -114,10 +114,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Tormentauro",
-        "file": "carnero_4.png",
-        "shadow": "carnero_4_shadow.png",
+        "stage": "adult",
+        "name": "Tempestaur",
+        "file": "ram_4.png",
+        "shadow": "ram_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -130,17 +130,17 @@
     ]
   },
   {
-    "id": "polilla",
-    "title": "Línea polilla",
-    "description": "Una polilla luna que nace como pelusa y crece hasta ser reina farol de la noche",
+    "id": "moth",
+    "title": "Luna moth line",
+    "description": "A fluffy moth that becomes the lantern queen of the night",
     "bg": "#e6f3ee",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Pelusín",
-        "file": "polilla_1.png",
-        "shadow": "polilla_1_shadow.png",
+        "stage": "baby",
+        "name": "Mothmallow",
+        "file": "moth_1.png",
+        "shadow": "moth_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -151,10 +151,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Plumín",
-        "file": "polilla_2.png",
-        "shadow": "polilla_2_shadow.png",
+        "stage": "kid",
+        "name": "Plumoth",
+        "file": "moth_2.png",
+        "shadow": "moth_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -165,10 +165,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Lunela",
-        "file": "polilla_3.png",
-        "shadow": "polilla_3_shadow.png",
+        "stage": "young",
+        "name": "Lunelle",
+        "file": "moth_3.png",
+        "shadow": "moth_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -179,10 +179,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Faroluna",
-        "file": "polilla_4.png",
-        "shadow": "polilla_4_shadow.png",
+        "stage": "adult",
+        "name": "Lanternyx",
+        "file": "moth_4.png",
+        "shadow": "moth_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -195,17 +195,17 @@
     ]
   },
   {
-    "id": "medusa",
-    "title": "Línea aurora",
-    "description": "Una medusa de aurora cuyo núcleo luminoso crece hasta coronar a una reina de luz",
+    "id": "jelly",
+    "title": "Aurora jelly line",
+    "description": "A tiny glowing jelly that becomes the queen of the northern lights",
     "bg": "#efe6f6",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Medusín",
-        "file": "medusa_1.png",
-        "shadow": "medusa_1_shadow.png",
+        "stage": "baby",
+        "name": "Jellumi",
+        "file": "jelly_1.png",
+        "shadow": "jelly_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -216,10 +216,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Lumi",
-        "file": "medusa_2.png",
-        "shadow": "medusa_2_shadow.png",
+        "stage": "kid",
+        "name": "Bellume",
+        "file": "jelly_2.png",
+        "shadow": "jelly_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -230,10 +230,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Aurela",
-        "file": "medusa_3.png",
-        "shadow": "medusa_3_shadow.png",
+        "stage": "young",
+        "name": "Auralis",
+        "file": "jelly_3.png",
+        "shadow": "jelly_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -244,10 +244,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Reinaurora",
-        "file": "medusa_4.png",
-        "shadow": "medusa_4_shadow.png",
+        "stage": "adult",
+        "name": "Borealia",
+        "file": "jelly_4.png",
+        "shadow": "jelly_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -260,17 +260,17 @@
     ]
   },
   {
-    "id": "geoda",
-    "title": "Línea geoda",
-    "description": "Un guijarro con cristales que crece hasta ser un guardián-geoda",
+    "id": "geode",
+    "title": "Geode line",
+    "description": "A pebble that grows crystals until it becomes a living geode",
     "bg": "#e9e1f3",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Piedrín",
-        "file": "geoda_1.png",
-        "shadow": "geoda_1_shadow.png",
+        "stage": "baby",
+        "name": "Pebbit",
+        "file": "geode_1.png",
+        "shadow": "geode_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -281,10 +281,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Cascajo",
-        "file": "geoda_2.png",
-        "shadow": "geoda_2_shadow.png",
+        "stage": "kid",
+        "name": "Quartzlet",
+        "file": "geode_2.png",
+        "shadow": "geode_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -295,10 +295,10 @@
         }
       },
       {
-        "stage": "joven",
+        "stage": "young",
         "name": "Geodillo",
-        "file": "geoda_3.png",
-        "shadow": "geoda_3_shadow.png",
+        "file": "geode_3.png",
+        "shadow": "geode_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -309,10 +309,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Amatitán",
-        "file": "geoda_4.png",
-        "shadow": "geoda_4_shadow.png",
+        "stage": "adult",
+        "name": "Amethitan",
+        "file": "geode_4.png",
+        "shadow": "geode_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -325,17 +325,17 @@
     ]
   },
   {
-    "id": "hongo",
-    "title": "Línea hongo",
-    "description": "Un espíritu del bosque que crece de hongo diminuto a anciano luminoso",
+    "id": "mushroom",
+    "title": "Mushroom line",
+    "description": "A little mushroom sprite that becomes the elder of the forest",
     "bg": "#e4f0d8",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Hongín",
-        "file": "hongo_1.png",
-        "shadow": "hongo_1_shadow.png",
+        "stage": "baby",
+        "name": "Sporby",
+        "file": "mushroom_1.png",
+        "shadow": "mushroom_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -346,10 +346,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Brotín",
-        "file": "hongo_2.png",
-        "shadow": "hongo_2_shadow.png",
+        "stage": "kid",
+        "name": "Capling",
+        "file": "mushroom_2.png",
+        "shadow": "mushroom_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -360,10 +360,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Musguito",
-        "file": "hongo_3.png",
-        "shadow": "hongo_3_shadow.png",
+        "stage": "young",
+        "name": "Mossprite",
+        "file": "mushroom_3.png",
+        "shadow": "mushroom_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -374,10 +374,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Ancestrón",
-        "file": "hongo_4.png",
-        "shadow": "hongo_4_shadow.png",
+        "stage": "adult",
+        "name": "Mycelder",
+        "file": "mushroom_4.png",
+        "shadow": "mushroom_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 24,
@@ -390,17 +390,17 @@
     ]
   },
   {
-    "id": "celeste",
-    "title": "Línea celestial",
-    "description": "Un ciervo hecho de cielo nocturno: nace con una luna en la frente y termina con astas de cristal",
+    "id": "stag",
+    "title": "Star stag line",
+    "description": "A deer made of night sky, crowned with crystal antlers",
     "bg": "#e4e2f7",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Astrín",
-        "file": "celeste_1.png",
-        "shadow": "celeste_1_shadow.png",
+        "stage": "baby",
+        "name": "Stellet",
+        "file": "stag_1.png",
+        "shadow": "stag_1_shadow.png",
         "size": 32,
         "shadowEllipse": {
           "cx": 16,
@@ -411,10 +411,10 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Brisaluz",
-        "file": "celeste_2.png",
-        "shadow": "celeste_2_shadow.png",
+        "stage": "kid",
+        "name": "Starfawn",
+        "file": "stag_2.png",
+        "shadow": "stag_2_shadow.png",
         "size": 36,
         "shadowEllipse": {
           "cx": 18,
@@ -425,10 +425,10 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Lunaro",
-        "file": "celeste_3.png",
-        "shadow": "celeste_3_shadow.png",
+        "stage": "young",
+        "name": "Lunaroe",
+        "file": "stag_3.png",
+        "shadow": "stag_3_shadow.png",
         "size": 42,
         "shadowEllipse": {
           "cx": 21,
@@ -439,10 +439,10 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Cosmiervo",
-        "file": "celeste_4.png",
-        "shadow": "celeste_4_shadow.png",
+        "stage": "adult",
+        "name": "Cervastra",
+        "file": "stag_4.png",
+        "shadow": "stag_4_shadow.png",
         "size": 48,
         "shadowEllipse": {
           "cx": 26,
@@ -456,14 +456,14 @@
   },
   {
     "id": "koi",
-    "title": "Línea koi",
-    "description": "La leyenda del koi que sube la cascada y se convierte en dragón",
+    "title": "Koi dragon line",
+    "description": "The koi that climbs the waterfall and becomes a dragon",
     "bg": "#d8ebf3",
     "scale": 1,
     "stages": [
       {
-        "stage": "bebe",
-        "name": "Koín",
+        "stage": "baby",
+        "name": "Koibble",
         "file": "koi_1.png",
         "shadow": "koi_1_shadow.png",
         "size": 32,
@@ -476,8 +476,8 @@
         }
       },
       {
-        "stage": "nino",
-        "name": "Koiki",
+        "stage": "kid",
+        "name": "Finnow",
         "file": "koi_2.png",
         "shadow": "koi_2_shadow.png",
         "size": 36,
@@ -490,8 +490,8 @@
         }
       },
       {
-        "stage": "joven",
-        "name": "Koiryn",
+        "stage": "young",
+        "name": "Drakoi",
         "file": "koi_3.png",
         "shadow": "koi_3_shadow.png",
         "size": 42,
@@ -504,8 +504,8 @@
         }
       },
       {
-        "stage": "adulto",
-        "name": "Ryūkoi",
+        "stage": "adult",
+        "name": "Ascendra",
         "file": "koi_4.png",
         "shadow": "koi_4_shadow.png",
         "size": 48,

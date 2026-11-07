@@ -1,0 +1,336 @@
+/*
+ * Shared components of the app design. Import after tokens.css.
+ * Pages add their own layout; anything reused across windows belongs here.
+ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font: 400 14px/1.45 var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+img.sprite,
+canvas.sprite {
+  image-rendering: pixelated;
+  display: block;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ---------- Type ---------- */
+.pixel-title {
+  margin: 0;
+  font: 600 34px/40px var(--font-pixel);
+}
+.pixel-name {
+  font-family: var(--font-pixel);
+  font-weight: 600;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.muted {
+  color: var(--text-2);
+}
+.meta {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.xp-text {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+
+/* ---------- Pixel-cut corners (buttons, portrait frames) ---------- */
+.pixel-cut {
+  clip-path: polygon(
+    0 var(--px),
+    var(--px) var(--px),
+    var(--px) 0,
+    calc(100% - var(--px)) 0,
+    calc(100% - var(--px)) var(--px),
+    100% var(--px),
+    100% calc(100% - var(--px)),
+    calc(100% - var(--px)) calc(100% - var(--px)),
+    calc(100% - var(--px)) 100%,
+    var(--px) 100%,
+    var(--px) calc(100% - var(--px)),
+    0 calc(100% - var(--px))
+  );
+}
+
+/* ---------- Buttons ---------- */
+.btn {
+  --px: 3px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 20px;
+  border: 0;
+  border-bottom: 3px solid var(--btn-2-edge);
+  background: var(--btn-2);
+  color: var(--btn-2-text);
+  font: 600 14px var(--font-ui);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.btn.primary {
+  border-bottom-color: var(--accent-edge);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.btn:hover:not(:disabled) {
+  filter: brightness(1.06);
+}
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+  border-bottom-width: 2px;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn.block {
+  width: 100%;
+}
+.btn.lg {
+  height: 46px;
+  font-size: 15px;
+}
+.btn.sm {
+  height: 38px;
+  padding: 0 16px;
+}
+.link {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: var(--accent);
+  font: 500 13px var(--font-ui);
+  cursor: pointer;
+  text-decoration: none;
+}
+.link:hover {
+  color: var(--accent-hover);
+}
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+}
+.icon-btn:hover {
+  background: var(--overlay-hover);
+}
+
+/* ---------- Switch (macOS style) ---------- */
+.switch {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 18px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--switch-off);
+  cursor: pointer;
+  transition: background 120ms;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: transform 120ms;
+}
+.switch[aria-checked='true'] {
+  background: var(--accent);
+}
+.switch[aria-checked='true']::after {
+  transform: translateX(14px);
+}
+
+/* ---------- Segmented XP bar: 20 pixel blocks ---------- */
+.xp-bar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+}
+.xp-bar > i {
+  flex: 1;
+  background: var(--track);
+}
+.xp-bar > i.on {
+  background: var(--accent);
+}
+.xp-bar.sm {
+  height: 6px;
+}
+.xp-bar.lg {
+  height: 10px;
+}
+
+/* ---------- Creature portrait: 2px dark frame with pixel-cut corners ---------- */
+.portrait {
+  --px: 4px;
+  flex: none;
+  padding: 2px;
+  background: var(--frame);
+}
+.portrait > .inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ---------- Chips, dots, notices ---------- */
+.count-chip {
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: var(--chip);
+  color: var(--chip-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+.size-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 22px;
+  padding: 0 4px;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-size: 11px;
+  font-weight: 600;
+}
+.dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--dot-done);
+}
+.dot.waiting {
+  background: var(--dot-waiting);
+}
+.dot.approved {
+  background: var(--dot-approved);
+}
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 12px;
+  border-radius: var(--radius);
+  background: var(--warning-bg);
+  color: var(--warning-text);
+  font-size: 13px;
+}
+.notice svg {
+  flex: none;
+  color: var(--warning-icon);
+}
+.notice strong {
+  font-weight: 600;
+}
+
+/* ---------- Window title bar (macOS: traffic lights are native, see trafficLightPosition) ---------- */
+.titlebar {
+  position: relative;
+  flex: none;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--titlebar);
+  border-bottom: 1px solid var(--titlebar-border);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 600;
+  -webkit-app-region: drag;
+  user-select: none;
+}
+.titlebar button,
+.titlebar a {
+  -webkit-app-region: no-drag;
+}
+
+/* ---------- Inputs ---------- */
+.field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: var(--radius);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  color: var(--text-3);
+}
+.field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--text);
+  font: 14px var(--font-ui);
+}
+.field:focus-within {
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+input[type='checkbox'] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--accent);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

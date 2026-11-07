@@ -1,0 +1,134 @@
+/*
+ * Design tokens (from the app design). Light by default; dark follows the system setting.
+ * Use the semantic tokens (--bg, --text, --accent…) in components, never raw hex values.
+ */
+@import url('../../../node_modules/@fontsource/inter/400.css');
+@import url('../../../node_modules/@fontsource/inter/500.css');
+@import url('../../../node_modules/@fontsource/inter/600.css');
+@import url('../../../node_modules/@fontsource/pixelify-sans/500.css');
+@import url('../../../node_modules/@fontsource/pixelify-sans/600.css');
+
+:root {
+  color-scheme: light dark;
+
+  /* Type */
+  --font-ui: Inter, system-ui, -apple-system, sans-serif;
+  --font-pixel: 'Pixelify Sans', var(--font-ui);
+
+  /* Surfaces */
+  --bg: #ffffff; /* windows, cards */
+  --bg-subtle: #faf8f5; /* profile window background */
+  --bg-menu: #fbfaf8; /* menu bar dropdown */
+  --surface: #f7f5fa; /* stat tiles, list hover */
+  --surface-hover: #f6f4fa;
+  --titlebar: #f6f3ef;
+  --titlebar-border: #ebe5dd;
+  --card-border: #ece6dd; /* inset ring of section cards */
+  --border: #e7e1ef; /* inset ring of lists and inputs */
+  --border-strong: #ddd6e8;
+  --divider: #efeaf3;
+  --divider-soft: #f3eff6;
+  --overlay-hover: #ebe7f3; /* menu row hover */
+
+  /* Text */
+  --text: #1d1830;
+  --text-2: #5f5872; /* secondary */
+  --text-3: #6e6780; /* tertiary, meta */
+  --text-4: #8a8399; /* placeholders, locked */
+
+  /* Accent (purple) */
+  --accent: #5b3fd6;
+  --accent-hover: #3f2a9e;
+  --accent-edge: #3d2899; /* pixel button bottom edge */
+  --accent-text: #4a2fc2; /* XP figures, links on light surfaces */
+  --accent-soft: #ece6f8; /* chips, size badges */
+  --accent-tint: #f5f2ff; /* selected card */
+  --on-accent: #ffffff;
+  --track: #e6e0f2; /* empty XP blocks, progress tracks */
+
+  /* Secondary button */
+  --btn-2: #f3f0f8;
+  --btn-2-edge: #dcd5e8;
+  --btn-2-text: #1d1830;
+
+  /* Status */
+  --chip: #f0ecf7;
+  --chip-text: #4d4460;
+  --warning-bg: #fff3df;
+  --warning-text: #8a4600;
+  --warning-icon: #b35c00;
+  --success: #1f7a4d;
+  --success-bg: #e3f4ea;
+  --dot-waiting: #e08a00;
+  --dot-approved: #2f9e64;
+  --dot-done: #a39cb3;
+  --switch-off: #d9d3e4;
+  --frame: #1d1830; /* 2px pixel frame around creature portraits */
+  --pet-shadow: rgba(42, 24, 64, 0.16);
+
+  /* Elevation */
+  --shadow-menu: 0 0 0 1px rgba(29, 24, 48, 0.1), 0 14px 36px rgba(29, 24, 48, 0.22);
+  --shadow-popover: 0 0 0 1px rgba(29, 24, 48, 0.08), 0 16px 40px rgba(29, 24, 48, 0.2);
+  --shadow-bubble: 0 0 0 1px rgba(29, 24, 48, 0.06), 0 10px 28px rgba(29, 24, 48, 0.18);
+
+  /* Shape */
+  --radius-sm: 6px;
+  --radius: 10px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --px: 3px; /* notch of pixel-cut corners */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1d1a26;
+    --bg-subtle: #17141f;
+    --bg-menu: #24212e;
+    --surface: #262231;
+    --surface-hover: #2a2537;
+    --titlebar: #221f2c;
+    --titlebar-border: #312c3d;
+    --card-border: #322d3e;
+    --border: #383148;
+    --border-strong: #463e58;
+    --divider: #2f2a3b;
+    --divider-soft: #2a2535;
+    --overlay-hover: #342d48;
+
+    --text: #f2eff8;
+    --text-2: #bdb6cc;
+    --text-3: #a59eb6;
+    --text-4: #857e96;
+
+    --accent: #7058ee;
+    --accent-hover: #c9bcff;
+    --accent-edge: #4630b0;
+    --accent-text: #b8a9ff;
+    --accent-soft: #312a55;
+    --accent-tint: #28224a;
+    --on-accent: #ffffff;
+    --track: #3a3452;
+
+    --btn-2: #2e2a3b;
+    --btn-2-edge: #1e1a28;
+    --btn-2-text: #f2eff8;
+
+    --chip: #322c44;
+    --chip-text: #cfc7e6;
+    --warning-bg: #3a2a14;
+    --warning-text: #ffcf8f;
+    --warning-icon: #f0a050;
+    --success: #6fd6a2;
+    --success-bg: #183a29;
+    --dot-waiting: #f0a030;
+    --dot-approved: #4cc285;
+    --dot-done: #7a7390;
+    --switch-off: #4a4360;
+    --frame: #0f0d16;
+    --pet-shadow: rgba(0, 0, 0, 0.35);
+
+    --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 36px rgba(0, 0, 0, 0.5);
+    --shadow-popover: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.5);
+    --shadow-bubble: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 28px rgba(0, 0, 0, 0.45);
+  }
+}

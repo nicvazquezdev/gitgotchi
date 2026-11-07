@@ -25,12 +25,12 @@ export function createPetStep({ api, catalog, state, toast }) {
       {
         class: 'species-card pixel-border',
         role: 'radio',
-        title: species.blurb,
+        title: species.desc,
         dataset: { id: species.id },
         onclick: () => select(species.id),
       },
       canvas,
-      h('span', { class: 'name' }, species.name),
+      h('span', { class: 'name' }, species.stages[0].name),
     );
   });
   $('#species-grid').replaceChildren(...cards);
@@ -56,8 +56,8 @@ export function createPetStep({ api, catalog, state, toast }) {
     if (!nameInput.value.trim() || nameInput.value === (prev && defaultName(prev))) nameInput.value = defaultName(next);
     state.species = id;
     cards.forEach((c) => c.setAttribute('aria-checked', String(c.dataset.id === id)));
-    $('#species-name').textContent = next.name;
-    $('#species-blurb').textContent = next.blurb;
+    $('#species-name').textContent = next.line;
+    $('#species-blurb').textContent = next.desc;
     next.stages.forEach((s, i) => (evoNames[i].textContent = s.name));
     $('#species-warning').hidden = !state.existingPet || state.existingPet.species === id;
   }
