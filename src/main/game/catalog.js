@@ -104,11 +104,12 @@ const PR_KEEP_MERGED_DAYS = 14;
 
 // ---------- Achievements ----------
 
-// Counted from the pet's own history (since its birth day), like XP. `metric` is what is counted: a ledger kind
+// Counted from the person's history since the first pet hatched, like XP. `metric` is what is counted: a ledger kind
 // (prs, reviews, merges, commits, issues), `streak` (best streak, see game/stats.js), `fullDays` (days with a PR
-// opened, a review and a merge) or `quickMerges` (PRs merged soon after opening them). `quickMerges` reads the
-// stored PR list, which only keeps recent PRs, so its target must be 1 (a reached achievement is stored and kept).
-// `icon` names an icon of renderer/shared/ui.js.
+// opened, a review and a merge), `quickMerges` (PRs merged soon after opening them), or from the collection: `species`
+// (pets hatched) and `adults` (pets fully grown). `quickMerges` reads the stored PR list, which only keeps recent
+// PRs, so its target must be 1 (a reached achievement is stored and kept).
+// `icon` names a glyph of renderer/shared/pixel-art.js.
 const ACHIEVEMENT_RULES = { quickMergeMinutes: 60 };
 
 const ACHIEVEMENT_GROUPS = [
@@ -117,6 +118,7 @@ const ACHIEVEMENT_GROUPS = [
   { id: 'reviews', name: 'Reviews' },
   { id: 'code', name: 'Commits and issues' },
   { id: 'streaks', name: 'Streaks', note: 'Weekends never break a streak' },
+  { id: 'collection', name: 'Collection' },
   { id: 'special', name: 'Special' },
 ];
 
@@ -196,6 +198,26 @@ const ACHIEVEMENT_FAMILIES = [
       ['streak-5', 5, 'Full work week', 'Be active 5 days in a row'],
       ['streak-10', 10, 'Two weeks strong', 'Be active 10 days in a row'],
       ['streak-20', 20, 'A month of work', 'Be active 20 days in a row'],
+    ],
+  },
+  {
+    group: 'collection',
+    icon: 'paw',
+    metric: 'species',
+    steps: [
+      ['duo', 2, 'Dynamic duo', 'Hatch 2 companions'],
+      ['squad', 4, 'Squad goals', 'Hatch 4 companions'],
+      ['full-house', SPECIES.length, 'Full house', `Hatch all ${SPECIES.length} companions`],
+    ],
+  },
+  {
+    group: 'collection',
+    icon: 'crown',
+    metric: 'adults',
+    steps: [
+      ['first-adult', 1, 'Fully grown', 'Raise a companion to its final form'],
+      ['adults-4', 4, 'Seasoned keeper', 'Raise 4 companions to their final form'],
+      ['adults-all', SPECIES.length, 'Hall of fame', `Raise all ${SPECIES.length} companions to their final form`],
     ],
   },
   {

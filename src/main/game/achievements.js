@@ -11,6 +11,8 @@ const UNITS = {
   commits: 'commits',
   issues: 'issues',
   streak: 'days',
+  species: 'companions',
+  adults: 'fully grown',
 };
 
 const POINTS = Object.fromEntries(ACHIEVEMENT_TIERS.map((tier) => [tier.id, tier.points]));
@@ -40,8 +42,23 @@ function seriesByMetric(days, prs, since) {
   return series;
 }
 
+/**
+ * The days the collection grew, oldest first: when each pet hatched (`species`) and when each grew up (`adults`).
+ * The n-th entry is the day the person had n of them.
+ */
+const collectionDays = (pets) => ({
+  species: pets.map((pet) => pet.bornDay).sort(),
+  adults: pets
+    .map((pet) => pet.matureDay)
+    .filter(Boolean)
+    .sort(),
+});
+
 /** `{ total, reachedDay }`: the count so far and the first day it was `target` or more (null before that). */
-function measure({ metric, target }, { series, lengths }) {
+function measure({ metric, target }, { series, lengths, collection }) {
+  if (metric === 'species' || metric === 'adults') {
+    return { total: collection[metric].length, reachedDay: collection[metric][target - 1] ?? null };
+  }
   if (metric === 'streak') {
     const entries = [...lengths];
     return {
@@ -66,14 +83,19 @@ function measure({ metric, target }, { series, lengths }) {
  * @param {string} [input.since]  the pet's birth day: PRs merged before it do not count
  * @param {{ [id: string]: string }} [input.stored]  achievements recorded as reached: id -> day. They stay reached
  *   whatever the ledger says now (it can be rebuilt), and their day is the one recorded.
+ * @param {{ bornDay: string, matureDay: string | null }[]} [input.pets]  when each pet hatched and grew up
  * @returns {{ id, group, metric, tier, points, icon, name, description, unit, target, value, unlockedAt }[]}
  *   `unlockedAt`: the day reached ('YYYY-MM-DD') or null; `value` never goes past `target`
  */
-function achievementProgress({ days, prs = [], since = '', stored = {} }) {
+function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [] }) {
   const active = Object.keys(days)
     .filter((day) => dayXp(days[day]) > 0)
     .sort();
-  const context = { series: seriesByMetric(days, prs, since), lengths: streakLengths(active) };
+  const context = {
+    series: seriesByMetric(days, prs, since),
+    lengths: streakLengths(active),
+    collection: collectionDays(pets),
+  };
   return ACHIEVEMENTS.map((def) => {
     const { total, reachedDay } = measure(def, context);
     const unlockedAt = stored[def.id] ?? (total >= def.target ? reachedDay : null);

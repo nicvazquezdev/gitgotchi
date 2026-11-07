@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--fresh] [--complete] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--fresh] [--complete] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -27,6 +27,7 @@ const fresh = process.argv.includes('--fresh'); // a pet that has done nothing y
 const complete = process.argv.includes('--complete'); // a pet with every achievement
 const click = process.argv.includes('--click') ? process.argv[process.argv.indexOf('--click') + 1] : null; // a selector to click before the capture
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
+const scroll = process.argv.includes('--scroll'); // scroll the content to the end before the capture
 const freeze = process.argv.includes('--freeze'); // a fixed clock and nothing that moves, for pixel comparisons
 const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
 const PAGES = {
@@ -217,13 +218,17 @@ async function shot(name) {
     await win.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(click)}).click()`);
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
+  if (scroll) {
+    await win.webContents.executeJavaScript(`document.querySelector('#app').scrollTop = 1e6`);
+    await new Promise((resolve) => setTimeout(resolve, 200));
+  }
   const image = await win.webContents.capturePage(rect);
   const overflowing = await win.webContents.executeJavaScript(
     `[...document.querySelectorAll('.card')].filter((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1).map((c) => c.className)`,
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

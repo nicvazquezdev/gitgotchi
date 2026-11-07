@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { achievementProgress, groupAchievements, unlockedOf } = require('../src/main/game/achievements');
 const { computeStatus } = require('../src/main/game/engine');
-const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_TIERS } = require('../src/main/game/catalog');
+const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_TIERS, SPECIES } = require('../src/main/game/catalog');
 
 const day = (counts = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...counts });
 const progress = (input) => Object.fromEntries(achievementProgress(input).map((a) => [a.id, a]));
@@ -16,7 +16,18 @@ test('the catalog is consistent: unique ids, known groups and metrics, quickMerg
   assert.equal(new Set(ids).size, ids.length);
   const groups = new Set(ACHIEVEMENT_GROUPS.map((g) => g.id));
   const tiers = new Set(ACHIEVEMENT_TIERS.map((tier) => tier.id));
-  const metrics = new Set(['prs', 'reviews', 'merges', 'commits', 'issues', 'streak', 'fullDays', 'quickMerges']);
+  const metrics = new Set([
+    'prs',
+    'reviews',
+    'merges',
+    'commits',
+    'issues',
+    'streak',
+    'fullDays',
+    'quickMerges',
+    'species',
+    'adults',
+  ]);
   for (const a of ACHIEVEMENTS) {
     assert.ok(groups.has(a.group), `${a.id}: group`);
     assert.ok(metrics.has(a.metric), `${a.id}: metric`);
@@ -168,15 +179,40 @@ test('a second pet does not move the start: the achievements keep counting from 
     new Date(2026, 2, 8, 12),
   );
   assert.deepEqual(
-    unlockedOf(status.achievements).map((a) => a.id),
-    ['first-pr'],
+    unlockedOf(status.achievements)
+      .map((a) => a.id)
+      .sort(),
+    ['duo', 'first-pr'], // the PR counts, and so does having hatched two pets
   );
+});
+
+test('the collection counts the pets hatched and the ones fully grown, on the day the n-th one was', () => {
+  const pets = [
+    { bornDay: '2026-03-02', matureDay: null },
+    { bornDay: '2026-03-09', matureDay: '2026-03-20' },
+    { bornDay: '2026-03-05', matureDay: '2026-03-18' },
+  ];
+  const p = progress({ days: {}, pets });
+  assert.equal(p.duo.unlockedAt, '2026-03-05'); // the second to hatch, whichever way they are listed
+  assert.deepEqual([p.squad.unlockedAt, p.squad.value, p.squad.unit], [null, 3, 'companions']);
+  assert.equal(p['first-adult'].unlockedAt, '2026-03-18');
+  assert.deepEqual([p['adults-4'].value, p['adults-4'].unit], [2, 'fully grown']);
+  assert.equal(p['full-house'].unlockedAt, null);
+  assert.deepEqual(unlocked({ days: {} }), []); // no pets, nothing
+});
+
+test('hatching every species unlocks the whole ladder', () => {
+  const pets = SPECIES.map((s, i) => ({ bornDay: `2026-03-0${i + 1}`, matureDay: `2026-03-1${i}` }));
+  const done = unlocked({ days: {}, pets }).sort();
+  assert.deepEqual(done, ['adults-4', 'adults-all', 'duo', 'first-adult', 'full-house', 'squad']);
+  assert.equal(progress({ days: {}, pets })['full-house'].target, SPECIES.length);
 });
 
 test('tiers climb with each family: four steps reach diamond, a lone step is special', () => {
   const tierOf = (id) => ACHIEVEMENTS.find((a) => a.id === id).tier;
   assert.deepEqual(['review-100', 'streak-20'].map(tierOf), ['diamond', 'diamond']);
   assert.deepEqual(['first-pr', 'pr-10', 'pr-50'].map(tierOf), ['bronze', 'silver', 'gold']);
+  assert.deepEqual(['duo', 'squad', 'full-house'].map(tierOf), ['bronze', 'silver', 'gold']);
   assert.deepEqual(['commit-100', 'commit-500'].map(tierOf), ['bronze', 'gold']);
   assert.deepEqual(['quick-merge', 'full-cycle'].map(tierOf), ['special', 'special']);
 });
