@@ -25,7 +25,8 @@ function portrait({ species, stage, mood }) {
 const WARNING_MOODS = ['anxious', 'sad'];
 
 /** Mood line: amber only when something needs attention; otherwise a calm line that says what is going on. */
-function moodNotice({ mood, moodLabel, moodReason }) {
+function moodNotice({ name, mood, moodLabel, moodReason }) {
+  const title = `${name} is ${moodLabel.toLowerCase()}`;
   if (mood === 'sleeping')
     return h(
       'div',
@@ -34,8 +35,8 @@ function moodNotice({ mood, moodLabel, moodReason }) {
       h(
         'span',
         {},
-        h('strong', {}, 'Sleeping'),
-        h('span', { class: 'notice-sub' }, `${moodReason}. Your XP keeps counting meanwhile.`),
+        h('strong', {}, `${name} is sleeping`),
+        h('span', { class: 'notice-sub' }, `${moodReason}. Your XP still counts.`),
       ),
     );
   if (WARNING_MOODS.includes(mood) && moodReason)
@@ -43,12 +44,12 @@ function moodNotice({ mood, moodLabel, moodReason }) {
       'div',
       { class: 'notice' },
       icon('clock'),
-      h('span', {}, h('strong', {}, moodLabel), h('span', { class: 'notice-sub' }, moodReason)),
+      h('span', {}, h('strong', {}, title), h('span', { class: 'notice-sub' }, moodReason)),
     );
   return h(
     'div',
     { class: 'notice calm' },
-    h('span', {}, h('strong', {}, moodLabel), moodReason ? h('span', { class: 'notice-sub' }, moodReason) : null),
+    h('span', {}, h('strong', {}, title), moodReason ? h('span', { class: 'notice-sub' }, moodReason) : null),
   );
 }
 
