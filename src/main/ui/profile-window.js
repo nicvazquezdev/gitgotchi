@@ -2,11 +2,11 @@
 const { createAppWindow } = require('./app-window');
 const { PROFILE_WINDOW } = require('../config');
 
-const window = createAppWindow('profile', {
+const profile = createAppWindow('profile', {
   ...PROFILE_WINDOW,
   resizable: false,
   maximizable: false,
   fullscreenable: false,
 });
 
-module.exports = { open: () => window.open(), send: window.send };
+module.exports = { open: () => profile.open(), send: profile.send };
