@@ -1,0 +1,233 @@
+html,
+body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+}
+
+body {
+  font-family: var(--font-display);
+  --px: 2px;
+}
+
+/* ---------- Pet ---------- */
+.stage {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 128px;
+  height: 128px;
+  margin-left: -64px;
+}
+
+.pet {
+  position: absolute;
+  inset: 0;
+  width: 128px;
+  height: 128px;
+  cursor: grab;
+}
+.pet.dragging {
+  cursor: grabbing;
+}
+.pet.jump {
+  animation: jump 0.5s steps(5);
+}
+.pet.evolve {
+  animation: evolve 1.8s steps(12);
+}
+
+/* Pixel ground shadow */
+.shadow {
+  position: absolute;
+  left: 36px;
+  right: 36px;
+  bottom: 2px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  box-shadow:
+    -4px 0 0 -1px rgba(0, 0, 0, 0.12),
+    4px 0 0 -1px rgba(0, 0, 0, 0.12);
+}
+body.dragging .shadow {
+  opacity: 0;
+}
+
+@keyframes jump {
+  40% {
+    transform: translateY(-18px);
+  }
+  70% {
+    transform: translateY(-4px);
+  }
+}
+@keyframes evolve {
+  0%,
+  16%,
+  33%,
+  50%,
+  66% {
+    filter: brightness(4) saturate(0);
+    transform: scale(1.08);
+  }
+  8%,
+  25%,
+  41%,
+  58%,
+  100% {
+    filter: none;
+    transform: none;
+  }
+}
+
+/* ---------- HUD (hover) ---------- */
+.hud {
+  --border: var(--ink);
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  right: 10px;
+  padding: 8px 8px 6px;
+  background: var(--night);
+  color: var(--text);
+  font-size: 7px;
+  line-height: 1.7;
+  opacity: 0;
+  transform: translateY(4px);
+  transition:
+    opacity 120ms steps(3),
+    transform 120ms steps(3);
+  pointer-events: none;
+}
+body.hover:not(.dragging) .hud {
+  opacity: 1;
+  transform: none;
+}
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+}
+.hud-name {
+  overflow: hidden;
+  color: var(--gold);
+  font-size: 8px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.hud-sync {
+  color: var(--sky);
+  animation: blink 0.8s steps(1) infinite;
+}
+.hud-stage {
+  color: var(--muted);
+}
+.hud-hearts {
+  color: var(--red);
+  font-size: 9px;
+  letter-spacing: 1px;
+}
+.hud-hearts .empty {
+  color: var(--line);
+}
+.xp-bar {
+  height: 6px;
+  margin-top: 4px;
+  background: var(--ink);
+  box-shadow: 0 0 0 1px var(--line);
+}
+.xp-fill {
+  width: 0;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--green) 0 4px, #5cc274 4px 6px);
+  transition: width 400ms steps(8);
+}
+.hud-xp {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 6px;
+}
+
+/* ---------- Speech bubble ---------- */
+.bubble {
+  --border: var(--ink);
+  position: absolute;
+  bottom: 128px;
+  left: 10px;
+  right: 10px;
+  padding: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 7px;
+  line-height: 1.7;
+  text-align: center;
+  pointer-events: none;
+  animation: pop-in 160ms steps(3);
+}
+.bubble::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  margin-left: -2px;
+  background: var(--paper);
+  box-shadow:
+    0 2px 0 0 var(--ink),
+    2px 0 0 0 var(--ink),
+    -2px 0 0 0 var(--ink);
+}
+body.hover .bubble {
+  display: none;
+}
+
+/* ---------- Indicators ---------- */
+.zzz {
+  position: absolute;
+  bottom: 92px;
+  right: 30px;
+  color: var(--sky);
+  pointer-events: none;
+}
+.zzz span {
+  position: absolute;
+  font-size: 7px;
+  animation: zzz 2.4s steps(6) infinite;
+}
+.zzz span:nth-child(2) {
+  animation-delay: 0.8s;
+}
+.zzz span:nth-child(3) {
+  font-size: 9px;
+  animation-delay: 1.6s;
+}
+@keyframes zzz {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(10px, -24px);
+  }
+}
+
+.alert {
+  --border: var(--ink);
+  position: absolute;
+  bottom: 100px;
+  left: 28px;
+  width: 14px;
+  height: 14px;
+  background: var(--red);
+  color: var(--paper);
+  font-size: 8px;
+  line-height: 15px;
+  text-align: center;
+  pointer-events: none;
+  animation: bob 1s steps(2) infinite;
+}

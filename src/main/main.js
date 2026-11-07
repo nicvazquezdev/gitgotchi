@@ -1,0 +1,85 @@
+// Entry point: app lifecycle and wiring between services and UI.
+const { app, screen, powerMonitor } = require('electron');
+const { IS_MAC, SYNC_INTERVAL_MS, TICK_INTERVAL_MS } = require('./config');
+
+const session = require('./services/session');
+const petService = require('./services/pet-service');
+const petWindow = require('./ui/pet-window');
+const onboardingWindow = require('./ui/onboarding-window');
+const { createTray, buildMenu } = require('./ui/tray');
+const { registerIpc } = require('./ipc');
+
+let tray = null;
+
+// ---------- App actions ----------
+
+const actions = {
+  sync: () => petService.sync(),
+  togglePet: () => (petWindow.isVisible() ? petWindow.hide() : petWindow.show()),
+  openSettings: () =>
+    onboardingWindow.open({
+      // Closing before finishing the first setup leaves nothing to show.
+      onClosed: () => !petService.isConfigured() && app.quit(),
+    }),
+  finishOnboarding: () => {
+    onboardingWindow.close();
+    petWindow.show();
+  },
+  disconnect: () => {
+    session.disconnect();
+    petWindow.close();
+    actions.openSettings();
+    refreshMenu();
+  },
+  showMenu: () => menu().popup({ window: petWindow.window }),
+  quit: () => app.quit(),
+};
+
+function menu() {
+  return buildMenu({
+    status: petService.status(),
+    configured: petService.isConfigured(),
+    connected: session.isConnected(),
+    petVisible: petWindow.isVisible(),
+    actions,
+  });
+}
+
+function refreshMenu() {
+  tray?.setContextMenu(menu());
+}
+
+// ---------- Events ----------
+
+petService.on('status', (status) => {
+  petWindow.send('pet:status', status);
+  refreshMenu();
+});
+petService.on('evolved', (stage) => petWindow.send('pet:evolved', stage));
+
+// ---------- Lifecycle ----------
+
+if (!app.requestSingleInstanceLock()) app.quit();
+app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : actions.openSettings()));
+
+app.whenReady().then(() => {
+  if (IS_MAC) app.dock?.hide();
+  registerIpc(actions);
+  tray = createTray();
+  refreshMenu();
+
+  if (petService.isConfigured()) {
+    petWindow.show();
+    petService.sync();
+  } else {
+    actions.openSettings();
+  }
+
+  setInterval(actions.sync, SYNC_INTERVAL_MS);
+  setInterval(() => petService.notify(), TICK_INTERVAL_MS);
+  powerMonitor.on('resume', actions.sync);
+  screen.on('display-removed', petWindow.ensureOnScreen);
+});
+
+// Lives in the menu bar: closing windows doesn't quit the app.
+app.on('window-all-closed', () => {});

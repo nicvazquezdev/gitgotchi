@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self'; font-src 'self'; img-src 'self' https://avatars.githubusercontent.com"
+    />
+    <title>Gitgotchi</title>
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="onboarding.css" />
+  </head>
+  <body>
+    <div class="sky" aria-hidden="true"><div class="moon"></div></div>
+    <div class="titlebar"></div>
+
+    <header class="header">
+      <h1 class="logo display">GITGOTCHI</h1>
+      <ol class="stepper">
+        <li data-step="login"><span class="dot">1</span><span class="label">Connect</span></li>
+        <li data-step="repos"><span class="dot">2</span><span class="label">Repos</span></li>
+        <li data-step="pet"><span class="dot">3</span><span class="label">Pet</span></li>
+      </ol>
+    </header>
+
+    <main class="card pixel-border">
+      <!-- ============ Step 1: GitHub ============ -->
+      <section class="step" data-step="login">
+        <div class="hero">
+          <canvas id="hero-egg"></canvas>
+          <div>
+            <h2 class="display title">Something's stirring…</h2>
+            <p>Your pet hatches and grows with your GitHub activity: pushes, PRs, merges, reviews and comments.</p>
+            <p class="muted small">We only read activity counts from the repos you pick. Never your code.</p>
+          </div>
+        </div>
+
+        <div class="login-view" data-view="checking">
+          <p class="muted">Looking for your <b>gh</b> session<span class="dots"></span></p>
+        </div>
+
+        <div class="login-view" data-view="help" hidden>
+          <p id="gh-error" class="warning center"></p>
+          <p class="center">Log in with the GitHub CLI in your terminal:</p>
+          <div class="terminal pixel-border"><span class="prompt">$</span> <span id="gh-command"></span></div>
+          <button id="btn-retry" class="btn primary">↻ Retry</button>
+        </div>
+
+        <div class="login-view" data-view="done" hidden>
+          <div class="user-card pixel-border">
+            <img id="user-avatar" alt="" width="48" height="48" />
+            <div>
+              <div class="muted small">Connected via gh as</div>
+              <div id="user-login" class="display user-login"></div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="step-footer">
+          <span></span>
+          <button id="btn-login-next" class="btn primary" hidden>Next ▶</button>
+        </footer>
+      </section>
+
+      <!-- ============ Step 2: Repos ============ -->
+      <section class="step" data-step="repos" hidden>
+        <h2 class="display title">Which repos feed your pet?</h2>
+        <p class="muted small">
+          Repos with recent activity are pre-selected. Search, or type
+          <b>owner/repo</b> to add another one.
+        </p>
+
+        <div class="toolbar">
+          <input
+            id="repo-search"
+            class="input"
+            type="search"
+            placeholder="Search repos…"
+            autocomplete="off"
+            spellcheck="false"
+          />
+        </div>
+        <div class="toolbar between">
+          <span id="repo-count" class="badge gold">0 selected</span>
+          <span>
+            <button id="btn-select-recent" class="btn ghost">Recent</button>
+            <button id="btn-select-none" class="btn ghost">None</button>
+          </span>
+        </div>
+
+        <ul id="repo-list" class="repo-list" role="list"></ul>
+
+        <footer class="step-footer">
+          <button class="btn ghost" data-go="login">◀ Back</button>
+          <button id="btn-repos-next" class="btn primary" disabled>Next ▶</button>
+        </footer>
+      </section>
+
+      <!-- ============ Step 3: Pet ============ -->
+      <section class="step" data-step="pet" hidden>
+        <h2 class="display title">Choose your buddy</h2>
+        <div id="species-grid" class="species-grid" role="radiogroup" aria-label="Pet"></div>
+
+        <div class="evolution pixel-border">
+          <div class="muted small">Evolution line</div>
+          <div id="evolution-line" class="evolution-line"></div>
+        </div>
+
+        <label class="field">
+          <span class="display label">Name</span>
+          <input id="pet-name" class="input" maxlength="16" autocomplete="off" spellcheck="false" />
+        </label>
+        <p id="species-warning" class="warning small" hidden>
+          ⚠ Switching species hatches a new pet: it starts over as an egg.
+        </p>
+
+        <footer class="step-footer">
+          <button class="btn ghost" data-go="repos">◀ Back</button>
+          <button id="btn-adopt" class="btn primary big">Adopt! ★</button>
+        </footer>
+      </section>
+    </main>
+
+    <div id="toast" class="toast pixel-border" role="alert" hidden></div>
+    <div class="ground" aria-hidden="true"></div>
+
+    <script type="module" src="onboarding.js"></script>
+  </body>
+</html>

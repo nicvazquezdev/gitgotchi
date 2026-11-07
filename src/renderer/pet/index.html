@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self'; font-src 'self'" />
+    <link rel="stylesheet" href="../shared/theme.css" />
+    <link rel="stylesheet" href="pet.css" />
+  </head>
+  <body>
+    <!-- Stats panel: shows on hover -->
+    <div class="hud pixel-border" aria-hidden="true">
+      <div class="hud-top">
+        <span id="hud-name" class="hud-name"></span>
+        <span id="hud-sync" class="hud-sync" hidden>↻</span>
+      </div>
+      <div id="hud-stage" class="hud-stage"></div>
+      <div id="hud-hearts" class="hud-hearts"></div>
+      <div class="xp-bar"><div id="xp-fill" class="xp-fill"></div></div>
+      <div id="hud-xp" class="hud-xp"></div>
+    </div>
+
+    <div id="bubble" class="bubble pixel-border" hidden></div>
+    <div id="zzz" class="zzz" hidden><span>z</span><span>z</span><span>Z</span></div>
+    <div id="alert" class="alert pixel-border" hidden>!</div>
+
+    <div class="stage">
+      <div class="shadow"></div>
+      <canvas id="pet" class="pet"></canvas>
+    </div>
+
+    <script type="module" src="pet.js"></script>
+  </body>
+</html>

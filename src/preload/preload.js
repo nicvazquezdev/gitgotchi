@@ -1,0 +1,35 @@
+// Safe bridge between pages and the main process. Must match src/main/ipc.js.
+const { contextBridge, ipcRenderer } = require('electron');
+
+const invoke = (channel) => (payload) => ipcRenderer.invoke(channel, payload);
+const send = (channel) => (payload) => ipcRenderer.send(channel, payload);
+const subscribe = (channel) => (callback) => {
+  const listener = (_event, payload) => callback(payload);
+  ipcRenderer.on(channel, listener);
+  return () => ipcRenderer.removeListener(channel, listener);
+};
+
+contextBridge.exposeInMainWorld('gitgotchi', {
+  bootstrap: invoke('app:bootstrap'),
+
+  auth: {
+    connect: invoke('auth:connect'),
+    disconnect: invoke('auth:disconnect'),
+  },
+
+  onboarding: {
+    listRepos: invoke('repos:list'),
+    finish: invoke('onboarding:finish'), // { repos, species, name }
+  },
+
+  pet: {
+    status: invoke('pet:status'),
+    refresh: invoke('pet:refresh'),
+    setClickThrough: send('pet:click-through'), // boolean
+    dragStart: send('pet:drag-start'), // { offsetX, offsetY }
+    dragEnd: send('pet:drag-end'),
+    openMenu: send('pet:menu'),
+    onStatus: subscribe('pet:status'),
+    onEvolved: subscribe('pet:evolved'),
+  },
+});

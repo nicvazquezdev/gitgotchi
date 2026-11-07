@@ -1,0 +1,20 @@
+{
+  "name": "gitgotchi",
+  "version": "0.1.0",
+  "description": "Pixel pet that lives on your desktop and evolves with your GitHub activity",
+  "main": "src/main/main.js",
+  "scripts": {
+    "start": "electron .",
+    "format": "prettier --write .",
+    "lint": "prettier --check ."
+  },
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "prettier": "^3.9.10"
+  },
+  "private": true,
+  "dependencies": {
+    "@fontsource/pixelify-sans": "^5.3.0",
+    "@fontsource/press-start-2p": "^5.3.0"
+  }
+}
