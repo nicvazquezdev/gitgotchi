@@ -26,6 +26,8 @@ const only = process.argv.slice(2).filter((a) => !a.startsWith('--')); // case n
 const CASES = [
   { name: 'profile-dark', page: 'profile', flags: [] },
   { name: 'profile-light', page: 'profile', flags: ['--light'] },
+  { name: 'profile-share-dark', page: 'profile', flags: ['--click', '#share-open'] },
+  { name: 'profile-share-light', page: 'profile', flags: ['--click', '#share-open', '--light'] },
   { name: 'profile-achievements-dark', page: 'profile', flags: ['--tab', 'achievements'] },
   { name: 'profile-collection-dark', page: 'profile', flags: ['--tab', 'collection'] },
   { name: 'profile-collection-light', page: 'profile', flags: ['--tab', 'collection', '--light'] },

@@ -1,0 +1,130 @@
+/* Profile > Share: the dialog and the card (see share-card.js). The card has a fixed size: it is a picture. */
+.share-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  background: color-mix(in srgb, #0b0912 86%, transparent);
+  backdrop-filter: blur(4px);
+}
+.share-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.share-actions {
+  display: flex;
+  gap: 8px;
+}
+.share-note {
+  margin: 0;
+  max-width: 440px;
+  text-align: center;
+  font-size: 12px;
+  color: #cfc9dd; /* the dialog is dark in both themes */
+}
+
+/* ---------- The card ---------- */
+/* What is copied: a flat margin around the card, so its cut corners show a plain color in the image. */
+.share-shot {
+  padding: 16px;
+  background: var(--bg-subtle);
+}
+.share-card {
+  --px: 4px;
+  width: 480px;
+  padding: 2px;
+  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+}
+.share-in {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 22px 18px;
+  background:
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, #f2c14e 20%, transparent), transparent 40%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--bg)), var(--bg) 70%);
+  color: var(--text);
+}
+.share-top {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+}
+.share-portrait {
+  width: 116px;
+  height: 116px;
+}
+.share-id {
+  flex: 1;
+  min-width: 0;
+}
+.share-name {
+  font-size: 26px;
+  line-height: 30px;
+}
+.share-sub {
+  margin: 2px 0 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.share-xp {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.share-mark {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.share-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+.share-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 4px 10px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.share-digits {
+  height: 28px;
+  color: var(--text);
+  line-height: 0;
+}
+.share-stat:nth-child(3) .share-digits {
+  color: var(--accent-text);
+}
+.share-label {
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.share-cups {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+}
+.share-cup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+.share-cup.none .pa {
+  opacity: 0.35;
+}

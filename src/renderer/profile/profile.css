@@ -22,6 +22,28 @@ body {
   border-radius: var(--radius);
   background: var(--surface);
 }
+/* The share button, at the right end of the title bar. */
+.share-btn {
+  position: absolute;
+  right: 16px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text-2);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+.share-btn:hover {
+  color: var(--text);
+}
+
 .seg-btn {
   display: inline-flex;
   align-items: center;

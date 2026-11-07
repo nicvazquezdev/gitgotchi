@@ -6,6 +6,7 @@ import { plural } from '../shared/format.js';
 import { animatePet } from '../shared/sprite.js';
 import { achievementsPage } from './achievements-view.js';
 import { collectionPage } from './collection-view.js';
+import { shareDialog } from './share-card.js';
 
 const api = window.gitgotchi;
 let catalog = null;
@@ -243,6 +244,7 @@ let view = VIEWS.some(([id]) => id === hashView) ? hashView : 'overview';
 let filter = 'all'; // achievements: which ones to show
 let latest = null; // the last status received
 let shownView = null; // the view on screen
+let sharing = false; // the share dialog is open
 
 /** Switches to another view (the title bar, or a link in a page). */
 function show(next) {
@@ -285,6 +287,52 @@ function viewTabs(status) {
   );
 }
 
+// ---------- Share ----------
+
+/** Asks main to copy the card on screen (its rectangle) to the clipboard as an image. */
+function copyCard(card) {
+  const { x, y, width, height } = card.getBoundingClientRect();
+  return api.profile.copyCard({ x, y, width, height });
+}
+
+/** The dialog, open or closed. The page behind is inert while it is open: the keyboard stays inside the dialog. */
+function renderShare() {
+  const overlay = $('#overlay');
+  overlay.replaceChildren(
+    ...(sharing && latest ? [shareDialog({ status: latest, copy: copyCard, close: closeShare })] : []),
+  );
+  $('.window').inert = sharing;
+}
+
+function openShare() {
+  sharing = true;
+  renderShare();
+  $('#share-copy')?.focus();
+}
+
+function closeShare() {
+  sharing = false;
+  renderShare();
+  $('#share-open')?.focus();
+}
+
+document.addEventListener('keydown', (e) => e.key === 'Escape' && sharing && closeShare());
+
+/** The button in the title bar that opens it. */
+const shareButton = () =>
+  h(
+    'button',
+    {
+      class: 'share-btn',
+      type: 'button',
+      id: 'share-open',
+      title: 'Copy a card of your pet as an image',
+      onclick: openShare,
+    },
+    icon('share', { size: 14, stroke: 2.2 }),
+    'Share',
+  );
+
 /** What has the focus (a card, a name field), to give it back after the page is drawn again. */
 const focusKey = () => document.activeElement?.dataset?.key ?? null;
 function restoreFocus(key) {
@@ -302,7 +350,7 @@ function render(status, { focus: focusOn } = {}) {
   const scroll = switched ? 0 : app.scrollTop; // a status update keeps the place in the list
   const focus = focusOn ?? (switched ? null : focusKey());
   shownView = view;
-  $('#title').replaceChildren(viewTabs(status));
+  $('#title').replaceChildren(viewTabs(status), shareButton());
   app.className = `content ${view}`;
   app.style.setProperty('--tint', status.species.tint);
   if (view === 'achievements') {
@@ -342,6 +390,7 @@ function render(status, { focus: focusOn } = {}) {
   }
   app.scrollTop = scroll;
   restoreFocus(focus);
+  if (sharing) renderShare(); // the card follows the status
 }
 
 async function init() {

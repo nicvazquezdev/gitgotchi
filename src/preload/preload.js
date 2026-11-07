@@ -65,6 +65,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onStatus: subscribe('profile:status'),
     view: invoke('profile:view'), // -> the tab the window was opened on ('collection'...), or null
     onView: subscribe('profile:view'), // an open window is asked to show another tab
+    copyCard: invoke('profile:copy-card'), // { x, y, width, height } of the share card: copies it to the clipboard as an image -> { ok } | { error, message }
   },
 
   evolution: {

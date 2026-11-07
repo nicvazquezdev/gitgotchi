@@ -12,6 +12,7 @@ const prefs = require('./prefs');
 const catalog = require('./game/catalog');
 const collection = require('./game/collection');
 const evolutionWindow = require('./ui/evolution-window');
+const { copyRegion } = require('./ui/share');
 const profileWindow = require('./ui/profile-window');
 
 // Only accept messages from our own local pages.
@@ -135,6 +136,12 @@ function registerIpc(actions) {
   // --- Profile & evolution windows ---
   handle('profile:status', () => petService.status());
   handle('profile:view', () => profileWindow.takeView());
+  // The share card: copies the part of the window it is drawn in to the clipboard, as an image. It needs the window
+  // that asked, so it does not go through `handle`.
+  ipcMain.handle('profile:copy-card', (event, rect) => {
+    if (!isTrusted(event)) throw new Error('Untrusted sender');
+    return copyRegion(event.sender, rect);
+  });
   handle('evolution:data', () => evolutionWindow.current());
   on('evolution:close', () => evolutionWindow.close());
   on('evolution:view-profile', (view) => {
