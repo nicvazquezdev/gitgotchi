@@ -17,8 +17,9 @@ module.exports = {
   // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
   // Window at the default size: the box plus room around it for the speech bubble card (268 px wide).
   PET_WINDOW: { width: 288, height: 320 },
-  // Any whole-pixel size within [min, max] (2x to 8x); set with the slider in the Settings window.
-  PET_SIZE_RANGE: { min: 104, max: 416 },
+  // Sizes are whole multiples of the box (2x to 8x, `step` = one native box of 52 px), so every sprite pixel
+  // is drawn at the same whole size and stays sharp. Set with the slider in the Settings window.
+  PET_SIZE_RANGE: { min: 104, max: 416, step: 52 },
   DEFAULT_PET_SIZE: 208,
   // Menu-bar dropdown and PR popover: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 320, height: 360 },

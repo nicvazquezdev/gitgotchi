@@ -3,12 +3,14 @@ const assert = require('node:assert/strict');
 const { resolveSize, windowSize, anchoredBounds } = require('../src/main/ui/pet-size');
 const { PET_WINDOW, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../src/main/config');
 
-const { min, max } = PET_SIZE_RANGE;
+const { min, max, step } = PET_SIZE_RANGE;
 const D = DEFAULT_PET_SIZE;
 const area = { x: 0, y: 0, width: 1440, height: 900 };
 
-test('resolveSize keeps whole pixels inside the range, default for junk', () => {
-  assert.equal(resolveSize(D + 10.4), D + 10);
+test('resolveSize snaps to the nearest step inside the range, default for junk', () => {
+  assert.equal(resolveSize(D + step / 2 - 1), D);
+  assert.equal(resolveSize(D + step / 2 + 1), D + step);
+  assert.equal(resolveSize(D + step), D + step);
   assert.equal(resolveSize(min - 50), min);
   assert.equal(resolveSize(max + 50), max);
   assert.equal(resolveSize(undefined), D);
@@ -17,7 +19,10 @@ test('resolveSize keeps whole pixels inside the range, default for junk', () => 
 
 test('windowSize equals PET_WINDOW at the default size and grows with the pet', () => {
   assert.deepEqual(windowSize(D), PET_WINDOW);
-  assert.deepEqual(windowSize(D + 100), { width: PET_WINDOW.width + 100, height: PET_WINDOW.height + 100 });
+  assert.deepEqual(windowSize(D + 2 * step), {
+    width: PET_WINDOW.width + 2 * step,
+    height: PET_WINDOW.height + 2 * step,
+  });
 });
 
 test('windowSize never gets narrower than the default width', () => {
@@ -34,7 +39,7 @@ test('anchoredBounds keeps the bottom-center in place', () => {
 
 test('anchoredBounds is reversible when nothing is clamped', () => {
   const bounds = { x: 600, y: 300, ...PET_WINDOW };
-  assert.deepEqual(anchoredBounds(anchoredBounds(bounds, D + 60, area), D, area), bounds);
+  assert.deepEqual(anchoredBounds(anchoredBounds(bounds, D + step, area), D, area), bounds);
 });
 
 test('anchoredBounds keeps the window inside the work area', () => {
@@ -48,6 +53,6 @@ test('anchoredBounds keeps the window inside the work area', () => {
 
 test('anchoredBounds respects a work area with an offset origin', () => {
   const offset = { x: -1920, y: 25, width: 1920, height: 1055 };
-  const next = anchoredBounds({ x: -1920, y: 25, ...PET_WINDOW }, D + 40, offset);
+  const next = anchoredBounds({ x: -1920, y: 25, ...PET_WINDOW }, D + step, offset);
   assert.deepEqual([next.x, next.y], [-1920, 25]);
 });

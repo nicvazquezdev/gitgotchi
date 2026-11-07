@@ -51,7 +51,7 @@ function switchRow(label, action, describe) {
 
 /** Pet size slider, shown as a percentage of the size the sprites are drawn for. */
 function sizeRow() {
-  const slider = h('input', { id: 'pet-size', class: 'slider', type: 'range', step: 1 });
+  const slider = h('input', { id: 'pet-size', class: 'slider', type: 'range' });
   const value = h('span', { class: 'size-value', 'aria-hidden': 'true' });
   let defaultSize = 1;
   let dragging = false; // while the slider is held, pushed states must not move it
@@ -94,6 +94,7 @@ function sizeRow() {
       defaultSize = defaultPetSize;
       slider.min = sizeRange.min;
       slider.max = sizeRange.max;
+      slider.step = sizeRange.step; // whole multiples of the sprite box: pixels stay sharp
       if (!dragging) slider.value = petSize;
       paint();
     },

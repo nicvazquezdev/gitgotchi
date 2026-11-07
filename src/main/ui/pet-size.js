@@ -3,10 +3,11 @@ const { PET_WINDOW, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../config');
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
-/** Whole pixels inside the allowed range; the default for junk (e.g. a stale or edited store). */
+/** The nearest allowed size (a multiple of the step inside the range); the default for junk (e.g. a stale store). */
 function resolveSize(size) {
   if (!Number.isFinite(size)) return DEFAULT_PET_SIZE;
-  return clamp(Math.round(size), PET_SIZE_RANGE.min, PET_SIZE_RANGE.max);
+  const { min, max, step } = PET_SIZE_RANGE;
+  return clamp(Math.round(size / step) * step, min, max);
 }
 
 /** The window grows with the sprite; it never gets narrower than the speech bubble and HUD need. */
