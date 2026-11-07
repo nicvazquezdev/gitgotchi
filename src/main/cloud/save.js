@@ -29,11 +29,19 @@ const isSave = (json) => json?.app === SAVE.app && json.profile && json.activity
 
 const samePet = (a, b) => Boolean(a && b && a.species === b.species && a.bornAt === b.bornAt);
 
+/** Union of two sets of reached achievements (id -> day), keeping the earliest day. Undefined when neither has any. */
+function mergeAchievements(a, b) {
+  if (!a && !b) return undefined;
+  const merged = { ...a };
+  for (const [id, day] of Object.entries(b ?? {})) if (!merged[id] || day < merged[id]) merged[id] = day;
+  return merged;
+}
+
 /**
  * Merges a remote save into the local state. Returns a store patch.
  * - XP history: max per day and kind on both sides, so nothing is lost or counted twice.
  * - Pet and repos: the most recently changed profile wins (last-write-wins on `updatedAt`).
- * - Same pet on both sides: keep the highest stage either computer reached.
+ * - Same pet on both sides: keep the highest stage either computer reached, and the achievements of both.
  */
 function mergeSave(state, save) {
   const remote = save.profile;
@@ -42,7 +50,14 @@ function mergeSave(state, save) {
   const other = winner === remote ? state.pet : remote.pet;
 
   let pet = winner.pet;
-  if (samePet(pet, other)) pet = { ...pet, stageIndex: Math.max(pet.stageIndex ?? 0, other.stageIndex ?? 0) };
+  if (samePet(pet, other)) {
+    const achievements = mergeAchievements(pet.achievements, other.achievements);
+    pet = {
+      ...pet,
+      stageIndex: Math.max(pet.stageIndex ?? 0, other.stageIndex ?? 0),
+      ...(achievements && { achievements }),
+    };
+  }
 
   return {
     pet,

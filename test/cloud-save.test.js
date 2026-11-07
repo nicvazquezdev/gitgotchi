@@ -69,3 +69,36 @@ test('saveSummary describes the saved pet', () => {
   assert.ok(summary.level >= 1);
   assert.equal(isSave({ app: 'other' }), false);
 });
+
+test('achievements travel with the pet, and the same pet on two computers keeps both sets (earliest day)', () => {
+  const local = state({ pet: { ...pet, achievements: { 'first-pr': '2026-11-03', 'review-10': '2026-11-05' } } });
+  const remote = toSave(
+    state({
+      pet: { ...pet, achievements: { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' } },
+      profileUpdatedAt: '2026-11-04T00:00:00Z',
+    }),
+  );
+  assert.deepEqual(remote.profile.pet.achievements, { 'first-pr': '2026-11-02', 'first-merge': '2026-11-04' });
+  const merged = mergeSave(local, remote);
+  assert.deepEqual(merged.pet.achievements, {
+    'first-pr': '2026-11-02',
+    'first-merge': '2026-11-04',
+    'review-10': '2026-11-05',
+  });
+});
+
+test('a pet without achievements on both sides stays without them (the first check records silently)', () => {
+  const merged = mergeSave(state(), toSave(state({ profileUpdatedAt: '2026-11-04T00:00:00Z' })));
+  assert.equal('achievements' in merged.pet, false);
+});
+
+test('another pet does not inherit the achievements of the one that lost the merge', () => {
+  const remote = toSave(
+    state({
+      pet: { ...pet, species: 'koi', bornAt: '2026-11-06T00:00:00Z', achievements: { 'first-pr': '2026-11-07' } },
+      profileUpdatedAt: '2026-11-06T00:00:00Z',
+    }),
+  );
+  const merged = mergeSave(state({ pet: { ...pet, achievements: { 'first-merge': '2026-11-03' } } }), remote);
+  assert.deepEqual(merged.pet.achievements, { 'first-pr': '2026-11-07' });
+});

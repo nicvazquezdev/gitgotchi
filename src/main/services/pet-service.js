@@ -2,6 +2,7 @@
 // XP comes from the user's PRs (GraphQL), reviews, issues and pushes (Events API; a push is worth its commits,
 // found with one lookup each) in the selected repos, see game/catalog.js.
 // Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level; also fires on the level that evolves),
+// 'achievements' (the ones just reached, as `[{ id, name, description, icon }]`),
 // 'activity' (new activity per kind, e.g. { merges: 1 }; a live `pushes` reaction is animation only;
 // `reviewRequests` is not XP: someone asked the user for a review),
 // 'configured' (setup saved: repos may have changed).
@@ -12,6 +13,7 @@ const engine = require('../game/engine');
 const { SPECIES, PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
 const { commitKey, pendingPushes } = require('../game/commits');
 const { reviewQueue } = require('../game/pull-requests');
+const { unlockedOf } = require('../game/achievements');
 const { fromDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
@@ -146,6 +148,7 @@ class PetService extends EventEmitter {
       if (this.#baselined && Object.keys(delta).length > 0) this.emit('activity', delta);
       this.#baselined = true;
       this.#checkProgress();
+      this.#checkAchievements();
     } catch (err) {
       console.error('[sync]', err);
       this.#poll.etag = null; // a failed sync must not hide events behind a 304
@@ -210,6 +213,7 @@ class PetService extends EventEmitter {
     if (!changed) return;
     if (Object.keys(delta).length > 0) this.emit('activity', delta);
     this.#checkProgress();
+    this.#checkAchievements();
     this.notify();
   }
 
@@ -241,6 +245,30 @@ class PetService extends EventEmitter {
     // First time we only record where the pet is, no celebration.
     if (pet.level != null && level > pet.level) this.emit('levelUp', level);
     if (pet.stageIndex != null && stage.index > pet.stageIndex) this.emit('evolved', stage);
+  }
+
+  /**
+   * Records the achievements reached (they are never lost, even if the history is rebuilt) and announces the new
+   * ones. The first time it only records them, so a pet that already had some (an update, a restored save)
+   * does not celebrate them all at once.
+   */
+  #checkAchievements() {
+    const status = engine.computeStatus(store.get());
+    if (!status) return;
+    const known = store.get().pet.achievements;
+    const fresh = unlockedOf(status.achievements).filter((a) => !known || !(a.id in known));
+    if (known && fresh.length === 0) return;
+    store.update((s) => ({
+      pet: {
+        ...s.pet,
+        achievements: { ...s.pet.achievements, ...Object.fromEntries(fresh.map((a) => [a.id, a.unlockedAt])) },
+      },
+    }));
+    if (known)
+      this.emit(
+        'achievements',
+        fresh.map(({ id, name, description, icon }) => ({ id, name, description, icon })),
+      );
   }
 }
 
