@@ -1,8 +1,26 @@
 // Preload for `npm run shots`: the same `window.gitgotchi` shape as src/preload/preload.js, filled with fixtures
 // instead of IPC. Fixtures come as JSON in the SHOTS_FIXTURES environment variable.
-const { contextBridge } = require('electron');
+const { contextBridge, webFrame } = require('electron');
 
 const fx = JSON.parse(process.env.SHOTS_FIXTURES);
+
+// `--freeze`: the page sees the same moment on every run (dates in the page are relative to it). This runs before
+// the page's own scripts.
+if (fx.freeze) {
+  webFrame.executeJavaScript(`(() => {
+    const FIXED = ${fx.freeze};
+    const RealDate = Date;
+    globalThis.Date = class extends RealDate {
+      constructor(...args) {
+        if (args.length) super(...args);
+        else super(FIXED);
+      }
+      static now() {
+        return FIXED;
+      }
+    };
+  })()`);
+}
 const value = (v) => async () => v;
 const never = () => () => {};
 const ignore = () => {};

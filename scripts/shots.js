@@ -1,5 +1,7 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--fresh] [--complete] [--click selector] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--fresh] [--complete] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
+// `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
+// `npm run shots:check` compares with the saved ones (see visual-check.js).
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('node:fs');
 const os = require('node:os');
@@ -22,6 +24,7 @@ const fresh = process.argv.includes('--fresh'); // a pet that has done nothing y
 const complete = process.argv.includes('--complete'); // a pet with every achievement
 const click = process.argv.includes('--click') ? process.argv[process.argv.indexOf('--click') + 1] : null; // a selector to click before the capture
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
+const freeze = process.argv.includes('--freeze'); // a fixed clock and nothing that moves, for pixel comparisons
 const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
 const PAGES = {
   profile: { size: config.PROFILE_WINDOW },
@@ -35,7 +38,7 @@ const pages = args.filter((a) => a in PAGES);
 
 // ---------- Fixtures ----------
 
-const NOW = new Date();
+const NOW = freeze ? new Date(2026, 5, 15, 12, 0, 0) : new Date();
 const dayKey = (n) => {
   const d = new Date(NOW);
   d.setDate(d.getDate() - n);
@@ -89,8 +92,20 @@ if (complete) pet.achievements = Object.fromEntries(catalog.ACHIEVEMENTS.map((a)
 const status = computeStatus({ pet, activity: history, repos }, NOW);
 status.reviewQueue = reviewQueue(
   [
-    { ...pr(11, 'Fix flaky editor selection test', 'webflow/webflow', 35), author: 'ana-dev' },
-    { ...pr(12, 'Bump design tokens to 4.2', 'webflow/webflow-cli', 520), author: 'lee-ui', createdAt: ago(80 * H) },
+    { ...pr(11, 'Fix flaky editor selection test', 'webflow/webflow', 35), author: 'ana-dev', requestedAt: ago(5 * H) },
+    {
+      ...pr(12, 'Bump design tokens to 4.2', 'webflow/webflow-cli', 520),
+      author: 'lee-ui',
+      createdAt: ago(80 * H),
+      requestedAt: ago(70 * H),
+      via: 'webflow/code',
+    },
+    // The date of the request could not be proved: the row says how old the PR is and does not flag it as late.
+    {
+      ...pr(13, 'Add keyboard shortcuts to the navigator', 'webflow/webflow', 140),
+      author: 'sam',
+      createdAt: ago(9 * 24 * H),
+    },
   ],
   repos,
   NOW,
@@ -98,6 +113,7 @@ status.reviewQueue = reviewQueue(
 
 if (mine) status.reviewQueue = [];
 const fixtures = {
+  freeze: freeze ? NOW.getTime() : null,
   celebrate: celebrate
     ? [
         {
@@ -130,6 +146,8 @@ const fixtures = {
     repoCount: repos.length,
     speechBubbles: true,
     doNotDisturb: false,
+    notifications: true,
+    menuBarCount: true,
     openAtLogin: false,
     cloud: { enabled: false, repo: null, saved: false, phase: null, error: null, lastPushAt: null },
     petSize: config.DEFAULT_PET_SIZE,
@@ -140,6 +158,19 @@ const fixtures = {
 process.env.SHOTS_FIXTURES = JSON.stringify(fixtures);
 
 // ---------- Render ----------
+
+/** For `--freeze`: check that the page's clock is the fixed one, and stop everything that moves. */
+async function settle(win) {
+  const clock = await win.webContents.executeJavaScript('Date.now()');
+  if (clock !== NOW.getTime()) throw new Error(`the clock is not frozen (${clock}), see shots-preload.js`);
+  await win.webContents.insertCSS(
+    `*, *::before, *::after { animation: none !important; transition: none !important; caret-color: transparent !important; }
+     canvas { visibility: hidden !important; }
+     ::-webkit-scrollbar { display: none !important; }`,
+  );
+  await win.webContents.executeJavaScript('document.fonts.ready.then(() => true)');
+  await new Promise((resolve) => setTimeout(resolve, 200));
+}
 
 async function shot(name) {
   const { fit } = PAGES[name];
@@ -153,6 +184,7 @@ async function shot(name) {
   });
   await win.loadFile(path.join(ROOT, 'src/renderer', name, 'index.html'), tab ? { hash: tab } : {});
   await new Promise((resolve) => setTimeout(resolve, 1000)); // fonts, images and the first render
+  if (freeze) await settle(win);
   const rect = fit
     ? await win.webContents.executeJavaScript(
         `(() => { const r = document.querySelector('#app').getBoundingClientRect(); return { x: 0, y: 0, width: innerWidth, height: Math.ceil(r.bottom) + 8 }; })()`,
