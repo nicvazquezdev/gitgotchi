@@ -23,6 +23,7 @@ fake('store.js', {
 fake('services/session.js', { client: async () => client });
 const cloud = require('../src/main/cloud/cloud-sync');
 
+const { toSave } = require('../src/main/cloud/save');
 const pet = { species: 'phoenix', name: 'Cindle', bornAt: '2026-11-01T00:00:00Z', stageIndex: 0 };
 
 /** Runs `job` and returns the phases the status reported, in order, ending with the idle state. */
@@ -66,6 +67,24 @@ test('a failing step ends idle with the error, and the switch can be used again'
   assert.equal(cloud.status().phase, null);
   assert.equal(cloud.status().error, 'boom');
   assert.equal(cloud.isBusy(), false);
+});
+
+test('the save is remembered after the backup is turned off, because the repo stays', async () => {
+  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  repo = { exists: false };
+  client.writeJsonFile = async () => 'sha';
+  assert.equal(cloud.status().saved, false);
+  await cloud.enable();
+  assert.equal(cloud.status().saved, true);
+  cloud.disable();
+  assert.deepEqual({ enabled: cloud.status().enabled, saved: cloud.status().saved }, { enabled: false, saved: true });
+});
+
+test('finding a save in the account counts as saved', async () => {
+  state = { user: { login: 'me' }, pet, repos: ['me/app'], activity: { days: {} }, cloudSync: false };
+  client.readJsonFile = async () => ({ sha: 's', json: toSave(state) });
+  await cloud.restore();
+  assert.equal(cloud.status().saved, true);
 });
 
 test('the repo name is "<login>/gitgotchi-save"', () => {

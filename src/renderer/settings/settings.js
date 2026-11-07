@@ -11,11 +11,15 @@ const REFRESH_LABEL_MS = 30 * 1000; // keeps "Last saved N min ago" current
 
 /**
  * Label and hint on the left, a switch on the right.
- * `describe(state)` -> { checked, hint, error?, busy? }; a busy switch ignores clicks.
+ * `describe(state)` -> { checked, hint, error?, busy?, link?: { label, action } }; a busy switch ignores clicks.
+ * The optional link goes at the end of the hint and sends `link.action`.
  */
 function switchRow(label, action, describe) {
   const id = `switch-${action}`;
-  const hint = h('p', { class: 'hint', id: `${id}-hint` });
+  const text = h('span');
+  let linkAction = null;
+  const link = h('button', { class: 'link', type: 'button', onclick: () => linkAction && api.action(linkAction) });
+  const hint = h('p', { class: 'hint', id: `${id}-hint` }, text, ' ', link);
   const control = h('button', {
     id,
     class: 'switch',
@@ -32,10 +36,13 @@ function switchRow(label, action, describe) {
       control,
     ),
     update(state) {
-      const { checked, hint: text, error = false, busy = false } = describe(state);
+      const { checked, hint: message, error = false, busy = false, link: extra } = describe(state);
       control.setAttribute('aria-checked', String(checked));
       control.disabled = busy;
-      hint.textContent = text;
+      text.textContent = message;
+      linkAction = extra?.action ?? null;
+      link.textContent = extra?.label ?? '';
+      link.hidden = !extra;
       hint.classList.toggle('error', error);
       hint.classList.toggle('busy', busy);
     },
@@ -120,14 +127,23 @@ const BACKUP_STEPS = {
 function backupHint({ cloud }) {
   if (cloud.phase) return { checked: true, hint: BACKUP_STEPS[cloud.phase](cloud.repo), busy: true };
   if (cloud.error) return { checked: cloud.enabled, hint: `Backup failed: ${cloud.error}`, error: true };
+  const openRepo = { label: 'Open on GitHub', action: 'openSaveRepo' };
   if (!cloud.enabled) {
+    // Turning the backup off stops syncing; it never deletes the repo.
+    if (cloud.saved) {
+      return {
+        checked: false,
+        hint: `Off. Your last save stays in ${cloud.repo}. Delete that repo on GitHub to remove it.`,
+        link: openRepo,
+      };
+    }
     return {
       checked: false,
       hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers.',
     };
   }
   const saved = cloud.lastPushAt ? ` Last saved ${timeAgo(cloud.lastPushAt)}.` : '';
-  return { checked: true, hint: `Saved in your private repo ${cloud.repo}.${saved}` };
+  return { checked: true, hint: `Saved in your private repo ${cloud.repo}.${saved}`, link: openRepo };
 }
 
 // ---------- Page ----------

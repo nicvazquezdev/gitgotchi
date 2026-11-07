@@ -80,11 +80,11 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, doNotDisturb, openAtLogin, cloud: { enabled, repo, phase, error, lastPushAt },
+    // -> { login, repoCount, speechBubbles, doNotDisturb, openAtLogin, cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    action: send('settings:action'), // 'toggleSpeechBubbles' | 'toggleOpenAtLogin' | 'toggleCloudSync' | 'openSetup'
+    action: send('settings:action'), // 'toggleSpeechBubbles' | 'toggleOpenAtLogin' | 'toggleCloudSync' | 'openSaveRepo' | 'openSetup'
     setSize: send('settings:size'), // { size, commit }: live while dragging, commit on release
   },
 });

@@ -25,6 +25,7 @@ class CloudSync extends EventEmitter {
 
   /**
    * `repo`: where the save lives ("<login>/gitgotchi-save"); `lastPushAt`: last write in this session;
+   * `saved`: a save exists in the repo (it stays there after the backup is turned off);
    * `phase`: null when idle, else 'checking' (is there a repo?), 'creating' (the repo),
    * 'pulling' (the remote save) or 'saving' (writing the save).
    */
@@ -33,6 +34,7 @@ class CloudSync extends EventEmitter {
     return {
       enabled: this.isEnabled(),
       repo: login ? `${login}/${SAVE.repo}` : null,
+      saved: Boolean(store.get().cloudSaved),
       phase: this.#phase,
       error: this.#error,
       lastPushAt: this.#lastPushAt || null,
@@ -157,7 +159,7 @@ class CloudSync extends EventEmitter {
     this.#setPhase('pulling');
     const file = await this.#read();
     if (!file) return;
-    store.update((state) => mergeSave(state, file.json));
+    store.update((state) => ({ ...mergeSave(state, file.json), cloudSaved: true }));
     this.#lastSaved = JSON.stringify(file.json);
     this.emit('pulled');
   }
@@ -182,6 +184,7 @@ class CloudSync extends EventEmitter {
     }
     this.#lastSaved = JSON.stringify(json);
     this.#lastPushAt = Date.now(); // the status event comes from #finish
+    store.update({ cloudSaved: true });
   }
 }
 

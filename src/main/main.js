@@ -78,6 +78,11 @@ const actions = {
     else cloud.enable();
     settingsWindow.send();
   },
+  // The backup repo (it stays in the account after the backup is turned off).
+  openSaveRepo: () => {
+    const { repo } = cloud.status();
+    if (repo) openGithub(`https://github.com/${repo}`);
+  },
   // Live while dragging the Settings slider (`persist` false); saved on release.
   setPetSize: (size, persist = true) => {
     petWindow.setSize(size, { persist });

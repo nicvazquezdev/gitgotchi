@@ -19,6 +19,7 @@ const defaults = () => ({
   doNotDisturb: false, // device setting: no bubbles, notifications or evolution popups
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
   cloudSync: false, // optional cloud save in the user's GitHub account (device setting)
+  cloudSaved: false, // a save exists in the user's GitHub account (written or found by this app)
   profileUpdatedAt: null, // when the pet or repos last changed here (cloud save: last change wins)
 });
 
