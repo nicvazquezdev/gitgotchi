@@ -25,7 +25,9 @@ npm run dev   # auto-reloads on changes
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds.
 - Points and thresholds live in `src/main/game/catalog.js`.
 
-**Usage:** drag the pet anywhere. Click: it talks. Right-click the pet or click the menu bar icon: a panel with stats, streak, a size slider and options, including _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
+**Usage:** drag the pet anywhere. Click: it talks. Right-click the pet or click the menu bar icon: a panel with the pet's level, your PRs and the everyday switches (_Show pet on desktop_, _Do not disturb_).
+
+**Settings** (_Settings…_ or ⌘,): pet size, speech bubbles, the account and repos (_Change…_ reopens the setup), _Back up pet to GitHub_ and _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
 
 ## Structure
 
@@ -47,6 +49,7 @@ src/
   renderer/
     shared/                 retro theme, DOM helpers, sprites
     pet/                    floating pet window
+    settings/               preferences window
     onboarding/             3-step onboarding (one module per step)
 ```
 
