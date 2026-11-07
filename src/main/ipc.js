@@ -20,7 +20,7 @@ function on(channel, fn) {
   ipcMain.on(channel, (event, payload) => isTrusted(event) && fn(payload));
 }
 
-/** @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void }} actions */
+/** @param {{ finishOnboarding: () => void, showMenu: () => void, stepPetSize: (direction: number) => void, disconnect: () => void }} actions */
 function registerIpc(actions) {
   // App
   handle('app:bootstrap', () => {
@@ -61,6 +61,8 @@ function registerIpc(actions) {
   );
   on('pet:drag-end', () => petWindow.stopDrag());
   on('pet:menu', () => actions.showMenu());
+  handle('pet:size', () => petWindow.size());
+  on('pet:size-step', (direction) => actions.stepPetSize(Math.sign(Number(direction))));
 }
 
 module.exports = { registerIpc };

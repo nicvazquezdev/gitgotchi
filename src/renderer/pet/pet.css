@@ -9,6 +9,10 @@ body {
 body {
   font-family: var(--font-display);
   --px: 2px;
+  /* --pet-size (sprite px) is set by pet.js from the main process; --u is one sprite pixel. */
+  --u: calc(var(--pet-size) / 32);
+  /* Width of the bubble and HUD: fixed, so their text wraps the same at every pet size. */
+  --panel-width: 148px;
 }
 
 /* ---------- Pet ---------- */
@@ -16,16 +20,16 @@ body {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: 128px;
-  height: 128px;
-  margin-left: -64px;
+  width: var(--pet-size);
+  height: var(--pet-size);
+  margin-left: calc(var(--pet-size) / -2);
 }
 
 .pet {
   position: absolute;
   inset: 0;
-  width: 128px;
-  height: 128px;
+  width: var(--pet-size);
+  height: var(--pet-size);
   cursor: grab;
 }
 .pet.dragging {
@@ -41,10 +45,10 @@ body {
 /* Pixel ground shadow */
 .shadow {
   position: absolute;
-  left: 36px;
-  right: 36px;
-  bottom: 2px;
-  height: 6px;
+  left: calc(var(--u) * 9);
+  right: calc(var(--u) * 9);
+  bottom: calc(var(--u) * 0.5);
+  height: calc(var(--u) * 1.5);
   background: rgba(0, 0, 0, 0.22);
   box-shadow:
     -4px 0 0 -1px rgba(0, 0, 0, 0.12),
@@ -56,10 +60,10 @@ body.dragging .shadow {
 
 @keyframes jump {
   40% {
-    transform: translateY(-18px);
+    transform: translateY(calc(var(--u) * -4.5));
   }
   70% {
-    transform: translateY(-4px);
+    transform: translateY(calc(var(--u) * -1));
   }
 }
 @keyframes evolve {
@@ -86,8 +90,10 @@ body.dragging .shadow {
   --border: var(--ink);
   position: absolute;
   top: 8px;
-  left: 10px;
-  right: 10px;
+  left: 0;
+  right: 0;
+  width: var(--panel-width);
+  margin: 0 auto;
   padding: 8px 8px 6px;
   background: var(--night);
   color: var(--text);
@@ -152,9 +158,11 @@ body.hover:not(.dragging) .hud {
 .bubble {
   --border: var(--ink);
   position: absolute;
-  bottom: 128px;
-  left: 10px;
-  right: 10px;
+  bottom: var(--pet-size);
+  left: 0;
+  right: 0;
+  width: var(--panel-width);
+  margin: 0 auto;
   padding: 8px;
   background: var(--paper);
   color: var(--ink);
@@ -185,8 +193,8 @@ body.hover .bubble {
 /* ---------- Indicators ---------- */
 .zzz {
   position: absolute;
-  bottom: 92px;
-  right: 30px;
+  bottom: calc(var(--u) * 23);
+  right: calc(var(--u) * 7.5);
   color: var(--sky);
   pointer-events: none;
 }
@@ -219,8 +227,8 @@ body.hover .bubble {
 .alert {
   --border: var(--ink);
   position: absolute;
-  bottom: 100px;
-  left: 28px;
+  bottom: calc(var(--u) * 25);
+  left: calc(var(--u) * 7);
   width: 14px;
   height: 14px;
   background: var(--red);

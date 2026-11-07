@@ -143,7 +143,33 @@ canvas.addEventListener('contextmenu', (e) => {
   api.openMenu();
 });
 
+// ---------- Size: Cmd/Ctrl + scroll over the pet ----------
+
+const SIZE_SCROLL_STEP = 40; // accumulated wheel delta that counts as one step
+const SIZE_SCROLL_COOLDOWN_MS = 150; // stops trackpad inertia from skipping several sizes
+const sizeScroll = { delta: 0, lastStepAt: 0 };
+
+const setSize = (px) => document.documentElement.style.setProperty('--pet-size', `${px}px`);
+
+canvas.addEventListener(
+  'wheel',
+  (e) => {
+    if (!(e.metaKey || e.ctrlKey)) return;
+    e.preventDefault();
+    sizeScroll.delta += e.deltaY;
+    if (Math.abs(sizeScroll.delta) < SIZE_SCROLL_STEP) return;
+    const direction = -Math.sign(sizeScroll.delta); // scroll up = bigger
+    sizeScroll.delta = 0;
+    if (e.timeStamp - sizeScroll.lastStepAt < SIZE_SCROLL_COOLDOWN_MS) return;
+    sizeScroll.lastStepAt = e.timeStamp;
+    api.stepSize(direction);
+  },
+  { passive: false },
+);
+
 // ---------- Main process events ----------
+
+api.onSize(setSize);
 
 api.onStatus(setStatus);
 api.onEvolved((stage) => {
@@ -151,6 +177,7 @@ api.onEvolved((stage) => {
   say(`${status?.name ?? 'Your pet'} evolved into a ${stage.name}! ✨`, 6000);
 });
 
+setSize(await api.size());
 setStatus(await api.status());
 animatePet(canvas, spriteOptions);
 if (status) say(status.stage.index === 0 ? '…' : `Hi! I'm ${status.name}`);
