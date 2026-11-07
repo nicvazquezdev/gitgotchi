@@ -82,7 +82,7 @@ function setClickThrough(enabled) {
   if (isOpen() && !followTimer) win.setIgnoreMouseEvents(enabled, { forward: true });
 }
 
-// ---------- Drag & corner resize: both follow the cursor from the main process ----------
+// ---------- Drag: the window follows the cursor from the main process ----------
 
 let followTimer = null;
 
@@ -109,30 +109,6 @@ function startDrag({ offsetX, offsetY }) {
 
 function stopDrag() {
   stopFollowing();
-  saveBounds();
-}
-
-let resizing = null; // { size } while a corner is being dragged
-
-/** Resizes from a sprite corner while the opposite corner stays put. */
-function startResize({ corner }) {
-  if (!isOpen() || !/^[ns][we]$/.test(corner)) return;
-  const anchor = petSize.oppositeCorner(win.getBounds(), size(), corner);
-  resizing = { size: size() };
-  followCursor((cursor) => {
-    const next = petSize.sizeFromCursor(anchor, cursor);
-    if (next === resizing.size) return;
-    resizing.size = next;
-    win.setBounds(petSize.boundsFromAnchor(anchor, corner, next));
-    send('pet:size', next);
-  });
-}
-
-function stopResize() {
-  if (!resizing) return;
-  stopFollowing();
-  store.update({ petSize: resizing.size });
-  resizing = null;
   saveBounds();
 }
 
@@ -163,8 +139,6 @@ module.exports = {
   setClickThrough,
   startDrag,
   stopDrag,
-  startResize,
-  stopResize,
   ensureOnScreen,
   size,
   setSize,

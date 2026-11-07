@@ -7,7 +7,6 @@ const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
 const onboardingWindow = require('./ui/onboarding-window');
 const { createTray, buildMenu } = require('./ui/tray');
-const { stepSize } = require('./ui/pet-size');
 const { registerIpc } = require('./ipc');
 const loginItem = require('./login-item');
 
@@ -41,8 +40,6 @@ const actions = {
     petWindow.setSize(size);
     refreshMenu();
   },
-  stepPetSize: (direction) => actions.setPetSize(stepSize(petWindow.size(), direction)),
-  refreshMenu: () => refreshMenu(),
   showMenu: () => menu().popup({ window: petWindow.window }),
   quit: () => app.quit(),
 };

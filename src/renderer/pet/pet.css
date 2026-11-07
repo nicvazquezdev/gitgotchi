@@ -36,20 +36,6 @@ body {
   cursor: grabbing;
 }
 
-/* ---------- Corner resize ---------- */
-.pet[data-corner='nw'],
-.pet[data-corner='se'] {
-  cursor: nwse-resize;
-}
-.pet[data-corner='ne'],
-.pet[data-corner='sw'] {
-  cursor: nesw-resize;
-}
-
-body.resizing .hud,
-body.resizing .bubble {
-  display: none;
-}
 .pet.jump {
   animation: jump 0.5s steps(5);
 }
