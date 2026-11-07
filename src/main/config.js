@@ -19,8 +19,8 @@ module.exports = {
   DEFAULT_PET_SIZE: 208,
   // Menu-bar panel: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 300, height: 360 },
-  // Default size is also the minimum: below it the pet step doesn't fit.
-  ONBOARDING_WINDOW: { width: 640, height: 860, minWidth: 640, minHeight: 860 },
+  // Default size is also the minimum: below it the steps don't fit.
+  ONBOARDING_WINDOW: { width: 960, height: 640, minWidth: 960, minHeight: 640 },
 
   // Base poll period. Cheap: conditional requests answer 304 when nothing changed.
   // GitHub's X-Poll-Interval header can only raise it.

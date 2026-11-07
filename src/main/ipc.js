@@ -62,6 +62,12 @@ function registerIpc(actions) {
     actions.finishOnboarding();
   });
 
+  // Cloud save. TODO(lead): replace these stubs with the real implementation.
+  handle('cloud:find', async () => ({ found: false }));
+  handle('cloud:restore', async () => {
+    throw new Error('Cloud save is not available yet');
+  });
+
   // Pet
   handle('pet:status', () => petService.status());
   handle('pet:refresh', () => petService.sync());

@@ -1,5 +1,5 @@
 // Onboarding / settings window.
-const { app, screen } = require('electron');
+const { app, screen, nativeTheme } = require('electron');
 const { createWindow } = require('./create-window');
 const { centeredIn } = require('./placement');
 const { ONBOARDING_WINDOW, IS_MAC } = require('../config');
@@ -30,8 +30,10 @@ function open({ onClosed } = {}) {
     ...ONBOARDING_WINDOW,
     ...centeredIn(activeDisplay().workArea, ONBOARDING_WINDOW),
     title: 'Gitgotchi',
-    backgroundColor: '#14102a',
+    backgroundColor: nativeTheme.shouldUseDarkColors ? '#1d1a26' : '#ffffff', // --bg
+    // The page draws the 40 px title bar; the native traffic lights sit inside it.
     titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
+    trafficLightPosition: { x: 16, y: 14 },
   });
   win.once('ready-to-show', () => {
     win.show();
