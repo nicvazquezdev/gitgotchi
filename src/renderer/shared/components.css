@@ -222,6 +222,72 @@ canvas.sprite {
   overflow: hidden;
 }
 
+/* ---------- Pixel art (shared/pixel-art.js): tier palettes ---------- */
+.pa {
+  display: block;
+  shape-rendering: crispEdges;
+}
+.pa-m {
+  fill: var(--t-main);
+}
+.pa-l {
+  fill: var(--t-light);
+}
+.pa-d {
+  fill: var(--t-dark);
+}
+.pa-g {
+  fill: var(--t-ink);
+}
+.pa-i {
+  fill: currentColor;
+}
+.tier-bronze {
+  --t-main: #d08a4e;
+  --t-light: #f3bd8a;
+  --t-dark: #8a4f24;
+  --t-ink: #4a2610;
+}
+.tier-silver {
+  --t-main: #b9c3d4;
+  --t-light: #eaf0fa;
+  --t-dark: #6f7b92;
+  --t-ink: #2f3a4f;
+}
+.tier-gold {
+  --t-main: #f2c14e;
+  --t-light: #ffe9a3;
+  --t-dark: #b8801c;
+  --t-ink: #5a3b05;
+}
+.tier-diamond {
+  --t-main: #6fdcf5;
+  --t-light: #cdf6ff;
+  --t-dark: #2f8fb0;
+  --t-ink: #0d3f52;
+}
+.tier-special {
+  --t-main: #d58cff;
+  --t-light: #f3d0ff;
+  --t-dark: #8a45b8;
+  --t-ink: #3d1458;
+}
+/* Not earned yet: the same shapes in the colors of the surface. */
+.tier-locked {
+  --t-main: #e4dfec;
+  --t-light: #f3f0f8;
+  --t-dark: #cbc4d8;
+  --t-ink: #b0a8c2;
+}
+@media (prefers-color-scheme: dark) {
+  .tier-locked {
+    --t-main: #2d2939;
+    --t-light: #3b3649;
+    --t-dark: #221f2c;
+    --t-ink: #524c68;
+  }
+}
+
 /* ---------- Chips, dots, notices ---------- */
 .count-chip {
   padding: 1px 6px;

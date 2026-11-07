@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--fresh] [--complete] [--click selector] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('node:fs');
@@ -11,13 +11,16 @@ const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
-const flagValues = new Set(['--out', '--tab'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
+const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const light = process.argv.includes('--light');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
+const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
+const complete = process.argv.includes('--complete'); // a pet with every achievement
+const click = process.argv.includes('--click') ? process.argv[process.argv.indexOf('--click') + 1] : null; // a selector to click before the capture
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
 const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
 const PAGES = {
@@ -81,7 +84,9 @@ const prs = [
 ];
 const repos = ['webflow/webflow', 'webflow/webflow-cli'];
 const pet = { name: 'Mergon', species: 'phoenix', bornAt: ago(20 * 24 * H), stageIndex: 1, level: 6 };
-const status = computeStatus({ pet, activity: { days, prs, commits: [] }, repos }, NOW);
+const history = fresh ? { days: {}, prs: [], commits: [] } : { days, prs, commits: [] };
+if (complete) pet.achievements = Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)]));
+const status = computeStatus({ pet, activity: history, repos }, NOW);
 status.reviewQueue = reviewQueue(
   [
     { ...pr(11, 'Fix flaky editor selection test', 'webflow/webflow', 35), author: 'ana-dev' },
@@ -144,13 +149,17 @@ async function shot(name) {
         `(() => { const r = document.querySelector('#app').getBoundingClientRect(); return { x: 0, y: 0, width: innerWidth, height: Math.ceil(r.bottom) + 8 }; })()`,
       )
     : undefined;
+  if (click) {
+    await win.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(click)}).click()`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+  }
   const image = await win.webContents.capturePage(rect);
   const overflowing = await win.webContents.executeJavaScript(
     `[...document.querySelectorAll('.card')].filter((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1).map((c) => c.className)`,
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

@@ -1,0 +1,378 @@
+/* Profile > Achievements: a console-style trophy case (see achievements-view.js). Pixel medals by tier. */
+.content.achievements {
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ach-page {
+  --dither: color-mix(in srgb, var(--text) 4%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  padding-bottom: 8px;
+}
+.ach-page h3 {
+  margin: 0;
+  font: 600 15px var(--font-pixel);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.ach-head,
+.ach-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.ach-head {
+  margin-bottom: 12px;
+}
+.ach-toolbar {
+  justify-content: space-between;
+  margin-bottom: -12px;
+}
+
+/* ---------- Segmented progress: blocks like the XP bar, in the color of the tier around them ---------- */
+.segs {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+}
+.segs > i {
+  flex: 1;
+  background: var(--track);
+}
+.segs > i.on {
+  background: var(--t-main, var(--accent));
+}
+
+/* ---------- Banner: score and the trophy of each tier ---------- */
+.ach-banner {
+  --px: 4px;
+  padding: 2px;
+  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+}
+.ach-banner-in {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 22px 26px;
+  background:
+    radial-gradient(circle at 9% 50%, color-mix(in srgb, #f2c14e 22%, transparent), transparent 36%),
+    linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--bg)), var(--bg) 70%);
+}
+.ach-banner-in::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(45deg, var(--dither) 25%, transparent 25%, transparent 75%, var(--dither) 75%),
+    linear-gradient(45deg, var(--dither) 25%, transparent 25%, transparent 75%, var(--dither) 75%);
+  background-size: 8px 8px;
+  background-position:
+    0 0,
+    4px 4px;
+}
+.ach-banner-in > * {
+  position: relative;
+}
+.ab-trophy {
+  filter: drop-shadow(0 0 14px color-mix(in srgb, var(--t-main) 55%, transparent));
+}
+.ab-label {
+  margin-bottom: 8px;
+  font: 600 12px var(--font-pixel);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.ab-digits {
+  color: var(--text);
+  line-height: 0;
+}
+.ab-points {
+  color: var(--accent-text);
+}
+.ab-count .segs {
+  width: 230px;
+  margin-top: 12px;
+}
+.ab-count .meta,
+.ab-score .meta {
+  margin-top: 8px;
+}
+.ab-tiers {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+.ab-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  width: 68px;
+  padding: 10px 4px 8px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+}
+.ab-tier b {
+  font-size: 13px;
+}
+.ab-tier span {
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.ab-tier.none .pa {
+  opacity: 0.35;
+}
+
+/* ---------- Next up ---------- */
+.ach-next-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+.ach-next {
+  --px: 4px;
+  padding: 2px;
+  background: linear-gradient(160deg, var(--t-main), var(--t-dark));
+}
+.ach-next-in {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  height: 100%;
+  padding: 14px;
+  background: var(--bg);
+}
+.ach-next-body {
+  flex: 1;
+  min-width: 0;
+}
+.ach-next .ach-desc {
+  margin-top: 2px;
+}
+.ach-next .segs {
+  height: 6px;
+  margin-top: 10px;
+}
+.ach-next-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.ach-next-foot b {
+  font-weight: 600;
+  color: var(--text);
+}
+.ach-next .ach-pts {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+}
+.ach-all-done {
+  --px: 4px;
+  padding: 2px;
+  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+}
+.ach-all-done-in {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 22px;
+  background: var(--bg);
+  font: 600 16px var(--font-pixel);
+}
+
+/* ---------- Groups and tiles ---------- */
+.ach-slots {
+  display: flex;
+  gap: 3px;
+  margin-left: auto;
+}
+.slot {
+  width: 10px;
+  height: 10px;
+  background: var(--track);
+}
+.slot.on {
+  background: var(--t-main);
+}
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+.ach {
+  position: relative;
+  transition: transform 0.12s steps(2);
+}
+.ach:hover {
+  transform: translateY(-2px);
+}
+.ach.done {
+  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--t-main) 30%, transparent));
+}
+.ach-frame {
+  --px: 4px;
+  height: 100%;
+  padding: 2px;
+  background: var(--card-border);
+}
+.ach.done .ach-frame {
+  background: linear-gradient(160deg, var(--t-light), var(--t-main) 40%, var(--t-dark));
+}
+.ach-in {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  height: 100%;
+  padding: 12px 14px 14px;
+  text-align: center;
+  background: var(--bg);
+}
+.ach.done .ach-in {
+  background:
+    radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--t-main) 20%, transparent), transparent 58%), var(--bg);
+}
+.ach-top {
+  align-self: stretch;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+.ach-tier {
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-4);
+}
+.ach.done .ach-tier {
+  color: color-mix(in srgb, var(--t-main) 75%, var(--text));
+}
+.ach-pts {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-3);
+}
+.ach.done .ach-pts {
+  color: var(--text-2);
+}
+.ach-medal {
+  position: relative;
+  margin: 2px 0;
+}
+.ach-lock {
+  position: absolute;
+  right: -8px;
+  bottom: -4px;
+}
+.ach-name {
+  font: 600 15px/1.2 var(--font-pixel);
+  color: var(--text-2);
+}
+.ach.done .ach-name {
+  color: var(--text);
+}
+.ach-desc {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-3);
+}
+.ach-foot {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 6px;
+}
+.ach-date {
+  font-size: 11px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--t-main) 70%, var(--text));
+}
+.ach-count {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.ach .segs {
+  height: 6px;
+}
+.ach-new {
+  position: absolute;
+  top: 34px;
+  right: 10px;
+  padding: 1px 5px;
+  background: #ff5d8f;
+  color: #fff;
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.06em;
+}
+.spark {
+  position: absolute;
+  left: var(--x);
+  top: var(--y);
+  width: 3px;
+  height: 3px;
+  background: var(--t-light);
+  box-shadow:
+    3px 0 0 var(--t-light),
+    -3px 0 0 var(--t-light),
+    0 3px 0 var(--t-light),
+    0 -3px 0 var(--t-light);
+}
+.ach-empty {
+  margin: 0;
+  padding: 28px 0;
+  text-align: center;
+  color: var(--text-2);
+}
+
+/* ---------- Motion (only when the system allows it) ---------- */
+@media (prefers-reduced-motion: no-preference) {
+  .spark {
+    opacity: 0;
+    animation: twinkle 2.6s steps(1) infinite var(--delay);
+  }
+  .ach-new {
+    animation: blink 1.2s steps(1) infinite;
+  }
+  .ach-page.enter .ach,
+  .ach-page.enter .ach-next,
+  .ach-page.enter .ach-banner {
+    animation: pop 0.3s steps(5) backwards;
+  }
+  .ach-page.enter .ach {
+    animation-delay: calc(var(--i) * 20ms);
+  }
+}
+@keyframes twinkle {
+  0%,
+  50%,
+  100% {
+    opacity: 0;
+  }
+  15%,
+  35% {
+    opacity: 1;
+  }
+}
+@keyframes blink {
+  50% {
+    opacity: 0.55;
+  }
+}
+@keyframes pop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}

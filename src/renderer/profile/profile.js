@@ -4,6 +4,7 @@ import { $, h } from '../shared/dom.js';
 import { icon, spriteImg, xpBar } from '../shared/ui.js';
 import { plural } from '../shared/format.js';
 import { animatePet } from '../shared/sprite.js';
+import { achievementsPage } from './achievements-view.js';
 
 const api = window.gitgotchi;
 let catalog = null;
@@ -203,80 +204,6 @@ function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
   );
 }
 
-// ---------- Achievements ----------
-
-/** 'YYYY-MM-DD' as "Nov 7" (with the year when it is not this one). */
-function dayLabel(day) {
-  const date = new Date(`${day}T12:00:00`);
-  const sameYear = date.getFullYear() === new Date().getFullYear();
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
-}
-
-function achievementCard(a) {
-  const done = Boolean(a.unlockedAt);
-  const progress =
-    !done && a.target > 1
-      ? h(
-          'div',
-          { class: 'ach-progress' },
-          h(
-            'div',
-            { class: 'ach-track', role: 'progressbar', ariaValueNow: a.value, ariaValueMax: a.target },
-            h('div', { class: 'ach-fill', style: { width: `${(a.value / a.target) * 100}%` } }),
-          ),
-          h('div', { class: 'ach-count' }, `${a.value} / ${a.target} ${a.unit}`),
-        )
-      : null;
-  return h(
-    'div',
-    { class: `ach${done ? ' done' : ''}` },
-    h('div', { class: 'ach-icon' }, icon(a.icon, { size: 20, stroke: 2.2 })),
-    h(
-      'div',
-      { class: 'ach-body' },
-      h('div', { class: 'ach-name' }, a.name),
-      h('div', { class: 'ach-desc' }, a.description),
-      done ? h('div', { class: 'ach-date' }, `Unlocked ${dayLabel(a.unlockedAt)}`) : progress,
-    ),
-  );
-}
-
-function achievementsPage({ name, achievements: { unlocked, total, groups } }) {
-  return h(
-    'div',
-    { class: 'ach-page' },
-    h(
-      'div',
-      { class: 'ach-head' },
-      h(
-        'div',
-        {},
-        h('h2', {}, `${name}'s achievements`),
-        h('div', { class: 'meta' }, 'Counted from the day it hatched'),
-      ),
-      h('div', { class: 'ach-total' }, h('b', {}, `${unlocked} / ${total}`), 'unlocked', xpBar(unlocked / total)),
-    ),
-    groups.map((group) =>
-      h(
-        'section',
-        { class: 'ach-group' },
-        h(
-          'div',
-          { class: 'ach-group-head' },
-          h('h3', {}, group.name),
-          group.note ? h('span', { class: 'meta' }, group.note) : null,
-          h(
-            'span',
-            { class: 'meta ach-group-count' },
-            `${group.items.filter((a) => a.unlockedAt).length} / ${group.items.length}`,
-          ),
-        ),
-        h('div', { class: 'ach-grid' }, group.items.map(achievementCard)),
-      ),
-    ),
-  );
-}
-
 // ---------- Views ----------
 
 const VIEWS = [
@@ -284,6 +211,7 @@ const VIEWS = [
   ['achievements', 'Achievements'],
 ];
 let view = location.hash === '#achievements' ? 'achievements' : 'overview';
+let filter = 'all'; // achievements: which ones to show
 let latest = null; // the last status received
 let shownView = null; // the view on screen
 
@@ -327,14 +255,24 @@ function viewTabs(status) {
 function render(status) {
   latest = status;
   const app = $('#app');
-  const scroll = shownView === view ? app.scrollTop : 0; // a status update keeps the place in the list
+  const switched = shownView !== view;
+  const scroll = switched ? 0 : app.scrollTop; // a status update keeps the place in the list
   shownView = view;
   $('#title').replaceChildren(viewTabs(status));
   app.className = `content ${view}`;
   app.style.setProperty('--tint', status.species.tint);
   if (view === 'achievements') {
     stopAnimation(); // the pet card is not on screen
-    app.replaceChildren(achievementsPage(status));
+    app.replaceChildren(
+      achievementsPage(status, {
+        filter,
+        enter: switched,
+        onFilter: (next) => {
+          filter = next;
+          render(latest);
+        },
+      }),
+    );
   } else {
     app.replaceChildren(
       petCard(status),
