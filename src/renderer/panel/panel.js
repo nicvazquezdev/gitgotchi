@@ -51,12 +51,18 @@ const prRow = (dot, label, detail, className = '') =>
     icon('chevron', { size: 12, stroke: 2.5 }),
   );
 
-function prSummary({ waiting, approved, mergedToday }) {
+/** `reviewQueue`: PRs waiting for the user's review, oldest first (null until fetched). */
+function prSummary({ waiting, approved, mergedToday }, reviewQueue) {
   const rows = [];
+  if (reviewQueue?.length) {
+    const days = reviewQueue[0].ageDays;
+    const label = reviewQueue.length === 1 ? '1 PR needs your review' : `${reviewQueue.length} PRs need your review`;
+    rows.push(prRow('waiting', label, days ? `oldest ${days}d` : 'opened today'));
+  }
   if (waiting.length) {
     const days = oldestDays(waiting);
     rows.push(
-      prRow('waiting', `${plural(waiting.length, 'PR')} waiting for review`, days ? `oldest ${days}d` : 'opened today'),
+      prRow('waiting', `${plural(waiting.length, 'of your PR')} in review`, days ? `oldest ${days}d` : 'opened today'),
     );
   }
   if (approved.length) rows.push(prRow('approved', `${plural(approved.length, 'PR')} approved, ready to merge`));
@@ -110,7 +116,7 @@ function render(next = state) {
       ? [
           header(status),
           divider(),
-          ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }),
+          ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }, status.reviewQueue),
           divider(),
           toggleRow('Show pet on desktop', 'togglePet', petVisible),
           toggleRow('Do not disturb', 'toggleDoNotDisturb', doNotDisturb),

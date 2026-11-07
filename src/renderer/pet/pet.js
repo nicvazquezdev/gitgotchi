@@ -21,6 +21,7 @@ let bubbleTimer = null;
 let waitingVisible = false; // the PR reminder is only up for a moment, so the pet never nags
 let waitingTimer = null;
 let waitingCount = null;
+let reviewCount = null;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -34,9 +35,12 @@ function setStatus(next) {
   const moodChanged = status && status.mood !== next.mood;
   status = next;
   const count = status.prs?.waiting?.length ?? 0;
-  if (count !== waitingCount) {
+  const reviews = status.reviewQueue?.length ?? 0;
+  if (count !== waitingCount || reviews !== reviewCount) {
+    const changed = (count !== waitingCount && count > 0) || (reviews !== reviewCount && reviews > 0);
     waitingCount = count;
-    if (count > 0) showWaiting(); // first status or the number changed
+    reviewCount = reviews;
+    if (changed) showWaiting(); // first status or a number went up or changed
   }
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
@@ -51,13 +55,22 @@ const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
 
 // ---------- Bubble ----------
 // A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
-// and the PR reminder (when the number of PRs waiting changes; click to see them).
+// and the PR reminder (when the number of PRs that wait for the user's review, or of their own, changes; click to see them).
 // Off with Speech bubbles or Do not disturb.
 
 const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
 
-/** The standing message: PRs waiting for review. */
+/** The standing message: PRs waiting for the user's review first (they can act on those), else their own PRs. */
 function waitingMessage() {
+  const queue = status?.reviewQueue ?? [];
+  if (queue.length) {
+    const days = queue[0].ageDays; // oldest first
+    return {
+      title: queue.length === 1 ? '1 PR needs your review' : `${queue.length} PRs need your review`,
+      sub: `${days > 0 ? `The oldest has waited ${plural(days, 'day')}` : 'All opened today'}. Click me to see them.`,
+      dot: 'waiting',
+    };
+  }
   const waiting = status?.prs?.waiting ?? [];
   if (!waiting.length) return null;
   const days = oldestDays(waiting);
@@ -125,6 +138,7 @@ function reactToClick() {
 const REACTIONS = [
   { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉', dot: 'approved' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
+  { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
   { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!', dot: 'approved' },
   { kind: 'issues', anim: 'wiggle', text: 'Issue noted!' },
   { kind: 'comments', anim: 'wiggle', text: 'Chatty today!' },
