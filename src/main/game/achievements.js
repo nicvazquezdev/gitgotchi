@@ -1,5 +1,5 @@
 // Pure achievements: how far each one is and when it was reached. No I/O. Definitions: game/catalog.js.
-const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_RULES } = require('./catalog');
+const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_TIERS, ACHIEVEMENT_RULES } = require('./catalog');
 const { dayXp, streakLengths } = require('./stats');
 const { toDay } = require('../dates');
 
@@ -12,6 +12,8 @@ const UNITS = {
   issues: 'issues',
   streak: 'days',
 };
+
+const POINTS = Object.fromEntries(ACHIEVEMENT_TIERS.map((tier) => [tier.id, tier.points]));
 
 const byDay = (a, b) => a[0].localeCompare(b[0]);
 
@@ -64,8 +66,8 @@ function measure({ metric, target }, { series, lengths }) {
  * @param {string} [input.since]  the pet's birth day: PRs merged before it do not count
  * @param {{ [id: string]: string }} [input.stored]  achievements recorded as reached: id -> day. They stay reached
  *   whatever the ledger says now (it can be rebuilt), and their day is the one recorded.
- * @returns {{ id, group, icon, name, description, unit, target, value, unlockedAt }[]}  `unlockedAt`: the day
- *   reached ('YYYY-MM-DD') or null; `value` never goes past `target`
+ * @returns {{ id, group, metric, tier, points, icon, name, description, unit, target, value, unlockedAt }[]}
+ *   `unlockedAt`: the day reached ('YYYY-MM-DD') or null; `value` never goes past `target`
  */
 function achievementProgress({ days, prs = [], since = '', stored = {} }) {
   const active = Object.keys(days)
@@ -75,10 +77,13 @@ function achievementProgress({ days, prs = [], since = '', stored = {} }) {
   return ACHIEVEMENTS.map((def) => {
     const { total, reachedDay } = measure(def, context);
     const unlockedAt = stored[def.id] ?? (total >= def.target ? reachedDay : null);
-    const { id, group, icon, name, description, target, metric } = def;
+    const { id, group, icon, name, description, target, metric, tier } = def;
     return {
       id,
       group,
+      metric,
+      tier,
+      points: POINTS[tier],
       icon,
       name,
       description,
@@ -90,11 +95,26 @@ function achievementProgress({ days, prs = [], since = '', stored = {} }) {
   });
 }
 
-/** The list grouped for the UI, in the catalog's order: `{ unlocked, total, groups: [{ id, name, note, items }] }`. */
+/**
+ * The list grouped for the UI, in the catalog's order. `points`: the score of what is unlocked (of `totalPoints`).
+ * `tiers`: how many of each tier are unlocked, in the catalog's order.
+ * @returns {{ unlocked, total, points, totalPoints, tiers: { id, name, unlocked, total }[],
+ *   groups: { id, name, note, items }[] }}
+ */
 function groupAchievements(list) {
+  const done = list.filter((a) => a.unlockedAt);
+  const sum = (items) => items.reduce((total, a) => total + a.points, 0);
   return {
-    unlocked: list.filter((a) => a.unlockedAt).length,
+    unlocked: done.length,
     total: list.length,
+    points: sum(done),
+    totalPoints: sum(list),
+    tiers: ACHIEVEMENT_TIERS.map(({ id, name }) => ({
+      id,
+      name,
+      unlocked: done.filter((a) => a.tier === id).length,
+      total: list.filter((a) => a.tier === id).length,
+    })),
     groups: ACHIEVEMENT_GROUPS.map(({ id, name, note = null }) => ({
       id,
       name,

@@ -120,6 +120,22 @@ const ACHIEVEMENT_GROUPS = [
   { id: 'special', name: 'Special' },
 ];
 
+// Like console trophies: every achievement has a tier, and each tier is worth points (the "score" of the case).
+// A family climbs the ladder for its length: bronze to diamond for four steps; a lone step is `special`.
+const ACHIEVEMENT_TIERS = [
+  { id: 'bronze', name: 'Bronze', points: 10 },
+  { id: 'silver', name: 'Silver', points: 25 },
+  { id: 'gold', name: 'Gold', points: 50 },
+  { id: 'diamond', name: 'Diamond', points: 100 },
+  { id: 'special', name: 'Special', points: 50 },
+];
+const TIER_LADDERS = {
+  1: ['special'],
+  2: ['bronze', 'gold'],
+  3: ['bronze', 'silver', 'gold'],
+  4: ['bronze', 'silver', 'gold', 'diamond'],
+};
+
 // One family per metric (they share group, icon and metric); each step is [id, target, name, description].
 const ACHIEVEMENT_FAMILIES = [
   {
@@ -197,7 +213,14 @@ const ACHIEVEMENT_FAMILIES = [
 ];
 
 const ACHIEVEMENTS = ACHIEVEMENT_FAMILIES.flatMap(({ steps, ...shared }) =>
-  steps.map(([id, target, name, description]) => ({ id, ...shared, name, description, target })),
+  steps.map(([id, target, name, description], i) => ({
+    id,
+    ...shared,
+    tier: TIER_LADDERS[steps.length][i],
+    name,
+    description,
+    target,
+  })),
 );
 
 // "How you earn XP", as the UI shows it (derived from PR_SIZES and WEIGHTS).
@@ -231,5 +254,6 @@ module.exports = {
   XP_RULES,
   ACHIEVEMENT_RULES,
   ACHIEVEMENT_GROUPS,
+  ACHIEVEMENT_TIERS,
   ACHIEVEMENTS,
 };

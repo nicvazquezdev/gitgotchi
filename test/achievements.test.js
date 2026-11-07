@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { achievementProgress, groupAchievements, unlockedOf } = require('../src/main/game/achievements');
 const { computeStatus } = require('../src/main/game/engine');
-const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS } = require('../src/main/game/catalog');
+const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_TIERS } = require('../src/main/game/catalog');
 
 const day = (counts = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...counts });
 const progress = (input) => Object.fromEntries(achievementProgress(input).map((a) => [a.id, a]));
@@ -15,11 +15,13 @@ test('the catalog is consistent: unique ids, known groups and metrics, quickMerg
   const ids = ACHIEVEMENTS.map((a) => a.id);
   assert.equal(new Set(ids).size, ids.length);
   const groups = new Set(ACHIEVEMENT_GROUPS.map((g) => g.id));
+  const tiers = new Set(ACHIEVEMENT_TIERS.map((tier) => tier.id));
   const metrics = new Set(['prs', 'reviews', 'merges', 'commits', 'issues', 'streak', 'fullDays', 'quickMerges']);
   for (const a of ACHIEVEMENTS) {
     assert.ok(groups.has(a.group), `${a.id}: group`);
     assert.ok(metrics.has(a.metric), `${a.id}: metric`);
     assert.ok(Number.isInteger(a.target) && a.target > 0, `${a.id}: target`);
+    assert.ok(tiers.has(a.tier), `${a.id}: tier`);
     assert.ok(a.name && a.description && a.icon, `${a.id}: texts and icon`);
   }
   assert.ok(ACHIEVEMENTS.filter((a) => a.metric === 'quickMerges').every((a) => a.target === 1));
@@ -149,5 +151,46 @@ test('the pet status carries the achievements, counted since its birth day only'
       .map((a) => a.id)
       .sort(),
     ['first-pr', 'first-review'],
+  );
+});
+
+test('tiers climb with each family: four steps reach diamond, a lone step is special', () => {
+  const tierOf = (id) => ACHIEVEMENTS.find((a) => a.id === id).tier;
+  assert.deepEqual(['review-100', 'streak-20'].map(tierOf), ['diamond', 'diamond']);
+  assert.deepEqual(['first-pr', 'pr-10', 'pr-50'].map(tierOf), ['bronze', 'silver', 'gold']);
+  assert.deepEqual(['commit-100', 'commit-500'].map(tierOf), ['bronze', 'gold']);
+  assert.deepEqual(['quick-merge', 'full-cycle'].map(tierOf), ['special', 'special']);
+});
+
+test('every achievement is worth the points of its tier; the view adds up the score and counts the tiers', () => {
+  const view = groupAchievements(
+    achievementProgress({ days: { '2026-03-02': day({ prs: 1, reviews: 10, merges: 1 }) } }),
+  );
+  // first-pr (bronze 10), first-merge (bronze 10), first-review (bronze 10), review-10 (silver 25), full-cycle (special 50)
+  assert.deepEqual(
+    unlockedOf(view)
+      .map((a) => a.points)
+      .sort((a, b) => a - b),
+    [10, 10, 10, 25, 50],
+  );
+  assert.equal(view.points, 105);
+  const all = ACHIEVEMENT_TIERS.reduce(
+    (sum, tier) => sum + tier.points * ACHIEVEMENTS.filter((a) => a.tier === tier.id).length,
+    0,
+  );
+  assert.equal(view.totalPoints, all);
+  assert.deepEqual(
+    view.tiers.map((tier) => [tier.id, tier.unlocked]),
+    [
+      ['bronze', 3],
+      ['silver', 1],
+      ['gold', 0],
+      ['diamond', 0],
+      ['special', 1],
+    ],
+  );
+  assert.equal(
+    view.tiers.reduce((n, tier) => n + tier.total, 0),
+    ACHIEVEMENTS.length,
   );
 });
