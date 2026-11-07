@@ -236,6 +236,9 @@ body {
   display: block;
   font-weight: 600;
 }
+.flag.bonus {
+  color: var(--accent-text);
+}
 .flag.running {
   color: var(--text-2);
 }

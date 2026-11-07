@@ -4,8 +4,11 @@ const { toDay, fromDay, addDays } = require('../dates');
 
 const HISTORY_DAYS = 7;
 
-/** One ledger day: a count per kind, plus `prsXp` (the XP of the PRs opened that day, which depends on their size). */
-const emptyDay = () => ({ ...Object.fromEntries(KINDS.map((kind) => [kind, 0])), prsXp: 0 });
+/**
+ * One ledger day: a count per kind, plus `prsXp` (the XP of the PRs opened that day, which depends on their size) and
+ * `fastReviews` (how many of that day's reviews answered a request within the hour: a bonus on top of `reviews`).
+ */
+const emptyDay = () => ({ ...Object.fromEntries(KINDS.map((kind) => [kind, 0])), prsXp: 0, fastReviews: 0 });
 
 /**
  * XP of one ledger day, per kind. Unknown (old) kinds are ignored.
@@ -16,7 +19,7 @@ const countXp = (d, kind) => Math.min(d[kind] || 0, DAILY_CAPS[kind] ?? Infinity
 
 const dayXpByKind = (d = {}) => ({
   prs: d.prsXp || 0,
-  reviews: countXp(d, 'reviews'),
+  reviews: countXp(d, 'reviews') + (d.fastReviews || 0) * WEIGHTS.fastReviews, // the bonus is part of reviewing
   merges: countXp(d, 'merges'),
   commits: countXp(d, 'commits'),
   issues: countXp(d, 'issues'),

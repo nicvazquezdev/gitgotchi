@@ -200,7 +200,7 @@ function weekCard({ week }) {
 const sizeLimit = (sizes, i) =>
   sizes[i].maxLines === null ? `over ${sizes[i - 1].maxLines} lines` : `up to ${sizes[i].maxLines} lines`;
 
-function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
+function rulesCard({ sizes, review, fastReview, merged, issue, commit, commitsPerDay }) {
   const rule = (name, hint, xp) =>
     h(
       'div',
@@ -222,6 +222,7 @@ function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
         { class: 'rule-col' },
         h('div', { class: 'rule-group' }, 'Other activity'),
         rule('Review a PR', 'per review', review),
+        fastReview != null && rule('Fast review', 'within the hour', fastReview),
         rule('PR merged', 'per PR', merged),
         issue != null && rule('Open an issue', 'per issue', issue),
         commit != null && rule('Push a commit', `max ${commitsPerDay} a day`, commit),

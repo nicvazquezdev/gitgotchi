@@ -22,6 +22,7 @@ test('the catalog is consistent: unique ids, known groups and metrics, quickMerg
     'merges',
     'commits',
     'issues',
+    'fastReviews',
     'streak',
     'fullDays',
     'quickMerges',

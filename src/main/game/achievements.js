@@ -3,10 +3,11 @@ const { ACHIEVEMENTS, ACHIEVEMENT_GROUPS, ACHIEVEMENT_TIERS, ACHIEVEMENT_RULES }
 const { dayXp, streakLengths } = require('./stats');
 const { toDay } = require('../dates');
 
-const LEDGER_KINDS = ['prs', 'reviews', 'merges', 'commits', 'issues'];
+const LEDGER_KINDS = ['prs', 'reviews', 'merges', 'commits', 'issues', 'fastReviews'];
 const UNITS = {
   prs: 'PRs',
   reviews: 'reviews',
+  fastReviews: 'fast reviews',
   merges: 'merges',
   commits: 'commits',
   issues: 'issues',

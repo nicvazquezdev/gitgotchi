@@ -167,11 +167,24 @@ const queueBadge = () => h('span', { class: 'badge review' }, icon('search', { s
 
 const FLAGGED = ['changes', 'failing', 'running']; // states worth a line of their own
 
-/** Detail lines: the PR's state when it needs attention (own line), then repo, size and the rest. */
+/**
+ * Detail lines: the fast-review bonus while it lasts, the PR's state when it needs attention (each on its own line),
+ * then repo, size and the rest.
+ */
 function metaLine(pr, ...rest) {
   const flag = FLAGGED.includes(pr.status?.kind) ? pr.status : null;
   const text = [repoRef(pr), pr.sizeName ?? 'Medium', ...rest].filter(Boolean).join(' · ');
-  return [flag ? h('span', { class: `flag ${flag.kind}` }, flag.label) : null, text];
+  return [
+    pr.fastBonus
+      ? h(
+          'span',
+          { class: 'flag bonus', title: 'Review it within an hour of the request for the bonus' },
+          `Fast bonus +${pr.fastXp} XP`,
+        )
+      : null,
+    flag ? h('span', { class: `flag ${flag.kind}` }, flag.label) : null,
+    text,
+  ];
 }
 const repoRef = (pr) => `${pr.repo} #${pr.number}`;
 const xpText = (pr, suffix = 'XP') => (pr.xp ? `+${pr.xp} ${suffix}` : null);
@@ -202,7 +215,11 @@ function reviewTab(queue) {
   return h(
     'section',
     { class: 'prs' },
-    h('div', { class: 'list-note meta' }, `Oldest request first · each review gives +${earned} XP`),
+    h(
+      'div',
+      { class: 'list-note meta' },
+      `Oldest request first · +${earned} XP each, +${queue[0].fastXp} more within an hour`,
+    ),
     ...queue.map((pr) => {
       // The wait counts from when the user was asked. When that date could not be proved, say how old the PR is
       // instead, and do not flag it as late: it would be a guess.

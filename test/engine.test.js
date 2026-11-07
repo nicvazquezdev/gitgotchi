@@ -22,7 +22,7 @@ const { toDay, addDays } = require('../src/main/dates');
 
 const NOON = new Date(2026, 5, 15, 12);
 const ev = (kind, repo, day) => ({ kind, repo, day });
-const day = (c = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...c });
+const day = (c = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, fastReviews: 0, ...c });
 const activity = (days = {}, extra = {}) => ({ days, prs: [], lastSyncedAt: null, prsSyncedAt: null, ...extra });
 const pet = (bornAt = new Date(2026, 0, 1), extra = {}) => ({
   name: 'Pixel',

@@ -20,6 +20,7 @@ const { speciesOf, newPet, cleanName, creditXp } = require('../game/collection')
 const { commitKey, pendingPushes } = require('../game/commits');
 const { reviewQueue, attentionOf } = require('../game/pull-requests');
 const { unlockedOf } = require('../game/achievements');
+const { rememberRequests, fastReviewsIn } = require('../game/review-speed');
 const { fromDay, toDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
@@ -193,8 +194,10 @@ class PetService extends EventEmitter {
       // Pushes left for later must not hide behind a 304: fetch the events again next time.
       if (incomplete) this.#poll.etag = null;
       const at = new Date().toISOString();
+      // Reviews that answered a request within the hour (the requests were seen by the queue fetch above).
+      const fastReviews = fastReviewsIn(events ?? [], store.get().activity.requests ?? [], state.repos);
       const { delta } = this.#absorb(
-        { events: events ?? [], prs, commits, pushes },
+        { events: events ?? [], prs, commits, pushes, fastReviews },
         { lastSyncedAt: at, prsSyncedAt: at },
       );
       if (this.#baselined && Object.keys(delta).length > 0) this.emit('activity', delta);
@@ -244,6 +247,7 @@ class PetService extends EventEmitter {
       const { login } = store.get().user;
       const prs = await client.reviewRequests({ login, teams: await this.#myTeams(client, login) });
       this.#reviewsAt = Date.now();
+      this.#rememberRequests(prs);
       const known = new Set(this.#reviewRequests?.map((pr) => pr.id));
       const first = this.#reviewRequests === null; // the first fetch is the baseline: nothing in it is news
       this.#reviewRequests = prs;
@@ -258,6 +262,18 @@ class PetService extends EventEmitter {
       this.notify();
     } catch (err) {
       console.error('[sync] review requests', err.message);
+    }
+  }
+
+  /**
+   * Remembers when the user was asked for each review: the PR leaves the queue as soon as they review it, and the
+   * review shows up later in the events, so the request has to be kept to tell how fast they answered.
+   */
+  #rememberRequests(prs) {
+    const { activity } = store.get();
+    const requests = rememberRequests(activity.requests ?? [], prs);
+    if (JSON.stringify(requests) !== JSON.stringify(activity.requests ?? [])) {
+      store.update({ activity: { ...activity, requests } });
     }
   }
 
@@ -301,9 +317,12 @@ class PetService extends EventEmitter {
    * Stores fresh data in the ledger. Returns the activity it added that no live source celebrated
    * yet (`delta`, see live/credits.js) and whether the stored activity changed.
    */
-  #absorb({ events, prs, commits, pushes }, marks = {}) {
+  #absorb({ events, prs, commits, pushes, fastReviews }, marks = {}) {
     const { activity: before, repos, pets, activePet } = store.get();
-    const activity = { ...engine.applyActivity(before, { events, prs, commits, pushes, repos }), ...marks };
+    const activity = {
+      ...engine.applyActivity(before, { events, prs, commits, pushes, fastReviews, repos }),
+      ...marks,
+    };
     // The XP that is new goes to the pet being raised (see creditXp).
     const credited = creditXp({ pets, activePet, days: activity.days });
     const changed = credited !== pets || JSON.stringify(activity) !== JSON.stringify(before);

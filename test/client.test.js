@@ -81,7 +81,23 @@ describe('activity', () => {
   test('returns repo and local day', async () => {
     stubFetch({ body: [event('PullRequestReviewEvent', {}, 'x/y', '2026-06-15T10:00:00Z')] });
     assert.deepEqual(await client.activity('me'), [
-      { kind: 'reviews', repo: 'x/y', day: toDay('2026-06-15T10:00:00Z') },
+      // A review also says which PR it was on and when (here the payload has neither: the time of the event)
+      { kind: 'reviews', repo: 'x/y', day: toDay('2026-06-15T10:00:00Z'), number: null, at: '2026-06-15T10:00:00Z' },
+    ]);
+  });
+
+  test('a review says which PR it was on and when it was submitted, to tell how fast it answered a request', async () => {
+    const payload = {
+      pull_request: { number: 42, user: { login: 'someone' } },
+      review: { submitted_at: '2026-06-15T09:58:30Z' },
+    };
+    stubFetch({ body: [event('PullRequestReviewEvent', payload, 'x/y', '2026-06-15T10:00:00Z')] });
+    const [review] = await client.activity('me');
+    assert.deepEqual([review.number, review.at], [42, '2026-06-15T09:58:30Z']);
+    // issues carry no such fields
+    stubFetch({ body: [event('IssuesEvent', { action: 'opened' }, 'x/y', '2026-06-15T10:00:00Z')] });
+    assert.deepEqual(await client.activity('me'), [
+      { kind: 'issues', repo: 'x/y', day: toDay('2026-06-15T10:00:00Z') },
     ]);
   });
 

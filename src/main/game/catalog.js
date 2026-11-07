@@ -48,7 +48,13 @@ const PR_SIZES = [
 
 // XP per counted event. (Opening a PR is not here: its XP depends on the size, see PR_SIZES.)
 // Commits are the cheap kind: a push of several commits is easy to inflate, so they have a daily cap.
-const WEIGHTS = { reviews: 10, merges: 15, commits: 1, issues: 5 };
+const WEIGHTS = { reviews: 10, merges: 15, commits: 1, issues: 5, fastReviews: 5 };
+
+// Answering a review request fast is worth more: a review submitted within `minutes` of being asked gives
+// `WEIGHTS.fastReviews` XP on top of the review's own (it helps whoever is blocked on it). The requests are
+// remembered `REQUEST_KEEP_DAYS` days, to compare when the user was asked with when they answered (game/review-speed.js).
+const FAST_REVIEW = { minutes: 60 };
+const REQUEST_KEEP_DAYS = 14;
 
 // Most events of a kind that give XP in one day (the ledger keeps the real count).
 const DAILY_CAPS = { commits: 10 };
@@ -105,7 +111,8 @@ const PR_KEEP_MERGED_DAYS = 14;
 // ---------- Achievements ----------
 
 // Counted from the person's history since the first pet hatched, like XP. `metric` is what is counted: a ledger kind
-// (prs, reviews, merges, commits, issues), `streak` (best streak, see game/stats.js), `fullDays` (days with a PR
+// (prs, reviews, merges, commits, issues), `fastReviews` (reviews answered within an hour of the request), `streak`
+// (best streak, see game/stats.js), `fullDays` (days with a PR
 // opened, a review and a merge), `quickMerges` (PRs merged soon after opening them), or from the collection: `species`
 // (pets hatched) and `adults` (pets fully grown). `quickMerges` reads the stored PR list, which only keeps recent
 // PRs, so its target must be 1 (a reached achievement is stored and kept).
@@ -169,6 +176,15 @@ const ACHIEVEMENT_FAMILIES = [
       ['review-10', 10, 'Second pair of eyes', 'Submit 10 reviews'],
       ['review-50', 50, 'Code guardian', 'Submit 50 reviews'],
       ['review-100', 100, 'Review machine', 'Submit 100 reviews'],
+    ],
+  },
+  {
+    group: 'reviews',
+    icon: 'bolt',
+    metric: 'fastReviews',
+    steps: [
+      ['fast-review', 1, 'Quick draw', 'Review a PR within an hour of being asked'],
+      ['fast-review-10', 10, 'Lightning reviewer', 'Review 10 PRs within an hour of being asked'],
     ],
   },
   {
@@ -254,6 +270,8 @@ const XP_RULES = {
     xp,
   })),
   review: WEIGHTS.reviews,
+  fastReview: WEIGHTS.fastReviews,
+  fastReviewMinutes: FAST_REVIEW.minutes,
   merged: WEIGHTS.merges,
   commit: WEIGHTS.commits,
   commitsPerDay: DAILY_CAPS.commits,
@@ -267,6 +285,8 @@ module.exports = {
   PR_SIZES,
   WEIGHTS,
   DAILY_CAPS,
+  FAST_REVIEW,
+  REQUEST_KEEP_DAYS,
   PUSH_LOOKUPS_PER_SYNC,
   COMMIT_KEEP_DAYS,
   KINDS,

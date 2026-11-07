@@ -1,5 +1,5 @@
 // Pure rules for the user's pull requests: size, XP, the stored list and the UI views.
-const { PR_SIZES, WEIGHTS, PR_KEEP_MERGED_DAYS } = require('./catalog');
+const { PR_SIZES, WEIGHTS, FAST_REVIEW, PR_KEEP_MERGED_DAYS } = require('./catalog');
 const { toDay } = require('../dates');
 const { emptyDay } = require('./stats');
 
@@ -136,8 +136,9 @@ function attentionOf(kind, pr) {
 
 /**
  * PRs waiting for the user's review, for the UI: only the selected repos (like everything else).
- * `xp` is what reviewing gives. `prs`: normalized PRs with an `author` login and, when known, `requestedAt` and `via`
- * (client.reviewRequests).
+ * `xp` is what reviewing gives, and `fastXp` the bonus on top of it while `fastBonus` is true: the user was asked less
+ * than FAST_REVIEW.minutes ago, so a review now still counts as fast (see review-speed.js). `prs`: normalized PRs with
+ * an `author` login and, when known, `requestedAt` and `via` (client.reviewRequests).
  *
  * The wait that matters is since the user was asked (`waitingDays`), not since the PR was opened (`ageDays`): a PR
  * can be months old and have asked the user yesterday. It is null when the request date could not be proved, and
@@ -155,6 +156,9 @@ function reviewQueue(prs, repos, now = new Date()) {
       ...toView(pr, now),
       author: pr.author,
       xp: WEIGHTS.reviews,
+      fastXp: WEIGHTS.fastReviews,
+      fastBonus:
+        Boolean(pr.requestedAt) && now.getTime() - new Date(pr.requestedAt).getTime() <= FAST_REVIEW.minutes * 60000,
       requestedAt: pr.requestedAt ?? null,
       via: pr.via ?? null,
       waitingDays: pr.requestedAt

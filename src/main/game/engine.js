@@ -5,6 +5,7 @@ const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
 const { startDay, progressOf, collectionView, petFacts } = require('./collection');
 const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
+const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
 
 const DAY_MS = 86400000;
@@ -14,14 +15,16 @@ const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
 const LEDGER_FIELDS = Object.keys(emptyDay());
 
 /**
- * Fresh activity state: day ledger, the user's PRs, the commits and pushes already counted (to count each once)
- * and the two sync marks.
+ * Fresh activity state: day ledger, the user's PRs, the commits and pushes already counted (to count each once),
+ * the review requests seen and the fast reviews already counted, and the two sync marks.
  */
 const emptyActivity = () => ({
   days: {},
   prs: [],
   commits: [],
   pushes: [],
+  requests: [],
+  fastReviews: [],
   lastSyncedAt: null,
   prsSyncedAt: null,
 });
@@ -102,23 +105,31 @@ function mergeDays(oldDays, newDays) {
 
 /**
  * Applies fresh data to the activity (pure). `events`: normalized review and issue events; `prs`: normalized PRs
- * (client.pullRequests); `commits`: records `{ key, day }` found in `pushes` (`{ id, day }`, the pushes they came from).
+ * (client.pullRequests); `commits`: records `{ key, day }` found in `pushes` (`{ id, day }`, the pushes they came from);
+ * `fastReviews`: records `{ key, day }` of reviews answered within the hour (see review-speed.js).
  * All optional. Day counts only ever grow, so partial data never lowers them.
  * @returns the new activity (other fields are kept)
  */
-function applyActivity(activity, { events = [], prs = [], commits = [], pushes = [], repos, now = new Date() }) {
+function applyActivity(
+  activity,
+  { events = [], prs = [], commits = [], pushes = [], fastReviews = [], repos, now = new Date() },
+) {
   const allPrs = mergePullRequests(activity.prs ?? [], prs, repos);
   const allCommits = mergeCommits(activity.commits ?? [], commits);
-  // Days come from the unpruned lists: a PR or commit dropped from the stored list long ago still counts.
-  const days = [buildDays({ events, repos }), pullRequestDays(allPrs), commitDays(allCommits)].reduce(
-    mergeDays,
-    activity.days ?? {},
-  );
+  const allFast = mergeFastReviews(activity.fastReviews ?? [], fastReviews);
+  // Days come from the unpruned lists: a PR, commit or review dropped from the stored list long ago still counts.
+  const days = [
+    buildDays({ events, repos }),
+    pullRequestDays(allPrs),
+    commitDays(allCommits),
+    fastReviewDays(allFast),
+  ].reduce(mergeDays, activity.days ?? {});
   return {
     ...activity,
     days,
     prs: prunePullRequests(allPrs, now),
     commits: pruneByDay(allCommits, now),
+    fastReviews: pruneFastReviews(allFast, now),
     pushes: pruneByDay([...(activity.pushes ?? []), ...pushes], now),
   };
 }

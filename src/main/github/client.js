@@ -17,6 +17,19 @@ const EVENT_KINDS = {
 const NULL_SHA = /^0+$/;
 
 /**
+ * An Events API event as `{ kind, repo, day }`. A review also says which PR (`number`) and when it was submitted
+ * (`at`), to tell how fast it answered a request (see game/review-speed.js).
+ */
+function normalizeEvent(kind, ev) {
+  const event = { kind, repo: ev.repo.name, day: toDay(ev.created_at) };
+  if (kind === 'reviews') {
+    event.number = ev.payload?.pull_request?.number ?? null;
+    event.at = ev.payload?.review?.submitted_at ?? ev.created_at;
+  }
+  return event;
+}
+
+/**
  * A push event as `{ kind: 'pushes', id, repo, day, before, head }`, or null when it carries no commits to count
  * (deleted branch, tags). The event does not say how many commits the push has: see `pushCommits`.
  */
@@ -131,7 +144,7 @@ class GitHubClient {
           continue;
         }
         const kind = EVENT_KINDS[ev.type]?.(ev.payload, login);
-        if (kind) result.push({ kind, repo: ev.repo.name, day: toDay(ev.created_at) });
+        if (kind) result.push(normalizeEvent(kind, ev));
       }
     };
     if (collect(first.data) !== false && first.next) await this.paginate(first.next, GITHUB.EVENT_PAGES - 1, collect);

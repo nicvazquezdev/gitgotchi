@@ -118,7 +118,12 @@ const achievements = complete ? Object.fromEntries(catalog.ACHIEVEMENTS.map((a) 
 const status = computeStatus({ pets, activePet: 'phoenix', achievements, activity: history, repos }, NOW);
 status.reviewQueue = reviewQueue(
   [
-    { ...pr(11, 'Fix flaky editor selection test', 'acme/web-app', 35), author: 'ana-dev', requestedAt: ago(5 * H) },
+    // Asked 25 minutes ago: a review now still earns the fast-review bonus.
+    {
+      ...pr(11, 'Fix flaky editor selection test', 'acme/web-app', 35),
+      author: 'ana-dev',
+      requestedAt: ago(25 * 60000),
+    },
     {
       ...pr(12, 'Bump design tokens to 4.2', 'acme/cli', 520),
       author: 'lee-ui',
