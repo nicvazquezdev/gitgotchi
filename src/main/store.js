@@ -15,6 +15,8 @@ const defaults = () => ({
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
+  speechBubbles: true, // device setting: show the pet's speech bubbles
+  doNotDisturb: false, // device setting: no bubbles, notifications or evolution popups
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
   cloudSync: false, // optional cloud save in the user's GitHub account (device setting)
   profileUpdatedAt: null, // when the pet or repos last changed here (cloud save: last change wins)
@@ -43,10 +45,10 @@ function update(patch) {
   return state;
 }
 
-/** Clears everything except the pet's screen position and size. */
+/** Clears everything except the device settings (pet position and size, menu toggles). */
 function reset() {
-  const { position, petSize, openAtLoginDefaulted } = get();
-  update({ ...defaults(), position, petSize, openAtLoginDefaulted });
+  const { position, petSize, speechBubbles, doNotDisturb, openAtLoginDefaulted } = get();
+  update({ ...defaults(), position, petSize, speechBubbles, doNotDisturb, openAtLoginDefaulted });
 }
 
 module.exports = { get, update, reset };

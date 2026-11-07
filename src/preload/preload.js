@@ -35,6 +35,12 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     dragStart: send('pet:drag-start'), // { offsetX, offsetY }
     dragEnd: send('pet:drag-end'),
     openMenu: send('pet:menu'),
+    // ---- everyday UI ----
+    prefs: invoke('pet:prefs'), // -> { speechBubbles, doNotDisturb }
+    onPrefs: subscribe('pet:prefs'),
+    openPopover: send('pet:popover'), // creature rect in window coords { x, y, width, height }: toggles the PR popover
+    onPopoverRequest: subscribe('pet:popover-request'), // the menu asks for the rect to anchor on
+    // ---- end everyday UI ----
     size: invoke('pet:size'), // sprite size in px
     onSize: subscribe('pet:size'),
     onStatus: subscribe('pet:status'),
@@ -55,11 +61,23 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   },
   // --- end Profile & evolution windows ---
 
+  // ---- everyday UI ----
   panel: {
-    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, openAtLogin, petSize, sizeRange }
+    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, speechBubbles, doNotDisturb, openAtLogin, cloudSync, petSize, sizeRange }
     onState: subscribe('panel:state'),
-    action: send('panel:action'), // 'sync' | 'togglePet' | 'toggleOpenAtLogin' | 'openSettings' | 'disconnect' | 'quit'
+    // 'sync' | 'togglePet' | 'toggleSpeechBubbles' | 'toggleDoNotDisturb' | 'toggleCloudSync' | 'toggleOpenAtLogin'
+    // | 'openPopover' | 'openProfile' | 'openSettings' | 'quit'
+    action: send('panel:action'),
     setSize: send('panel:size'), // { size, commit }: live while dragging, commit on release
     setHeight: send('panel:height'), // content height in px
   },
+
+  popover: {
+    state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
+    onState: subscribe('popover:state'),
+    action: send('popover:action'), // 'nudgeReviewers' | 'openProfile' | 'openSettings'
+    openPullRequest: send('popover:open-pr'), // https://github.com URL
+    setHeight: send('popover:height'),
+  },
+  // ---- end everyday UI ----
 });

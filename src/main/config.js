@@ -15,13 +15,14 @@ module.exports = {
   // Window size at the default sprite size; it grows with the sprite (see ui/pet-size.js).
   // The pet lives in a square box (52 native sprite px: room for the adult plus its hop, see renderer/shared/sprite.js).
   // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
-  // Window at the default size: the box plus room above it for the speech bubble.
-  PET_WINDOW: { width: 208, height: 280 },
+  // Window at the default size: the box plus room around it for the speech bubble card (268 px wide).
+  PET_WINDOW: { width: 288, height: 320 },
   // Any whole-pixel size within [min, max] (2x to 8x); set with the slider in the menu bar panel.
   PET_SIZE_RANGE: { min: 104, max: 416 },
   DEFAULT_PET_SIZE: 208,
-  // Menu-bar panel: fixed width; the height follows the content (the page reports it).
-  PANEL_WINDOW: { width: 300, height: 360 },
+  // Menu-bar dropdown and PR popover: fixed width; the height follows the content (the page reports it).
+  PANEL_WINDOW: { width: 320, height: 360 },
+  POPOVER_WINDOW: { width: 360, height: 400 },
   // Profile and evolution windows; the native traffic lights overlay the 40 px page title bar.
   PROFILE_WINDOW: { width: 960, height: 500 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
