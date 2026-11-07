@@ -86,7 +86,7 @@ function renderBubble() {
 }
 
 /** Shows the PR reminder for a few seconds. */
-function showWaiting(ms = 8000) {
+function showWaiting(ms = 5000) {
   waitingVisible = true;
   renderBubble();
   clearTimeout(waitingTimer);
