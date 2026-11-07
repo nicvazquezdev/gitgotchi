@@ -1,22 +1,24 @@
-// Pure: the generic menu bar icon (a little pixel creature with ears, eyes, a smile and feet), as raw bitmaps for macOS template images.
+// Pure: the generic menu bar icon (a chubby pixel creature: ears, big eyes with a highlight, a smile), as raw bitmaps for macOS template images.
 const GLYPH = [
-  '..##......##..',
-  '.####....####.',
-  '.############.',
-  '##############',
-  '##############',
-  '###..####..###',
-  '###..####..###',
-  '##############',
-  '#####.##.#####',
-  '######..######',
-  '##############',
-  '.############.',
-  '.############.',
-  '..###....###..',
+  '..##........##..',
+  '..###......###..',
+  '..####....####..',
+  '..############..',
+  '.##############.',
+  '################',
+  '#####.#####.####',
+  '####..####..####',
+  '####..####..####',
+  '################',
+  '######.##.######',
+  '.######..######.',
+  '.##############.',
+  '..############..',
+  '..####....####..',
+  '..###......###..',
 ];
 
-// One glyph pixel is one point (14x14 pt): whole device pixels at @1x and @2x stay crisp.
+// One glyph pixel is one point (16x16 pt): whole device pixels at @1x and @2x stay crisp.
 const POINTS_PER_PIXEL = 1;
 
 /**
