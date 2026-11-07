@@ -1,6 +1,7 @@
 import { $, h, replayClass } from '../shared/dom.js';
 import { plural, oldestDays, oldestWaitingDays } from '../shared/format.js';
 import { PetView, PX_PER_SCALE } from './pet-view.js';
+import { medal } from '../shared/pixel-art.js';
 
 const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
@@ -106,13 +107,29 @@ function renderBubble() {
   const message = quiet() ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
   bubble.hidden = !message;
   if (!message) return;
-  const key = `${message.title}|${message.sub}`;
+  const { toast } = message;
+  const key = `${message.title}|${message.sub}|${toast?.icon}`;
   if (bubble.dataset.key === key) return; // unchanged: don't replay the pop-in
   bubble.dataset.key = key;
+  bubble.className = toast ? `bubble toast tier-${toast.tier}` : 'bubble';
   bubble.replaceChildren(
-    h('div', { class: 'bubble-title' }, h('span', { class: `dot ${message.dot ?? ''}` }), message.title),
-    // Not `null`: replaceChildren turns it into the text "null".
-    ...(message.sub ? [h('div', { class: 'bubble-sub' }, message.sub)] : []),
+    // An achievement toast, like a console's: the medal, what it is with its points, the name and what it was for.
+    ...(toast ? [h('div', { class: 'bubble-medal' }, medal(toast.icon, 2))] : []),
+    h(
+      'div',
+      { class: 'bubble-text' },
+      ...(toast
+        ? [h('div', { class: 'bubble-kicker' }, h('span', {}, toast.kicker), h('b', {}, `+${toast.points} pts`))]
+        : []),
+      h(
+        'div',
+        { class: 'bubble-title' },
+        ...(toast ? [] : [h('span', { class: `dot ${message.dot ?? ''}` })]),
+        message.title,
+      ),
+      // Not `null`: replaceChildren turns it into the text "null".
+      ...(message.sub ? [h('div', { class: 'bubble-sub' }, message.sub)] : []),
+    ),
   );
   replayClass(bubble, 'bubble');
 }
@@ -129,8 +146,8 @@ function showWaiting(ms = 5000) {
 }
 
 /** Says a line for a moment; the standing message comes back afterwards. */
-function say(title, { sub, dot, ms = 3500 } = {}) {
-  spoken = { title, sub, dot };
+function say(title, { sub, dot, toast, ms = 3500 } = {}) {
+  spoken = { title, sub, dot, toast };
   renderBubble();
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => {
@@ -200,15 +217,24 @@ function reactToActivity(delta) {
   say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { dot: reaction.dot, ms: 4000 });
 }
 
-/** New achievements: the usual cheer, then the name of the first one in the bubble (the rest are in the profile). */
+/**
+ * New achievements: the usual cheer, then a toast with the medal of the first one, its points and what it was for
+ * (the rest are in the profile).
+ */
 function celebrateAchievements(list) {
   if (!list?.length) return;
   reactToActivity({ achievements: list.length });
   const [first] = list;
-  say(`Achievement: ${first.name} 🏆`, {
-    sub: list.length > 1 ? `And ${list.length - 1} more in your profile` : first.description,
-    dot: 'approved',
-    ms: 5000,
+  const several = list.length > 1;
+  say(first.name, {
+    sub: several ? `And ${list.length - 1} more in your profile` : first.description,
+    toast: {
+      icon: first.icon,
+      tier: first.tier ?? 'bronze',
+      points: list.reduce((sum, a) => sum + (a.points ?? 0), 0),
+      kicker: several ? `${list.length} achievements unlocked` : 'Achievement unlocked',
+    },
+    ms: 6000,
   });
 }
 

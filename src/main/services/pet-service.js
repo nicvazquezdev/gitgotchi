@@ -2,9 +2,11 @@
 // XP comes from the user's PRs (GraphQL), reviews, issues and pushes (Events API; a push is worth its commits,
 // found with one lookup each) in the selected repos, see game/catalog.js.
 // Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level; also fires on the level that evolves),
-// 'achievements' (the ones just reached, as `[{ id, name, description, icon }]`),
+// 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier, points }]`),
 // 'activity' (new activity per kind, e.g. { merges: 1 }; a live `pushes` reaction is animation only;
 // `reviewRequests` is not XP: someone asked the user for a review),
+// 'attention' (what the user may want a system notification for: `[{ kind, id, title, repo, number, url, author, via }]`,
+// kind: 'reviewRequested' | 'approved' | 'changesRequested' | 'checksFailed'),
 // 'configured' (setup saved: repos may have changed).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
@@ -12,7 +14,7 @@ const session = require('./session');
 const engine = require('../game/engine');
 const { SPECIES, PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
 const { commitKey, pendingPushes } = require('../game/commits');
-const { reviewQueue } = require('../game/pull-requests');
+const { reviewQueue, attentionOf } = require('../game/pull-requests');
 const { unlockedOf } = require('../game/achievements');
 const { fromDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
@@ -167,6 +169,15 @@ class PetService extends EventEmitter {
     return this.#reviewing;
   }
 
+  /** Tells whoever listens what just happened to the user's PRs (moments from the PR watcher, see pr-diff.js). */
+  announce(moments) {
+    if (!this.isConfigured() || moments.length === 0) return;
+    this.emit(
+      'attention',
+      moments.map(({ kind, pr }) => attentionOf(kind, pr)),
+    );
+  }
+
   /** The user's teams: a request to one of them is a request to the user. A failure keeps the last list. */
   async #myTeams(client, login) {
     if (Date.now() - this.#teams.at < LIVE.TEAMS_REFRESH_MS) return this.#teams.slugs;
@@ -187,8 +198,14 @@ class PetService extends EventEmitter {
       const known = new Set(this.#reviewRequests?.map((pr) => pr.id));
       const first = this.#reviewRequests === null; // the first fetch is the baseline: nothing in it is news
       this.#reviewRequests = prs;
-      const added = first ? 0 : reviewQueue(prs, store.get().repos).filter((pr) => !known.has(pr.id)).length;
-      if (added > 0) this.emit('activity', { reviewRequests: added });
+      const added = first ? [] : reviewQueue(prs, store.get().repos).filter((pr) => !known.has(pr.id));
+      if (added.length > 0) {
+        this.emit('activity', { reviewRequests: added.length });
+        this.emit(
+          'attention',
+          added.map((pr) => attentionOf('reviewRequested', pr)),
+        );
+      }
       this.notify();
     } catch (err) {
       console.error('[sync] review requests', err.message);
@@ -281,7 +298,7 @@ class PetService extends EventEmitter {
     if (known)
       this.emit(
         'achievements',
-        fresh.map(({ id, name, description, icon }) => ({ id, name, description, icon })),
+        fresh.map(({ id, name, description, icon, tier, points }) => ({ id, name, description, icon, tier, points })),
       );
   }
 }

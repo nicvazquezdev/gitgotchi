@@ -59,7 +59,16 @@ test('with nothing yet it records an empty set, so the next ones are announced',
   events = [review()];
   await petService.sync();
   assert.deepEqual(announced, [
-    [{ id: 'first-review', name: 'First review', description: "Review someone else's pull request", icon: 'eye' }],
+    [
+      {
+        id: 'first-review',
+        name: 'First review',
+        description: "Review someone else's pull request",
+        icon: 'eye',
+        tier: 'bronze',
+        points: 10,
+      },
+    ],
   ]);
   assert.equal(state.pet.achievements['first-review'], '2026-06-15');
 });

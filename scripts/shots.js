@@ -99,7 +99,16 @@ status.reviewQueue = reviewQueue(
 if (mine) status.reviewQueue = [];
 const fixtures = {
   celebrate: celebrate
-    ? [{ id: 'first-merge', name: 'First merge', description: 'Get a pull request merged', icon: 'merge' }]
+    ? [
+        {
+          id: 'first-merge',
+          name: 'First merge',
+          description: 'Get a pull request merged',
+          icon: 'merge',
+          tier: 'bronze',
+          points: 10,
+        },
+      ]
     : null,
   status,
   catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },

@@ -183,6 +183,39 @@ body.dragging .pet {
   font-size: 13px;
   color: var(--text-2);
 }
+/* Achievement toast, like a console's: the medal, what it is with its points, the name and what it was for. */
+.bubble-text {
+  min-width: 0;
+  flex: 1;
+}
+.bubble.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow:
+    var(--shadow-bubble),
+    inset 0 0 0 2px color-mix(in srgb, var(--t-main) 60%, transparent);
+}
+.bubble-medal {
+  flex: none;
+}
+.bubble-kicker {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 3px;
+  font: 600 10px var(--font-pixel);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, var(--t-main) 75%, var(--text));
+}
+.bubble-kicker b {
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.bubble.toast .bubble-sub {
+  padding-left: 0;
+}
 @keyframes bubble-in {
   from {
     opacity: 0;
