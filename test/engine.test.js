@@ -359,6 +359,28 @@ describe('computeStatus', () => {
   });
 });
 
+describe('PR status', () => {
+  const { statusOf } = require('../src/main/game/pull-requests');
+  const kind = (p) => statusOf(p).kind;
+
+  test('most urgent first: changes requested, failing checks, ready, checks running, else needs review', () => {
+    assert.equal(kind({ reviewDecision: 'CHANGES_REQUESTED', ci: 'FAILURE' }), 'changes');
+    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'FAILURE' }), 'failing');
+    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'ERROR' }), 'failing');
+    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'PENDING' }), 'ready');
+    assert.equal(kind({ reviewDecision: null, ci: 'PENDING' }), 'running');
+    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'SUCCESS' }), 'review');
+    assert.equal(kind({ reviewDecision: null, ci: null }), 'review');
+  });
+
+  test('the PR view carries the status and the size name; a merged PR has no status', () => {
+    const open = status(activity({}, { prs: [pr({ lines: 30, ci: 'FAILURE' })] })).prs.waiting[0];
+    assert.deepEqual([open.status.kind, open.sizeName], ['failing', 'Small']);
+    const merged = status(activity({}, { prs: [pr({ state: 'MERGED', mergedAt: hoursAgo(1) })] })).prs.mergedToday[0];
+    assert.equal(merged.status, null);
+  });
+});
+
 describe('PR lists', () => {
   const lists = (prs) => status(activity({}, { prs })).prs;
 

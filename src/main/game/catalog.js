@@ -40,10 +40,10 @@ const SPECIES = SPRITES.map(({ id, title, bg, stages }) => ({
 
 // Opening a PR gives XP by size (lines = additions + deletions). The first bucket whose `maxLines` is above the size wins.
 const PR_SIZES = [
-  { id: 'XS', maxLines: 10, xp: 5 },
-  { id: 'S', maxLines: 100, xp: 10 },
-  { id: 'M', maxLines: 500, xp: 20 },
-  { id: 'L', maxLines: Infinity, xp: 30 },
+  { id: 'XS', name: 'Tiny', maxLines: 10, xp: 5 },
+  { id: 'S', name: 'Small', maxLines: 100, xp: 10 },
+  { id: 'M', name: 'Medium', maxLines: 500, xp: 20 },
+  { id: 'L', name: 'Large', maxLines: Infinity, xp: 30 },
 ];
 
 // XP per counted event. (Opening a PR is not here: its XP depends on the size, see PR_SIZES.)
@@ -104,7 +104,12 @@ const PR_KEEP_MERGED_DAYS = 14;
 
 // "How you earn XP", as the UI shows it (derived from PR_SIZES and WEIGHTS).
 const XP_RULES = {
-  sizes: PR_SIZES.map(({ id, maxLines, xp }) => ({ id, maxLines: Number.isFinite(maxLines) ? maxLines : null, xp })),
+  sizes: PR_SIZES.map(({ id, name, maxLines, xp }) => ({
+    id,
+    name,
+    maxLines: Number.isFinite(maxLines) ? maxLines : null,
+    xp,
+  })),
   review: WEIGHTS.reviews,
   merged: WEIGHTS.merges,
   commit: WEIGHTS.commits,

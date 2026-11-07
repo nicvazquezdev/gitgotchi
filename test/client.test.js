@@ -217,6 +217,24 @@ describe('pull requests (GraphQL)', () => {
     assert.equal(pr.repository, undefined);
   });
 
+  test('reads the checks state of the last commit as `ci` (null when there are no checks)', async () => {
+    const withChecks = {
+      ...node('1', '2026-06-15T10:00:00Z'),
+      commits: { nodes: [{ commit: { statusCheckRollup: { state: 'FAILURE' } } }] },
+    };
+    const noChecks = {
+      ...node('2', '2026-06-15T09:00:00Z'),
+      commits: { nodes: [{ commit: { statusCheckRollup: null } }] },
+    };
+    stubFetch(page([withChecks, noChecks, node('3', '2026-06-15T08:00:00Z')]));
+    const prs = await client.recentPullRequests();
+    assert.deepEqual(
+      prs.map((p) => p.ci),
+      ['FAILURE', null, null],
+    );
+    assert.equal(prs[0].commits, undefined);
+  });
+
   test('pullRequestsSince pages until a PR older than `since`, and keeps only newer ones', async () => {
     stubFetch(
       page([node('1', '2026-06-15T10:00:00Z'), node('2', '2026-06-14T10:00:00Z')], 'c1'),

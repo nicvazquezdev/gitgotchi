@@ -12,7 +12,7 @@ const sizeOf = (lines) => PR_SIZES.find((s) => lines < s.maxLines);
 const openXp = (lines) => sizeOf(lines).xp;
 
 /** Compact PR record kept in the state, from a normalized GitHub node (see client.pullRequests). */
-const toRecord = ({ id, number, title, url, repo, state, isDraft, reviewDecision, lines, createdAt, mergedAt }) => ({
+const toRecord = ({
   id,
   number,
   title,
@@ -21,6 +21,20 @@ const toRecord = ({ id, number, title, url, repo, state, isDraft, reviewDecision
   state,
   isDraft,
   reviewDecision,
+  ci,
+  lines,
+  createdAt,
+  mergedAt,
+}) => ({
+  id,
+  number,
+  title,
+  url,
+  repo,
+  state,
+  isDraft,
+  reviewDecision,
+  ci: ci ?? null,
   lines,
   createdAt,
   mergedAt,
@@ -53,6 +67,19 @@ function pullRequestDays(prs) {
   return days;
 }
 
+/**
+ * What a PR needs from its author, most urgent first: changes requested, failing checks, then (when nothing is wrong)
+ * approved, checks still running, or simply waiting for a review.
+ * @returns {{ kind: 'changes' | 'failing' | 'ready' | 'running' | 'review', label: string }}
+ */
+function statusOf({ reviewDecision, ci }) {
+  if (reviewDecision === 'CHANGES_REQUESTED') return { kind: 'changes', label: 'Changes requested' };
+  if (ci === 'FAILURE' || ci === 'ERROR') return { kind: 'failing', label: 'Checks failing' };
+  if (reviewDecision === 'APPROVED') return { kind: 'ready', label: 'Ready to merge' };
+  if (ci === 'PENDING' || ci === 'EXPECTED') return { kind: 'running', label: 'Checks running' };
+  return { kind: 'review', label: 'Needs review' };
+}
+
 /** Short repo name: 'webflow/app-web' -> 'app-web'. */
 const shortRepo = (fullName) => fullName.split('/').pop();
 
@@ -67,6 +94,8 @@ function toView(pr, now) {
     fullRepo: pr.repo,
     url: pr.url,
     size: sizeOf(pr.lines).id,
+    sizeName: sizeOf(pr.lines).name,
+    status: merged ? null : statusOf(pr),
     xp: merged ? WEIGHTS.merges : openXp(pr.lines),
     ageDays: Math.max(0, Math.floor((now.getTime() - new Date(pr.createdAt).getTime()) / DAY_MS)),
     createdAt: pr.createdAt,
@@ -109,6 +138,7 @@ function reviewQueue(prs, repos, now = new Date()) {
 
 module.exports = {
   sizeOf,
+  statusOf,
   openXp,
   mergePullRequests,
   prunePullRequests,

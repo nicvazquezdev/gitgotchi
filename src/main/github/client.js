@@ -26,15 +26,20 @@ function normalizePush(ev) {
 }
 
 const PR_FIELDS = `id number title url state isDraft reviewDecision additions deletions createdAt updatedAt mergedAt
-  repository { nameWithOwner }`;
+  repository { nameWithOwner }
+  commits(last: 1) { nodes { commit { statusCheckRollup { state } } } }`;
 
 // Open PRs, not drafts, where the user (or a team they are in) was asked for a review. GitHub drops the user from the
 // request once they review, so a PR leaves this list by itself. `review-requested` also covers team requests.
 const REVIEW_REQUESTS_QUERY = 'is:pr is:open archived:false draft:false review-requested:@me';
 
-/** GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, lines, createdAt, updatedAt, mergedAt, repo }`. */
-const normalizePullRequest = ({ repository, additions, deletions, ...pr }) => ({
+/**
+ * GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, ci, lines, createdAt, updatedAt, mergedAt, repo }`.
+ * `ci`: the checks state of the last commit (SUCCESS, FAILURE, ERROR, PENDING, EXPECTED), null when there are none.
+ */
+const normalizePullRequest = ({ repository, additions, deletions, commits, ...pr }) => ({
   ...pr,
+  ci: commits?.nodes?.[0]?.commit?.statusCheckRollup?.state ?? null,
   lines: additions + deletions,
   repo: repository.nameWithOwner,
 });
