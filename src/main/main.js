@@ -114,11 +114,6 @@ const actions = {
   // The review queue is also fetched when a window that shows it opens (not more than every few seconds).
   refreshReviews: () => petService.refreshReviews({ maxAgeMs: LIVE.REVIEW_QUEUE_OPEN_REFRESH_MS }),
   // Only opens PR pages in the browser; it never writes to GitHub.
-  // The review queue is sorted oldest first: the one that has waited longest is the first to open.
-  reviewOldest: () => {
-    const [oldest] = petService.status().reviewQueue ?? [];
-    if (oldest) openGithub(oldest.url);
-  },
   openPullRequest: (url) => openGithub(url),
   // --- end everyday UI ---
   panelState: () => ({

@@ -211,38 +211,17 @@ function minePrsTab({ waiting, approved, mergedToday }) {
 
 // ---------- Footer ----------
 
-/**
- * To review has a main action: open the oldest request. My PRs has none: its rows already open each PR.
- * "View profile" is always there (alone, it takes the whole row).
- */
-function footer(tab, { reviewQueue }) {
-  const [oldest] = reviewQueue ?? [];
-  const profile = h(
-    'button',
-    {
-      class: `btn sm pixel-cut${tab === 'review' ? '' : ' grow'}`,
-      type: 'button',
-      onclick: () => api.action('openProfile'),
-    },
-    'View profile',
-  );
-  if (tab !== 'review') return h('div', { class: 'actions' }, profile);
-  return h(
+/** The popover has no main action: its rows already open each PR. Only the way to the profile. */
+const footer = () =>
+  h(
     'div',
     { class: 'actions' },
     h(
       'button',
-      {
-        class: 'btn primary sm pixel-cut grow',
-        type: 'button',
-        disabled: !oldest,
-        onclick: () => api.action('reviewOldest'),
-      },
-      oldest ? `Review oldest · ${shortAge(oldest.ageDays)}` : 'Review oldest',
+      { class: 'btn sm pixel-cut grow', type: 'button', onclick: () => api.action('openProfile') },
+      'View profile',
     ),
-    profile,
   );
-}
 
 // ---------- Render ----------
 
@@ -266,7 +245,7 @@ function render(state = latest, { resetScroll = false } = {}) {
               ? reviewTab(status.reviewQueue ?? null)
               : [moodNotice(status), minePrsTab(status.prs ?? { waiting: [], approved: [], mergedToday: [] })],
           ),
-          footer(tab, status),
+          footer(),
         ]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
