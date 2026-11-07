@@ -18,7 +18,21 @@
           "rx": 9,
           "ry": 1.3,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "phoenix_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "phoenix_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "phoenix_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -32,7 +46,21 @@
           "rx": 7.5,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "phoenix_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "phoenix_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "phoenix_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -46,7 +74,21 @@
           "rx": 8,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "phoenix_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "phoenix_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "phoenix_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -60,7 +102,21 @@
           "rx": 7,
           "ry": 1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "phoenix_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "phoenix_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "phoenix_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -83,7 +139,21 @@
           "rx": 8,
           "ry": 1.2,
           "alpha": 0.9
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "ram_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "ram_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "ram_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -97,7 +167,21 @@
           "rx": 10.5,
           "ry": 1.2,
           "alpha": 0.9
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "ram_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "ram_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "ram_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -111,7 +195,21 @@
           "rx": 12.5,
           "ry": 1.3,
           "alpha": 0.85
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "ram_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "ram_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "ram_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -125,7 +223,21 @@
           "rx": 15,
           "ry": 1.4,
           "alpha": 0.8
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "ram_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "ram_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "ram_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -148,7 +260,21 @@
           "rx": 7,
           "ry": 1.2,
           "alpha": 0.7
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "moth_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "moth_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "moth_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -162,7 +288,21 @@
           "rx": 6.5,
           "ry": 1.1,
           "alpha": 0.55
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "moth_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "moth_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "moth_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -176,7 +316,21 @@
           "rx": 6.6,
           "ry": 1.1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "moth_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "moth_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "moth_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -190,7 +344,21 @@
           "rx": 8,
           "ry": 1.1,
           "alpha": 0.45
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "moth_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "moth_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "moth_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -213,7 +381,21 @@
           "rx": 5.5,
           "ry": 1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "jelly_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "jelly_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "jelly_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -227,7 +409,21 @@
           "rx": 6.5,
           "ry": 1.05,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "jelly_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "jelly_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "jelly_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -241,7 +437,21 @@
           "rx": 7.5,
           "ry": 1.1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "jelly_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "jelly_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "jelly_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -255,7 +465,21 @@
           "rx": 9,
           "ry": 1.1,
           "alpha": 0.45
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "jelly_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "jelly_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "jelly_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -278,7 +502,21 @@
           "rx": 8.5,
           "ry": 1.3,
           "alpha": 0.9
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "geode_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "geode_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "geode_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -292,7 +530,21 @@
           "rx": 11.5,
           "ry": 1.3,
           "alpha": 0.9
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "geode_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "geode_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "geode_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -306,7 +558,21 @@
           "rx": 14,
           "ry": 1.4,
           "alpha": 0.9
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "geode_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "geode_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "geode_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -320,7 +586,21 @@
           "rx": 17.5,
           "ry": 1.5,
           "alpha": 0.8
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "geode_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "geode_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "geode_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -343,7 +623,21 @@
           "rx": 8,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "mushroom_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "mushroom_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "mushroom_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -357,7 +651,21 @@
           "rx": 8.5,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "mushroom_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "mushroom_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "mushroom_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -371,7 +679,21 @@
           "rx": 10,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "mushroom_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "mushroom_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "mushroom_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -385,7 +707,21 @@
           "rx": 13,
           "ry": 1.2,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "mushroom_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "mushroom_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "mushroom_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -408,7 +744,21 @@
           "rx": 8,
           "ry": 1.4,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "stag_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "stag_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "stag_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -422,7 +772,21 @@
           "rx": 11,
           "ry": 1.5,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "stag_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "stag_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "stag_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -436,7 +800,21 @@
           "rx": 12.5,
           "ry": 1.6,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "stag_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "stag_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "stag_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -450,7 +828,21 @@
           "rx": 15,
           "ry": 1.8,
           "alpha": 1
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "stag_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "stag_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "stag_4_anxious.png"
+          }
+        ]
       }
     ]
   },
@@ -473,7 +865,21 @@
           "rx": 6,
           "ry": 1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "koi_1.png"
+          },
+          {
+            "mood": "happy",
+            "file": "koi_1_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "koi_1_anxious.png"
+          }
+        ]
       },
       {
         "stage": "kid",
@@ -487,7 +893,21 @@
           "rx": 8,
           "ry": 1.1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "koi_2.png"
+          },
+          {
+            "mood": "happy",
+            "file": "koi_2_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "koi_2_anxious.png"
+          }
+        ]
       },
       {
         "stage": "young",
@@ -501,7 +921,21 @@
           "rx": 9,
           "ry": 1.1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "koi_3.png"
+          },
+          {
+            "mood": "happy",
+            "file": "koi_3_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "koi_3_anxious.png"
+          }
+        ]
       },
       {
         "stage": "adult",
@@ -515,7 +949,21 @@
           "rx": 10,
           "ry": 1.1,
           "alpha": 0.5
-        }
+        },
+        "moods": [
+          {
+            "mood": "neutral",
+            "file": "koi_4.png"
+          },
+          {
+            "mood": "happy",
+            "file": "koi_4_happy.png"
+          },
+          {
+            "mood": "anxious",
+            "file": "koi_4_anxious.png"
+          }
+        ]
       }
     ]
   }

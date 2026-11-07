@@ -1,0 +1,2560 @@
+{
+ "version": 1,
+ "pad": 6,
+ "frames": [
+  "idle0",
+  "idle1",
+  "idle2",
+  "idle3",
+  "half",
+  "blink",
+  "move0",
+  "move1",
+  "move2",
+  "move3",
+  "cheer0",
+  "cheer1",
+  "cheer2",
+  "cheer3"
+ ],
+ "moods": [
+  "neutral",
+  "happy",
+  "anxious"
+ ],
+ "timing": {
+  "idle": [
+   380,
+   300,
+   380,
+   300
+  ],
+  "idleAnxious": [
+   220,
+   180,
+   220,
+   180
+  ],
+  "blink": {
+   "frames": [
+    "half",
+    "blink",
+    "half"
+   ],
+   "ms": [
+    50,
+    90,
+    50
+   ],
+   "every": [
+    2500,
+    6000
+   ],
+   "double": 0.2
+  },
+  "move": [
+   130,
+   130,
+   130,
+   130
+  ],
+  "cheer": {
+   "ms": [
+    140,
+    90,
+    260,
+    90
+   ],
+   "repeat": 2,
+   "landing": 120
+  },
+  "heart": {
+   "every": 650,
+   "pop": 70,
+   "rise": 9,
+   "life": 1150,
+   "fade": 400,
+   "sway": 1
+  },
+  "sparkle": {
+   "every": 900,
+   "frame": 90
+  },
+  "sweat": {
+   "bead": 260,
+   "slide": 500,
+   "slideBy": 3,
+   "stretch": 120,
+   "fall": 200,
+   "fallBy": 4,
+   "pause": [
+    700,
+    1200
+   ]
+  },
+  "shiver": {
+   "every": [
+    2200,
+    3600
+   ],
+   "ms": 60,
+   "times": 4
+  },
+  "ambient": {
+   "every": [
+    1400,
+    3000
+   ],
+   "rise": [
+    6,
+    11
+   ],
+   "life": [
+    1300,
+    1900
+   ],
+   "sway": 1
+  },
+  "puff": {
+   "frame": 90,
+   "drift": 2
+  }
+ },
+ "motion": {
+  "walk": {
+   "idle": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "move": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "cheer": [
+    0,
+    -3,
+    -6,
+    -3
+   ],
+   "speed": 1
+  },
+  "hop": {
+   "idle": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "move": [
+    0,
+    -2,
+    -4,
+    -2
+   ],
+   "cheer": [
+    0,
+    -3,
+    -6,
+    -3
+   ],
+   "speed": 2
+  },
+  "float": {
+   "idle": [
+    0,
+    -1,
+    -2,
+    -1
+   ],
+   "move": [
+    0,
+    -1,
+    -2,
+    -1
+   ],
+   "cheer": [
+    0,
+    -3,
+    -6,
+    -3
+   ],
+   "speed": 1
+  }
+ },
+ "fx": {
+  "heart": {
+   "file": "fx/heart.png",
+   "w": 7,
+   "h": 6,
+   "anchor": [
+    3,
+    3
+   ],
+   "frames": 3
+  },
+  "heartL": {
+   "file": "fx/heartL.png",
+   "w": 9,
+   "h": 8,
+   "anchor": [
+    4,
+    4
+   ],
+   "frames": 4
+  },
+  "sparkle": {
+   "file": "fx/sparkle.png",
+   "w": 5,
+   "h": 5,
+   "anchor": [
+    2,
+    2
+   ],
+   "frames": 4
+  },
+  "sweat": {
+   "file": "fx/sweat.png",
+   "w": 4,
+   "h": 6,
+   "anchor": [
+    0,
+    0
+   ],
+   "frames": 4
+  },
+  "sweatL": {
+   "file": "fx/sweatL.png",
+   "w": 5,
+   "h": 8,
+   "anchor": [
+    0,
+    0
+   ],
+   "frames": 4
+  },
+  "puff": {
+   "file": "fx/puff.png",
+   "w": 5,
+   "h": 4,
+   "anchor": [
+    4,
+    3
+   ],
+   "frames": 3
+  },
+  "ember": {
+   "file": "fx/ember.png",
+   "w": 2,
+   "h": 2,
+   "anchor": [
+    0,
+    1
+   ],
+   "frames": 4
+  },
+  "bubble": {
+   "file": "fx/bubble.png",
+   "w": 5,
+   "h": 5,
+   "anchor": [
+    2,
+    2
+   ],
+   "frames": 4
+  },
+  "zap": {
+   "file": "fx/zap.png",
+   "w": 4,
+   "h": 6,
+   "anchor": [
+    2,
+    3
+   ],
+   "frames": 4
+  },
+  "mote": {
+   "file": "fx/mote.png",
+   "w": 3,
+   "h": 3,
+   "anchor": [
+    1,
+    1
+   ],
+   "frames": 5
+  }
+ },
+ "lines": [
+  {
+   "id": "phoenix",
+   "title": "Phoenix line",
+   "description": "An ember chick reborn as a sun phoenix",
+   "bg": "#fbe3cf",
+   "ambient": {
+    "fx": "ember",
+    "file": "fx/ember.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Cindle",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/phoenix_1.png",
+     "shadow": "sheets/phoenix_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 35.8,
+      "rx": 9,
+      "ry": 1.3,
+      "alpha": 1
+     },
+     "motion": "hop",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       -2,
+       -4,
+       -2
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 2
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        12,
+        14
+       ],
+       [
+        32,
+        13
+       ]
+      ],
+      "sweat": [
+       31,
+       15
+      ],
+      "ambient": [
+       [
+        22,
+        8
+       ],
+       [
+        20,
+        11
+       ],
+       [
+        24,
+        11
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Kindlet",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/phoenix_2.png",
+     "shadow": "sheets/phoenix_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.3,
+      "rx": 7.5,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        12,
+        14
+       ],
+       [
+        36,
+        13
+       ]
+      ],
+      "sweat": [
+       32,
+       15
+      ],
+      "ambient": [
+       [
+        25,
+        8
+       ],
+       [
+        21,
+        10
+       ],
+       [
+        27,
+        11
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Pyrrow",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/phoenix_3.png",
+     "shadow": "sheets/phoenix_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46.4,
+      "rx": 8,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        11,
+        10
+       ],
+       [
+        35,
+        15
+       ]
+      ],
+      "sweat": [
+       21,
+       14
+      ],
+      "ambient": [
+       [
+        31,
+        10
+       ],
+       [
+        27,
+        9
+       ],
+       [
+        22,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Solphyre",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/phoenix_4.png",
+     "shadow": "sheets/phoenix_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52.6,
+      "rx": 7,
+      "ry": 1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        14
+       ],
+       [
+        50,
+        22
+       ]
+      ],
+      "sweat": [
+       23,
+       19
+      ],
+      "ambient": [
+       [
+        30,
+        11
+       ],
+       [
+        25,
+        9
+       ],
+       [
+        20,
+        9
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "ram",
+   "title": "Thunder ram line",
+   "description": "A cloud lamb that grows into the ram of the storm",
+   "bg": "#e3defa",
+   "ambient": {
+    "fx": "zap",
+    "file": "fx/zap.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Nimbaa",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/ram_1.png",
+     "shadow": "sheets/ram_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 36.2,
+      "rx": 8,
+      "ry": 1.2,
+      "alpha": 0.9
+     },
+     "motion": "hop",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       -2,
+       -4,
+       -2
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 2
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        9,
+        10
+       ],
+       [
+        36,
+        19
+       ]
+      ],
+      "sweat": [
+       33,
+       15
+      ],
+      "ambient": [
+       [
+        15,
+        14
+       ],
+       [
+        29,
+        14
+       ],
+       [
+        34,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Drizzlamb",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/ram_2.png",
+     "shadow": "sheets/ram_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.1,
+      "rx": 10.5,
+      "ry": 1.2,
+      "alpha": 0.9
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        7,
+        23
+       ],
+       [
+        12,
+        15
+       ]
+      ],
+      "sweat": [
+       9,
+       19
+      ],
+      "ambient": [
+       [
+        22,
+        17
+       ],
+       [
+        36,
+        19
+       ],
+       [
+        17,
+        19
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Voltram",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/ram_3.png",
+     "shadow": "sheets/ram_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46.2,
+      "rx": 12.5,
+      "ry": 1.3,
+      "alpha": 0.85
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        7,
+        20
+       ],
+       [
+        9,
+        11
+       ]
+      ],
+      "sweat": [
+       7,
+       14
+      ],
+      "ambient": [
+       [
+        28,
+        11
+       ],
+       [
+        44,
+        16
+       ],
+       [
+        44,
+        28
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Tempestaur",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/ram_4.png",
+     "shadow": "sheets/ram_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52,
+      "rx": 15,
+      "ry": 1.4,
+      "alpha": 0.8
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        6,
+        19
+       ],
+       [
+        9,
+        9
+       ]
+      ],
+      "sweat": [
+       6,
+       15
+      ],
+      "ambient": [
+       [
+        33,
+        11
+       ],
+       [
+        50,
+        16
+       ],
+       [
+        50,
+        28
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "moth",
+   "title": "Luna moth line",
+   "description": "A fluffy moth that becomes the lantern queen of the night",
+   "bg": "#e6f3ee",
+   "ambient": {
+    "fx": "mote",
+    "file": "fx/mote_moth.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Mothmallow",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/moth_1.png",
+     "shadow": "sheets/moth_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 35.6,
+      "rx": 7,
+      "ry": 1.2,
+      "alpha": 0.7
+     },
+     "motion": "hop",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       -2,
+       -4,
+       -2
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 2
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        9,
+        14
+       ],
+       [
+        35,
+        14
+       ]
+      ],
+      "sweat": [
+       29,
+       14
+      ],
+      "ambient": [
+       [
+        14,
+        9
+       ],
+       [
+        30,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Plumoth",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/moth_2.png",
+     "shadow": "sheets/moth_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.2,
+      "rx": 6.5,
+      "ry": 1.1,
+      "alpha": 0.55
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        12
+       ],
+       [
+        38,
+        12
+       ]
+      ],
+      "sweat": [
+       30,
+       14
+      ],
+      "ambient": [
+       [
+        14,
+        8
+       ],
+       [
+        34,
+        8
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Lunelle",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/moth_3.png",
+     "shadow": "sheets/moth_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46,
+      "rx": 6.6,
+      "ry": 1.1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        11,
+        9
+       ],
+       [
+        43,
+        9
+       ]
+      ],
+      "sweat": [
+       35,
+       16
+      ],
+      "ambient": [
+       [
+        16,
+        8
+       ],
+       [
+        38,
+        8
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Lanternyx",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/moth_4.png",
+     "shadow": "sheets/moth_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52.4,
+      "rx": 8,
+      "ry": 1.1,
+      "alpha": 0.45
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        12,
+        9
+       ],
+       [
+        48,
+        9
+       ]
+      ],
+      "sweat": [
+       38,
+       15
+      ],
+      "ambient": [
+       [
+        17,
+        11
+       ],
+       [
+        43,
+        11
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "jelly",
+   "title": "Aurora jelly line",
+   "description": "A tiny glowing jelly that becomes the queen of the northern lights",
+   "bg": "#efe6f6",
+   "ambient": {
+    "fx": "mote",
+    "file": "fx/mote_jelly.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Jellumi",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/jelly_1.png",
+     "shadow": "sheets/jelly_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 36.2,
+      "rx": 5.5,
+      "ry": 1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        13
+       ],
+       [
+        34,
+        13
+       ]
+      ],
+      "sweat": [
+       31,
+       12
+      ],
+      "ambient": [
+       [
+        18,
+        10
+       ],
+       [
+        26,
+        10
+       ],
+       [
+        22,
+        8
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Bellume",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/jelly_2.png",
+     "shadow": "sheets/jelly_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.3,
+      "rx": 6.5,
+      "ry": 1.05,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        14
+       ],
+       [
+        38,
+        14
+       ]
+      ],
+      "sweat": [
+       34,
+       14
+      ],
+      "ambient": [
+       [
+        24,
+        7
+       ],
+       [
+        19,
+        9
+       ],
+       [
+        29,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Auralis",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/jelly_3.png",
+     "shadow": "sheets/jelly_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46.3,
+      "rx": 7.5,
+      "ry": 1.1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        15
+       ],
+       [
+        44,
+        15
+       ]
+      ],
+      "sweat": [
+       38,
+       18
+      ],
+      "ambient": [
+       [
+        27,
+        7
+       ],
+       [
+        21,
+        9
+       ],
+       [
+        33,
+        9
+       ],
+       [
+        15,
+        12
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Borealia",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/jelly_4.png",
+     "shadow": "sheets/jelly_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52.4,
+      "rx": 9,
+      "ry": 1.1,
+      "alpha": 0.45
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        9,
+        15
+       ],
+       [
+        50,
+        15
+       ]
+      ],
+      "sweat": [
+       44,
+       21
+      ],
+      "ambient": [
+       [
+        30,
+        7
+       ],
+       [
+        24,
+        9
+       ],
+       [
+        36,
+        9
+       ],
+       [
+        17,
+        10
+       ],
+       [
+        43,
+        10
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "geode",
+   "title": "Geode line",
+   "description": "A pebble that grows crystals until it becomes a living geode",
+   "bg": "#e9e1f3",
+   "ambient": {
+    "fx": "mote",
+    "file": "fx/mote_geode.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Pebbit",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/geode_1.png",
+     "shadow": "sheets/geode_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 35.6,
+      "rx": 8.5,
+      "ry": 1.3,
+      "alpha": 0.9
+     },
+     "motion": "hop",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       -2,
+       -4,
+       -2
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 2
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        16
+       ],
+       [
+        34,
+        16
+       ]
+      ],
+      "sweat": [
+       31,
+       19
+      ],
+      "ambient": [
+       [
+        22,
+        7
+       ],
+       [
+        16,
+        11
+       ],
+       [
+        28,
+        12
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Quartzlet",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/geode_2.png",
+     "shadow": "sheets/geode_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 39.6,
+      "rx": 11.5,
+      "ry": 1.3,
+      "alpha": 0.9
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        21
+       ],
+       [
+        37,
+        15
+       ]
+      ],
+      "sweat": [
+       20,
+       22
+      ],
+      "ambient": [
+       [
+        28,
+        10
+       ],
+       [
+        21,
+        16
+       ],
+       [
+        35,
+        17
+       ],
+       [
+        39,
+        26
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Geodillo",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/geode_3.png",
+     "shadow": "sheets/geode_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 45.6,
+      "rx": 14,
+      "ry": 1.4,
+      "alpha": 0.9
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        23
+       ],
+       [
+        41,
+        17
+       ]
+      ],
+      "sweat": [
+       20,
+       25
+      ],
+      "ambient": [
+       [
+        28,
+        8
+       ],
+       [
+        20,
+        17
+       ],
+       [
+        37,
+        15
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Amethitan",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/geode_4.png",
+     "shadow": "sheets/geode_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52.3,
+      "rx": 17.5,
+      "ry": 1.5,
+      "alpha": 0.8
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        8,
+        26
+       ],
+       [
+        52,
+        28
+       ]
+      ],
+      "sweat": [
+       21,
+       31
+      ],
+      "ambient": [
+       [
+        32,
+        7
+       ],
+       [
+        24,
+        11
+       ],
+       [
+        42,
+        12
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "mushroom",
+   "title": "Mushroom line",
+   "description": "A little mushroom sprite that becomes the elder of the forest",
+   "bg": "#e4f0d8",
+   "ambient": {
+    "fx": "mote",
+    "file": "fx/mote_mushroom.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Sporby",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/mushroom_1.png",
+     "shadow": "sheets/mushroom_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 36.2,
+      "rx": 8,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "hop",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       -2,
+       -4,
+       -2
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 2
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        7,
+        14
+       ],
+       [
+        37,
+        14
+       ]
+      ],
+      "sweat": [
+       29,
+       23
+      ],
+      "ambient": [
+       [
+        16,
+        11
+       ],
+       [
+        28,
+        11
+       ],
+       [
+        22,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Capling",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/mushroom_2.png",
+     "shadow": "sheets/mushroom_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.2,
+      "rx": 8.5,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        7,
+        15
+       ],
+       [
+        41,
+        15
+       ]
+      ],
+      "sweat": [
+       31,
+       24
+      ],
+      "ambient": [
+       [
+        17,
+        11
+       ],
+       [
+        31,
+        11
+       ],
+       [
+        24,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Mossprite",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/mushroom_3.png",
+     "shadow": "sheets/mushroom_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46.2,
+      "rx": 10,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        8,
+        16
+       ],
+       [
+        46,
+        16
+       ]
+      ],
+      "sweat": [
+       34,
+       26
+      ],
+      "ambient": [
+       [
+        18,
+        12
+       ],
+       [
+        36,
+        12
+       ],
+       [
+        28,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Mycelder",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/mushroom_4.png",
+     "shadow": "sheets/mushroom_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 53,
+      "rx": 13,
+      "ry": 1.2,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        7,
+        16
+       ],
+       [
+        53,
+        16
+       ]
+      ],
+      "sweat": [
+       38,
+       28
+      ],
+      "ambient": [
+       [
+        16,
+        9
+       ],
+       [
+        44,
+        9
+       ],
+       [
+        30,
+        6
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "stag",
+   "title": "Star stag line",
+   "description": "A deer made of night sky, crowned with crystal antlers",
+   "bg": "#e4e2f7",
+   "ambient": {
+    "fx": "mote",
+    "file": "fx/mote_stag.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Stellet",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/stag_1.png",
+     "shadow": "sheets/stag_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 35.6,
+      "rx": 8,
+      "ry": 1.4,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "front",
+     "anchors": {
+      "fx": [
+       [
+        9,
+        8
+       ],
+       [
+        35,
+        8
+       ]
+      ],
+      "sweat": [
+       32,
+       15
+      ],
+      "ambient": [
+       [
+        34,
+        23
+       ],
+       [
+        10,
+        10
+       ],
+       [
+        34,
+        10
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Starfawn",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/stag_2.png",
+     "shadow": "sheets/stag_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 39.3,
+      "rx": 11,
+      "ry": 1.5,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        12,
+        9
+       ],
+       [
+        20,
+        9
+       ]
+      ],
+      "sweat": [
+       20,
+       18
+      ],
+      "ambient": [
+       [
+        17,
+        9
+       ],
+       [
+        39,
+        21
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Lunaroe",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/stag_3.png",
+     "shadow": "sheets/stag_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46.2,
+      "rx": 12.5,
+      "ry": 1.6,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        14,
+        10
+       ],
+       [
+        25,
+        10
+       ]
+      ],
+      "sweat": [
+       22,
+       21
+      ],
+      "ambient": [
+       [
+        17,
+        9
+       ],
+       [
+        45,
+        20
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Cervastra",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/stag_4.png",
+     "shadow": "sheets/stag_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 32,
+      "cy": 52.6,
+      "rx": 15,
+      "ry": 1.8,
+      "alpha": 1
+     },
+     "motion": "walk",
+     "lift": {
+      "idle": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "move": [
+       0,
+       0,
+       0,
+       0
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        10,
+        12
+       ],
+       [
+        39,
+        12
+       ]
+      ],
+      "sweat": [
+       33,
+       21
+      ],
+      "ambient": [
+       [
+        25,
+        6
+       ],
+       [
+        10,
+        10
+       ],
+       [
+        40,
+        10
+       ],
+       [
+        51,
+        23
+       ]
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "koi",
+   "title": "Koi dragon line",
+   "description": "The koi that climbs the waterfall and becomes a dragon",
+   "bg": "#d8ebf3",
+   "ambient": {
+    "fx": "bubble",
+    "file": "fx/bubble.png"
+   },
+   "stages": [
+    {
+     "stage": "baby",
+     "name": "Koibble",
+     "size": 44,
+     "nominalSize": 32,
+     "sheet": "sheets/koi_1.png",
+     "shadow": "sheets/koi_1_shadow.png",
+     "shadowEllipse": {
+      "cx": 22,
+      "cy": 36.6,
+      "rx": 6,
+      "ry": 1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        8,
+        12
+       ],
+       [
+        35,
+        12
+       ]
+      ],
+      "sweat": [
+       26,
+       12
+      ],
+      "ambient": [
+       [
+        10,
+        24
+       ],
+       [
+        21,
+        9
+       ],
+       [
+        32,
+        18
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "kid",
+     "name": "Finnow",
+     "size": 48,
+     "nominalSize": 36,
+     "sheet": "sheets/koi_2.png",
+     "shadow": "sheets/koi_2_shadow.png",
+     "shadowEllipse": {
+      "cx": 24,
+      "cy": 40.4,
+      "rx": 8,
+      "ry": 1.1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        8,
+        13
+       ],
+       [
+        29,
+        10
+       ]
+      ],
+      "sweat": [
+       17,
+       12
+      ],
+      "ambient": [
+       [
+        8,
+        25
+       ],
+       [
+        22,
+        10
+       ],
+       [
+        37,
+        18
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "young",
+     "name": "Drakoi",
+     "size": 54,
+     "nominalSize": 42,
+     "sheet": "sheets/koi_3.png",
+     "shadow": "sheets/koi_3_shadow.png",
+     "shadowEllipse": {
+      "cx": 27,
+      "cy": 46,
+      "rx": 9,
+      "ry": 1.1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        9,
+        11
+       ],
+       [
+        27,
+        9
+       ]
+      ],
+      "sweat": [
+       24,
+       15
+      ],
+      "ambient": [
+       [
+        9,
+        19
+       ],
+       [
+        14,
+        10
+       ],
+       [
+        20,
+        9
+       ]
+      ]
+     }
+    },
+    {
+     "stage": "adult",
+     "name": "Ascendra",
+     "size": 60,
+     "nominalSize": 48,
+     "sheet": "sheets/koi_4.png",
+     "shadow": "sheets/koi_4_shadow.png",
+     "shadowEllipse": {
+      "cx": 30,
+      "cy": 52.6,
+      "rx": 10,
+      "ry": 1.1,
+      "alpha": 0.5
+     },
+     "motion": "float",
+     "lift": {
+      "idle": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "move": [
+       0,
+       -1,
+       -2,
+       -1
+      ],
+      "cheer": [
+       0,
+       -3,
+       -6,
+       -3
+      ],
+      "speed": 1
+     },
+     "facing": "left",
+     "anchors": {
+      "fx": [
+       [
+        6,
+        10
+       ],
+       [
+        35,
+        12
+       ]
+      ],
+      "sweat": [
+       27,
+       14
+      ],
+      "ambient": [
+       [
+        33,
+        9
+       ],
+       [
+        17,
+        8
+       ],
+       [
+        8,
+        20
+       ]
+      ]
+     }
+    }
+   ]
+  }
+ ]
+}
