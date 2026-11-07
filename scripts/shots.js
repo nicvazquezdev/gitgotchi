@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--celebrate] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('node:fs');
@@ -17,6 +17,7 @@ const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const light = process.argv.includes('--light');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
+const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
 const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
 const PAGES = {
@@ -92,6 +93,9 @@ status.reviewQueue = reviewQueue(
 
 if (mine) status.reviewQueue = [];
 const fixtures = {
+  celebrate: celebrate
+    ? [{ id: 'first-merge', name: 'First merge', description: 'Get a pull request merged', icon: 'merge' }]
+    : null,
   status,
   catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
   petSize: config.DEFAULT_PET_SIZE,
@@ -146,7 +150,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };
