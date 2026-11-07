@@ -87,4 +87,4 @@ function stats(days, now = new Date(), isOff = never) {
   return { streak, bestStreak, history };
 }
 
-module.exports = { stats, streakLengths, emptyDay, dayXp, dayXpByKind };
+module.exports = { stats, streakLengths, isWeekend, emptyDay, dayXp, dayXpByKind };

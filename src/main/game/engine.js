@@ -1,13 +1,14 @@
 // Pure game rules: no I/O, easy to test.
 const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
-const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
+const { stats, isWeekend, emptyDay, dayXp, dayXpByKind } = require('./stats');
 const { startDay, progressOf, collectionView, petFacts } = require('./collection');
 const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
 const { isOffDay, timeOffView } = require('./time-off');
+const { dailyGoalView } = require('./daily-goal');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
@@ -253,6 +254,8 @@ function computeStatus({ pets = {}, activePet, achievements, activity, repos = [
     levelXpNeeded: progress.levelXpNeeded,
     ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline, off: isOff(today) }),
     timeOff: timeOffView(timeOff, today),
+    // Today's XP against a typical working day (no goal on a weekend or a day of time off).
+    daily: dailyGoalView({ baseline, xp: dayXp(sinceStart[today]), rest: isWeekend(today) || isOff(today) }),
     week,
     prs,
     baseline,

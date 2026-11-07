@@ -1,8 +1,9 @@
 // PR popover: the pet's header and two tabs. "To review" is the queue of PRs waiting for the user's review;
 // "My PRs" is the user's own PRs (waiting, approved, merged today). Rows open the PR in the browser.
 import { $, h } from '../shared/dom.js';
-import { plural, timeAgo } from '../shared/format.js';
+import { plural, timeAgo, dayLabel } from '../shared/format.js';
 import { icon, xpBar, portraitImg } from '../shared/ui.js';
+import { ring } from '../shared/pixel-art.js';
 
 const api = window.gitgotchi.popover;
 const app = $('#app');
@@ -87,6 +88,55 @@ const moodNotice = ({ mood, moodLabel, moodReason }) =>
         h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
       )
     : null;
+
+// ---------- Today: the daily goal ----------
+
+/**
+ * Today's XP against the daily goal, a typical working day of the person. It is a nudge: a weekend or a day of time
+ * off has no goal (and says the streak is safe), and nothing is lost by not reaching it.
+ */
+function todayRow({ daily, timeOff }) {
+  if (!daily) return null;
+  const text = (title, sub) => h('div', { class: 'today-text' }, h('b', {}, title), h('div', { class: 'meta' }, sub));
+  const goalRing = (progress, done) =>
+    h(
+      'span',
+      { class: `goal-ring${done ? ' done' : ''}`, role: 'img', ariaLabel: `${daily.xp} XP today` },
+      ring(progress, 2),
+    );
+
+  if (daily.rest && daily.xp === 0) {
+    const [title, sub] = timeOff?.active
+      ? [
+          'On time off',
+          timeOff.backOn ? `Back on ${dayLabel(timeOff.backOn)}. Your streak is safe.` : 'Your streak is safe.',
+        ]
+      : ['Rest day', 'No goal today. Your streak is safe.'];
+    return h(
+      'div',
+      { class: 'today' },
+      h('span', { class: 'today-icon' }, icon('moon', { size: 18, stroke: 2.2 })),
+      text(title, sub),
+    );
+  }
+  if (daily.rest) {
+    return h('div', { class: 'today' }, goalRing(1, true), text(`+${daily.xp} XP today`, 'A bonus: it is a rest day'));
+  }
+  const progress = Math.min(1, daily.xp / daily.goal);
+  return daily.reached
+    ? h(
+        'div',
+        { class: 'today reached' },
+        goalRing(1, true),
+        text('Daily goal reached', `${daily.xp} XP today · a typical day is ${daily.goal}`),
+      )
+    : h(
+        'div',
+        { class: 'today' },
+        goalRing(progress, false),
+        text(`${daily.xp} / ${daily.goal} XP today`, `${daily.goal - daily.xp} XP to your daily goal`),
+      );
+}
 
 // ---------- Tabs ----------
 
@@ -297,6 +347,7 @@ function render(state = latest, { resetScroll = false } = {}) {
     ...(status
       ? [
           header(status),
+          todayRow(status),
           tabs(status),
           h(
             'div',

@@ -200,6 +200,7 @@ petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
 petService.on('levelUp', (level, info) => petWindow.send('pet:level-up', { level, ...info }));
 petService.on('companion', (companion) => petWindow.send('pet:companion', companion));
 petService.on('achievements', (list) => petWindow.send('pet:achievements', list));
+petService.on('goal', (info) => petWindow.send('pet:goal', info));
 
 // --- cloud save (optional) ---
 petService.on('status', () => cloud.schedulePush());

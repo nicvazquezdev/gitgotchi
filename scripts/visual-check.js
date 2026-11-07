@@ -34,6 +34,8 @@ const CASES = [
   { name: 'popover-review-dark', page: 'popover', flags: [] },
   { name: 'popover-review-light', page: 'popover', flags: ['--light'] },
   { name: 'popover-mine-dark', page: 'popover', flags: ['--mine'] },
+  { name: 'popover-goal-open-dark', page: 'popover', flags: ['--goal-open'] },
+  { name: 'popover-time-off-dark', page: 'popover', flags: ['--time-off'] },
   { name: 'panel-dark', page: 'panel', flags: [] },
   { name: 'panel-light', page: 'panel', flags: ['--light'] },
   { name: 'settings-dark', page: 'settings', flags: [] },

@@ -92,6 +92,47 @@ body {
   margin: 0 16px;
 }
 
+/* ---------- Today: the daily goal ---------- */
+.today {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 0 16px 12px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.today.reached {
+  background: var(--success-bg);
+}
+.goal-ring {
+  --t-main: var(--accent);
+  --t-dark: var(--track);
+  flex: none;
+  line-height: 0;
+}
+.goal-ring.done {
+  --t-main: var(--success);
+}
+.today-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  color: var(--text-3);
+}
+.today-text b {
+  font-size: 13px;
+  font-weight: 600;
+}
+.today.reached .today-text b {
+  color: var(--success);
+}
+.today-text .meta {
+  margin-top: 1px;
+}
+
 /* ---------- Tabs: a segmented control with a count per tab ---------- */
 .tabs {
   display: flex;

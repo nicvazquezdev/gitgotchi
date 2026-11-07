@@ -186,6 +186,7 @@ const REACTIONS = [
   { kind: 'merges', cheer: true, text: 'PR merged! 🎉', dot: 'approved' },
   { kind: 'approvals', cheer: true, text: 'Your PR got approved! 🎉', dot: 'approved' },
   { kind: 'achievements', cheer: true, text: 'Achievement unlocked! 🏆', dot: 'approved' },
+  { kind: 'goal', cheer: true, text: 'Daily goal reached!', dot: 'approved' },
   { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
   { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
@@ -321,6 +322,15 @@ api.onEvolved(() => {
 });
 api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
+// The daily goal: the cheer and a toast.
+api.onGoal(({ xp, goal }) => {
+  reactToActivity({ goal: 1 });
+  say('Goal reached', {
+    sub: `${xp} XP today · a typical day is ${goal}`,
+    toast: { icon: 'target', tier: 'gold', kicker: 'Daily goal' },
+    ms: 5000,
+  });
+});
 // A new level: a hop, sparkles and a toast (if it also evolves, the evolution that follows takes over).
 api.onLevelUp(({ level, toNext, name }) => {
   if (!calm()) {

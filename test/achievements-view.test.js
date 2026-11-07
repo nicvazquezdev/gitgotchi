@@ -129,3 +129,27 @@ test('pixel art: the arrow of the level-up toast has a glyph too', async () => {
   assert.ok(GLYPH_NAMES.includes('up'));
   assert.equal(medalRows('up').length, 20);
 });
+
+test('pixel art: the progress ring fills clockwise from the top, and is round', async () => {
+  const { ringRows } = await art();
+  const count = (rows, char) => rows.join('').split(char).length - 1;
+  const total = count(ringRows(0), 'd');
+  assert.ok(total > 60);
+  assert.equal(count(ringRows(0), 'm'), 0);
+  assert.equal(count(ringRows(1), 'd'), 0);
+  assert.equal(count(ringRows(1), 'm'), total);
+  assert.equal(count(ringRows(0.5), 'm'), total / 2);
+  assert.equal(count(ringRows(2), 'm'), total); // clamped
+  assert.equal(count(ringRows(-1), 'm'), 0);
+  // a little progress starts at the top and goes to the right
+  const start = ringRows(0.08);
+  assert.ok(start[0].slice(8).includes('m') && !start[0].slice(0, 8).includes('m'));
+  assert.equal(start[0][0], '.'); // round: the corners are empty
+  // the ring is hollow
+  assert.equal(ringRows(1)[8][8], '.');
+});
+
+test('pixel art: the glyph of the daily goal toast exists', async () => {
+  const { GLYPH_NAMES } = await art();
+  assert.ok(GLYPH_NAMES.includes('target'));
+});
