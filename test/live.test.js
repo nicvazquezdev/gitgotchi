@@ -1,4 +1,4 @@
-const { test } = require('node:test');
+const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const { repoFromRemoteUrl, originUrl, lastLine, isPushReflogLine } = require('../src/main/live/git-remotes');
 const { diffPullRequests } = require('../src/main/live/pr-diff');
@@ -144,4 +144,59 @@ test('diffPullRequests: a PR entering the window with a decision already set is 
   const { snapshot } = diffPullRequests(null, [], REPOS, NOW);
   const old = pr('1', 'OPEN', { reviewDecision: 'APPROVED', createdAt: '2025-12-01T00:00:00Z' });
   assert.deepEqual(diffPullRequests(snapshot, [old], REPOS, NOW + 10_000).delta, {});
+});
+
+describe('diffPullRequests: moments (what the user may want to hear about)', () => {
+  const open = (extra = {}) =>
+    pr('1', 'OPEN', { reviewDecision: null, ci: 'SUCCESS', createdAt: '2025-12-01T00:00:00Z', ...extra });
+  const kinds = (result) => result.moments.map((m) => m.kind);
+
+  test('an approval, changes requested and failing checks come with the PR', () => {
+    const base = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
+    const approved = diffPullRequests(base, [open({ reviewDecision: 'APPROVED' })], REPOS, NOW + 10_000);
+    assert.deepEqual(kinds(approved), ['approved']);
+    assert.equal(approved.moments[0].pr.id, '1');
+
+    const changes = diffPullRequests(base, [open({ reviewDecision: 'CHANGES_REQUESTED' })], REPOS, NOW + 10_000);
+    assert.deepEqual(kinds(changes), ['changesRequested']);
+
+    const red = diffPullRequests(base, [open({ ci: 'FAILURE' })], REPOS, NOW + 10_000);
+    assert.deepEqual(kinds(red), ['checksFailed']);
+    assert.deepEqual(red.delta, {}, 'failing checks give the pet nothing to celebrate');
+  });
+
+  test('failing checks count once per failure: going from pending or green to red, not red to red', () => {
+    const at = (ci, snapshot, t) => diffPullRequests(snapshot, [open({ ci })], REPOS, NOW + t);
+    let result = at('SUCCESS', diffPullRequests(null, [open()], REPOS, NOW).snapshot, 10_000);
+    result = at('PENDING', result.snapshot, 20_000);
+    assert.deepEqual(kinds(result), []);
+    result = at('FAILURE', result.snapshot, 30_000);
+    assert.deepEqual(kinds(result), ['checksFailed']);
+    result = at('FAILURE', result.snapshot, 40_000);
+    assert.deepEqual(kinds(result), [], 'still red: nothing new');
+    result = at('ERROR', result.snapshot, 50_000);
+    assert.deepEqual(kinds(result), [], 'FAILURE and ERROR are both red');
+    result = at('PENDING', result.snapshot, 60_000); // a re-run
+    result = at('ERROR', result.snapshot, 70_000);
+    assert.deepEqual(kinds(result), ['checksFailed'], 'a new failure after a re-run is news again');
+  });
+
+  test('nothing is news for a PR the app did not know, on the first look, or when it is not open', () => {
+    assert.deepEqual(diffPullRequests(null, [open({ ci: 'FAILURE' })], REPOS, NOW).moments, []);
+    const empty = diffPullRequests(null, [], REPOS, NOW).snapshot;
+    assert.deepEqual(
+      diffPullRequests(empty, [open({ ci: 'FAILURE', reviewDecision: 'APPROVED' })], REPOS, NOW + 10_000).moments,
+      [],
+    );
+
+    const base = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
+    const merged = pr('1', 'MERGED', { reviewDecision: 'APPROVED', ci: 'FAILURE', mergedAt: '2026-01-01T12:00:05Z' });
+    assert.deepEqual(diffPullRequests(base, [merged], REPOS, NOW + 10_000).moments, []);
+  });
+
+  test('PRs of repos that are not selected are ignored', () => {
+    const other = (extra) => open({ repo: 'someone/else', ...extra });
+    const base = diffPullRequests(null, [other()], REPOS, NOW).snapshot;
+    assert.deepEqual(diffPullRequests(base, [other({ ci: 'FAILURE' })], REPOS, NOW + 10_000).moments, []);
+  });
 });

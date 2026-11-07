@@ -13,9 +13,10 @@ class PrWatcher {
    * `powerMonitor`: Electron's. `isEnabled()`: whether the app is set up.
    * `fetchPrs()`: resolves normalized PRs. `getRepos()`: selected repos. `onActivity(delta)`: new activity.
    * `onPullRequests(prs)` (optional): every fetched list, so the app's PR data stays as fresh as the check.
+   * `onMoments(moments)` (optional): what just happened to the user's open PRs (see diffPullRequests).
    */
-  constructor({ powerMonitor, isEnabled, fetchPrs, getRepos, onActivity, onPullRequests }) {
-    Object.assign(this, { powerMonitor, isEnabled, fetchPrs, getRepos, onActivity, onPullRequests });
+  constructor({ powerMonitor, isEnabled, fetchPrs, getRepos, onActivity, onPullRequests, onMoments }) {
+    Object.assign(this, { powerMonitor, isEnabled, fetchPrs, getRepos, onActivity, onPullRequests, onMoments });
   }
 
   start() {
@@ -47,10 +48,11 @@ class PrWatcher {
     try {
       const at = Date.now();
       const prs = await this.fetchPrs();
-      const { snapshot, delta } = diffPullRequests(this.#snapshot, prs, this.getRepos(), at);
+      const { snapshot, delta, moments } = diffPullRequests(this.#snapshot, prs, this.getRepos(), at);
       this.#snapshot = snapshot;
       // Reaction first: the credit it leaves keeps the ledger update below from reacting a second time.
       if (Object.keys(delta).length > 0) this.onActivity(delta);
+      if (moments.length > 0) this.onMoments?.(moments);
       this.onPullRequests?.(prs);
     } catch (err) {
       console.error('[live] PR check failed:', err.message);

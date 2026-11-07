@@ -41,6 +41,7 @@ const request = (id, over = {}) => ({
 let petService;
 let requests;
 let activities;
+let attentions;
 
 beforeEach(() => {
   state = {
@@ -51,6 +52,7 @@ beforeEach(() => {
   };
   requests = [request('1')];
   activities = [];
+  attentions = [];
   sessionCalls = 0;
   gh = {
     myTeams: async () => ['a/ui'],
@@ -63,6 +65,7 @@ beforeEach(() => {
   delete require.cache[SERVICE];
   petService = require(SERVICE);
   petService.on('activity', (delta) => activities.push(delta));
+  petService.on('attention', (items) => attentions.push(items));
 });
 
 const queueIds = () => petService.status().reviewQueue?.map((pr) => pr.id);
@@ -82,6 +85,47 @@ test('the first fetch is a baseline; a request that shows up later is reported o
   assert.deepEqual(activities, [{ reviewRequests: 1 }]);
   await petService.refreshReviews({ gh });
   assert.equal(activities.length, 1); // nothing new the third time
+});
+
+test('a new request also tells whoever listens for notifications, with what they need to say it', async () => {
+  requests = [request('1')];
+  await petService.refreshReviews({ gh });
+  assert.deepEqual(attentions, [], 'the first fetch is the baseline');
+  requests = [
+    request('1'),
+    request('2', { title: 'Fix it', number: 9, author: 'ana', via: 'a/ui', url: 'https://github.com/a/b/pull/9' }),
+  ];
+  await petService.refreshReviews({ gh });
+  assert.deepEqual(attentions, [
+    [
+      {
+        id: '2',
+        kind: 'reviewRequested',
+        title: 'Fix it',
+        repo: 'a/b',
+        number: 9,
+        url: 'https://github.com/a/b/pull/9',
+        author: 'ana',
+        via: 'a/ui',
+      },
+    ],
+  ]);
+  await petService.refreshReviews({ gh });
+  assert.equal(attentions.length, 1, 'once');
+});
+
+test('announce() turns the moments of the user PRs into attention items', async () => {
+  const moment = (kind, id) => ({ kind, pr: request(id, { title: `PR ${id}` }) });
+  petService.announce([moment('checksFailed', '7'), moment('approved', '8')]);
+  assert.deepEqual(
+    attentions[0].map((item) => [item.kind, item.id, item.title, item.repo]),
+    [
+      ['checksFailed', '7', 'PR 7', 'a/b'],
+      ['approved', '8', 'PR 8', 'a/b'],
+    ],
+  );
+  petService.announce([]);
+  assert.equal(attentions.length, 1, 'nothing to say, nothing emitted');
 });
 
 test('a request in a repo that is not selected is not news', async () => {

@@ -35,7 +35,15 @@ const POPOVER_ACTIONS = ['openProfile', 'openSettings'];
 // ---- end everyday UI ----
 
 // Settings window controls.
-const SETTINGS_ACTIONS = ['toggleSpeechBubbles', 'toggleOpenAtLogin', 'toggleCloudSync', 'openSaveRepo', 'openSetup'];
+const SETTINGS_ACTIONS = [
+  'toggleSpeechBubbles',
+  'toggleNotifications',
+  'toggleMenuBarCount',
+  'toggleOpenAtLogin',
+  'toggleCloudSync',
+  'openSaveRepo',
+  'openSetup',
+];
 
 /**
  * @param {{ openProfile: () => void, finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,

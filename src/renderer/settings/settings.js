@@ -165,6 +165,16 @@ const rows = {
       ? 'Hidden for now: Do not disturb is on.'
       : 'Short messages above the pet: PRs waiting for review, live reactions and mood changes.',
   })),
+  notifications: switchRow('System notifications', 'toggleNotifications', ({ notifications, doNotDisturb }) => ({
+    checked: notifications,
+    hint: doNotDisturb
+      ? 'Off for now: Do not disturb is on.'
+      : 'When someone asks for your review, or one of your PRs gets changes requested, fails its checks or is approved.',
+  })),
+  menuBarCount: switchRow('Review count in the menu bar', 'toggleMenuBarCount', ({ menuBarCount }) => ({
+    checked: menuBarCount,
+    hint: 'The number of PRs waiting for your review, next to the pet icon.',
+  })),
   account: accountRow(),
   backup: switchRow('Back up pet to GitHub', 'toggleCloudSync', backupHint),
   openAtLogin: switchRow('Open at login', 'toggleOpenAtLogin', ({ openAtLogin }) => ({
@@ -177,6 +187,7 @@ const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
   section('Pet', rows.size, rows.bubbles),
+  section('Reviews', rows.notifications, rows.menuBarCount),
   section('GitHub', rows.account, rows.backup),
   section('General', rows.openAtLogin),
 );

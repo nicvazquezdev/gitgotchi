@@ -125,6 +125,16 @@ function classify(prs, now = new Date()) {
 }
 
 /**
+ * What the user may want to be told about, one PR at a time (for a system notification): `kind` is
+ * 'reviewRequested' | 'approved' | 'changesRequested' | 'checksFailed'. `pr`: a normalized PR (repo is 'owner/name')
+ * or a queue entry (see `reviewQueue`, where it is `fullRepo`).
+ */
+function attentionOf(kind, pr) {
+  const { id, title, number, url, author = null, via = null } = pr;
+  return { id, kind, title, repo: pr.fullRepo ?? pr.repo, number, url, author, via };
+}
+
+/**
  * PRs waiting for the user's review, for the UI: only the selected repos (like everything else).
  * `xp` is what reviewing gives. `prs`: normalized PRs with an `author` login and, when known, `requestedAt` and `via`
  * (client.reviewRequests).
@@ -161,5 +171,6 @@ module.exports = {
   prunePullRequests,
   pullRequestDays,
   classify,
+  attentionOf,
   reviewQueue,
 };

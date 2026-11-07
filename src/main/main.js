@@ -13,7 +13,9 @@ const evolutionWindow = require('./ui/evolution-window');
 const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
-const { createTray } = require('./ui/tray');
+const { createTray, setTrayLabel } = require('./ui/tray');
+const { trayLabel } = require('./ui/tray-label');
+const { createNotifier } = require('./ui/notifier');
 const store = require('./store');
 const prefs = require('./prefs');
 const { registerIpc } = require('./ipc');
@@ -103,6 +105,8 @@ const actions = {
   // --- everyday UI: menu bar dropdown, PR popover, pet bubble ---
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
   toggleDoNotDisturb: () => togglePref('doNotDisturb'),
+  toggleNotifications: () => togglePref('notifications'),
+  toggleMenuBarCount: () => togglePref('menuBarCount'),
   // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
   openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : popoverWindow.show(trayAnchor())),
   /** `rect`: the creature's rect in the pet window's own coordinates. */
@@ -130,6 +134,8 @@ const actions = {
       repoCount: repos.length,
       speechBubbles: prefs.speechBubbles(),
       doNotDisturb: prefs.doNotDisturb(),
+      notifications: prefs.notifications(),
+      menuBarCount: prefs.menuBarCount(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
       petSize: petWindow.size(),
@@ -147,7 +153,20 @@ function togglePref(key) {
   panelWindow.send();
   settingsWindow.send();
   petWindow.send('pet:prefs', prefs.petPrefs());
+  refreshTray();
 }
+
+/** The menu bar shows how many PRs wait for the user's review (if they want it). */
+function refreshTray() {
+  if (tray) setTrayLabel(tray, trayLabel(petService.status()?.reviewQueue?.length ?? 0, prefs.menuBarCount()));
+}
+
+// System notifications for the moments worth interrupting for (see notify-plan.js). Do not disturb silences them.
+const notifier = createNotifier({
+  isEnabled: () => prefs.notifications() && !prefs.doNotDisturb(),
+  openPullRequest: (url) => openGithub(url),
+  openPopover: () => popoverWindow.show(trayAnchor()),
+});
 
 // ---------- Events ----------
 
@@ -157,8 +176,10 @@ petService.on('status', (status) => {
   panelWindow.send();
   settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();
+  refreshTray();
   actions.flushEvolution();
 });
+petService.on('attention', (items) => notifier.notify(items));
 petService.on('evolved', (stage) => {
   petWindow.send('pet:evolved', stage);
   actions.celebrateEvolution(stage);
@@ -196,6 +217,7 @@ app.whenReady().then(() => {
   popoverWindow.init(actions.panelState);
   settingsWindow.init(actions.settingsState);
   tray = createTray();
+  refreshTray();
   const toggleMenu = () => {
     actions.flushEvolution();
     actions.refreshReviews();
