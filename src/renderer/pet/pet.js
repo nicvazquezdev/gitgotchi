@@ -116,13 +116,20 @@ function renderBubble() {
   bubble.dataset.key = key;
   bubble.className = toast ? `bubble toast tier-${toast.tier}` : 'bubble';
   bubble.replaceChildren(
-    // An achievement toast, like a console's: the medal, what it is with its points, the name and what it was for.
+    // A toast, like a console's: the medal, what it is (and a figure on the right), the name and what it was for.
     ...(toast ? [h('div', { class: 'bubble-medal' }, medal(toast.icon, 2))] : []),
     h(
       'div',
       { class: 'bubble-text' },
       ...(toast
-        ? [h('div', { class: 'bubble-kicker' }, h('span', {}, toast.kicker), h('b', {}, `+${toast.points} pts`))]
+        ? [
+            h(
+              'div',
+              { class: 'bubble-kicker' },
+              h('span', {}, toast.kicker),
+              ...(toast.side ? [h('b', {}, toast.side)] : []),
+            ),
+          ]
         : []),
       h(
         'div',
@@ -234,7 +241,7 @@ function celebrateAchievements(list) {
     toast: {
       icon: first.icon,
       tier: first.tier ?? 'bronze',
-      points: list.reduce((sum, a) => sum + (a.points ?? 0), 0),
+      side: `+${list.reduce((sum, a) => sum + (a.points ?? 0), 0)} pts`,
       kicker: several ? `${list.length} achievements unlocked` : 'Achievement unlocked',
     },
     ms: 6000,
@@ -313,13 +320,17 @@ api.onEvolved(() => {
 });
 api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
-// A new level: a hop and sparkles (if it also evolves, the evolution that follows takes over).
-api.onLevelUp((level) => {
+// A new level: a hop, sparkles and a toast (if it also evolves, the evolution that follows takes over).
+api.onLevelUp(({ level, toNext, name }) => {
   if (!calm()) {
     replayClass(canvas, 'jump');
     burst('sparkle');
   }
-  say(`Level ${level}! ⬆️`, { dot: 'approved', ms: 4000 });
+  say(`Level ${level}`, {
+    sub: `${name} · ${toNext} XP to level ${level + 1}`,
+    toast: { icon: 'up', tier: 'special', kicker: 'Level up' },
+    ms: 4500,
+  });
 });
 // The user hatched a pet or switched to another one: it comes in out of a flash and says that it earns the XP now.
 api.onCompanion(({ kind, name }) => {

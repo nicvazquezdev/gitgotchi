@@ -123,3 +123,9 @@ test('pixel art: the bitmap font draws digits and the slash, 7 rows tall, one co
   assert.deepEqual(digitRows('x'), digitRows('0')); // unknown characters draw as 0
   for (const digit of '0123456789/') assert.ok(digitRows(digit).join('').includes('i'), digit);
 });
+
+test('pixel art: the arrow of the level-up toast has a glyph too', async () => {
+  const { GLYPH_NAMES, medalRows } = await art();
+  assert.ok(GLYPH_NAMES.includes('up'));
+  assert.equal(medalRows('up').length, 20);
+});

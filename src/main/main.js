@@ -186,7 +186,7 @@ petService.on('evolved', (stage) => {
   actions.celebrateEvolution(stage);
 });
 petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
-petService.on('levelUp', (level) => petWindow.send('pet:level-up', level));
+petService.on('levelUp', (level, info) => petWindow.send('pet:level-up', { level, ...info }));
 petService.on('companion', (companion) => petWindow.send('pet:companion', companion));
 petService.on('achievements', (list) => petWindow.send('pet:achievements', list));
 

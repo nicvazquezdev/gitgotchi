@@ -54,10 +54,10 @@ beforeEach(() => {
   events = [];
   delete require.cache[SERVICE];
   petService = require(SERVICE);
-  heard = { companion: [], configured: 0, levelUp: [], evolved: [] };
+  heard = { companion: [], configured: 0, levelUp: [], levelUpInfo: [], evolved: [] };
   petService.on('companion', (c) => heard.companion.push(c));
   petService.on('configured', () => heard.configured++);
-  petService.on('levelUp', (level) => heard.levelUp.push(level));
+  petService.on('levelUp', (level, info) => (heard.levelUp.push(level), heard.levelUpInfo.push(info)));
   petService.on('evolved', (stage) => heard.evolved.push(stage.index));
 });
 
@@ -174,6 +174,9 @@ test('every pet records its level and stage, but only the active pet celebrates 
   state.pets.koi = { ...born('koi'), earned: { '2026-05-01': xpForLevel(STAGES[3].level, BASELINE.defaultWeekly) } };
   await petService.sync();
   assert.deepEqual(heard.levelUp, [STAGES[1].level]);
+  // The toast says how far the next level is: the whole of level 5, as the pet has just reached it.
+  const level6 = xpForLevel(STAGES[1].level + 1, BASELINE.defaultWeekly);
+  assert.deepEqual(heard.levelUpInfo, [{ name: 'Pixel', toNext: level6 - level5 }]);
   assert.deepEqual(heard.evolved, [1]);
   assert.deepEqual([state.pets.phoenix.level, state.pets.phoenix.stageIndex], [STAGES[1].level, 1]);
   // The benched one grew up too (it is worth that much XP): recorded, with the day, without a party.

@@ -54,7 +54,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onEvolved: subscribe('pet:evolved'),
     onActivity: subscribe('pet:activity'), // { [kind]: count }
     onCompanion: subscribe('pet:companion'), // { kind: 'hatched' | 'switched', species, name }
-    onLevelUp: subscribe('pet:level-up'), // the new level
+    onLevelUp: subscribe('pet:level-up'), // { level, name, toNext }: the new level and the XP to the next one
     onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
   },
 

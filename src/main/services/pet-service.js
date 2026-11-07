@@ -1,7 +1,8 @@
 // Orchestrates the pet: setup, GitHub sync and derived status.
 // XP comes from the user's PRs (GraphQL), reviews, issues and pushes (Events API; a push is worth its commits,
 // found with one lookup each) in the selected repos, see game/catalog.js.
-// Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level; also fires on the level that evolves),
+// Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level, and `{ name, toNext }`: the XP still needed for
+// the next one; also fires on the level that evolves),
 // 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier, points }]`),
 // 'activity' (new activity per kind, e.g. { merges: 1 }; a live `pushes` reaction is animation only;
 // `reviewRequests` is not XP: someone asked the user for a review),
@@ -322,7 +323,8 @@ class PetService extends EventEmitter {
    * when. Announces the growth of the active pet: the others only change when the person's pace does.
    */
   #checkProgress() {
-    const { stage, level, collection } = this.status();
+    const status = this.status();
+    const { stage, level, collection } = status;
     const { pets, activePet } = store.get();
     const today = toDay(new Date());
     const changes = {};
@@ -336,7 +338,9 @@ class PetService extends EventEmitter {
     store.update({ pets: { ...pets, ...changes } });
     const before = pets[activePet];
     // First time we only record where the pet is, no celebration.
-    if (before.level != null && level > before.level) this.emit('levelUp', level);
+    if (before.level != null && level > before.level) {
+      this.emit('levelUp', level, { name: status.name, toNext: status.levelXpNeeded - status.levelXp });
+    }
     if (before.stageIndex != null && stage.index > before.stageIndex) this.emit('evolved', stage);
   }
 

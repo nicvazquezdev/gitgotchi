@@ -47,7 +47,11 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onEvolved: never,
     onActivity: never,
     onCompanion: never,
-    onLevelUp: never,
+    // `--level-up`: the pet reaches a new level a moment after it loads
+    onLevelUp: (callback) => {
+      if (fx.levelUp) setTimeout(() => callback(fx.levelUp), 300);
+      return () => {};
+    },
     // `--celebrate`: the pet gets new achievements a moment after it loads
     onAchievements: (callback) => {
       if (fx.celebrate) setTimeout(() => callback(fx.celebrate), 300);
