@@ -37,6 +37,7 @@ body {
   inset: 0;
   width: var(--pet-size);
   height: var(--pet-size);
+  image-rendering: pixelated; /* nearest-neighbor: keeps the pixel art sharp when scaled up */
 }
 /* Only the creature itself is grabbable (pet.js hit-tests it); the rest of the box is click-through. */
 body.hover .pet {
