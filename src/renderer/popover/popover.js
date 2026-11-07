@@ -46,9 +46,24 @@ function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
         { class: 'head-title' },
         h('span', { class: 'pixel-name name' }, name),
         h(
-          'button',
-          { class: 'icon-btn', type: 'button', 'aria-label': 'Settings', onclick: () => api.action('openSettings') },
-          icon('gear', { size: 18 }),
+          'span',
+          { class: 'head-actions' },
+          h(
+            'button',
+            {
+              class: 'icon-btn',
+              type: 'button',
+              'aria-label': 'Companions',
+              title: 'Switch companion',
+              onclick: () => api.action('openCollection'),
+            },
+            icon('swap', { size: 18 }),
+          ),
+          h(
+            'button',
+            { class: 'icon-btn', type: 'button', 'aria-label': 'Settings', onclick: () => api.action('openSettings') },
+            icon('gear', { size: 18 }),
+          ),
         ),
       ),
       h('div', { class: 'stage-line' }, `${stage.name} · Level ${level}`),

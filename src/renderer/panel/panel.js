@@ -1,10 +1,11 @@
-// Menu bar dropdown: the pet, its PR summary, everyday toggles and app actions, from the state pushed by main.
-// Preferences that are set once live in the Settings window.
+// Menu bar dropdown: the pet, the companions (one click switches), its PR summary, everyday toggles and app actions,
+// from the state pushed by main. Preferences that are set once live in the Settings window.
 import { $, h } from '../shared/dom.js';
 import { plural, totalXp, oldestDays, oldestWaitingDays, timeAgo } from '../shared/format.js';
 import { icon, xpBar, portraitImg } from '../shared/ui.js';
 
 const api = window.gitgotchi.panel;
+const { catalog } = await window.gitgotchi.bootstrap(); // the art of every species (the status only has the active one)
 const app = $('#app');
 
 const REFRESH_LABEL_MS = 30 * 1000; // "Synced N min ago" stays fresh while the dropdown is open
@@ -36,6 +37,69 @@ function header({ name, species, stage, nextStage, level, levelXp, levelXpNeeded
       ),
       xpBar(levelXp / levelXpNeeded, 'sm'),
       h('div', { class: 'meta xp-line' }, xpLine({ level, levelXp, levelXpNeeded, nextStage })),
+    ),
+  );
+}
+
+/**
+ * One companion as a face: its creature on its color and its level, and a bolt on the one that is earning XP.
+ * Clicking another one makes it the active pet.
+ */
+function face(entry) {
+  const species = catalog.species.find((s) => s.id === entry.id);
+  const label = entry.active ? `${entry.name}: earning XP` : `Switch to ${entry.name} (level ${entry.level})`;
+  return h(
+    'button',
+    {
+      class: `face${entry.active ? ' active' : ''}`,
+      type: 'button',
+      title: label,
+      'aria-label': label,
+      'aria-pressed': String(entry.active),
+      style: { background: species.tint },
+      onclick: () => !entry.active && window.gitgotchi.pets.activate(entry.id),
+    },
+    portraitImg({ species, stage: { index: entry.stageIndex } }, 44),
+    h('span', { class: 'face-lv', ariaHidden: 'true' }, entry.level),
+    entry.active ? h('span', { class: 'face-bolt', ariaHidden: 'true' }, icon('bolt', { size: 9, stroke: 3 })) : null,
+  );
+}
+
+/** The companions in a row, the last button hatches a new one while there is a species left. */
+function party({ collection }) {
+  const faces = collection.entries.filter((entry) => entry.hatched).map(face);
+  const more = collection.hatched < collection.total;
+  const open = () => api.action('openCollection');
+  return h(
+    'div',
+    { class: 'party' },
+    h(
+      'div',
+      { class: 'party-head' },
+      h('span', { class: 'eyebrow' }, 'Companions'),
+      h(
+        'button',
+        { class: 'link', type: 'button', onclick: open },
+        `Collection ${collection.hatched}/${collection.total}`,
+      ),
+    ),
+    h(
+      'div',
+      { class: 'party-row', role: 'group', 'aria-label': 'Companions' },
+      faces,
+      more
+        ? h(
+            'button',
+            {
+              class: 'face add',
+              type: 'button',
+              title: 'Hatch a new companion',
+              'aria-label': 'Hatch a new companion',
+              onclick: open,
+            },
+            icon('plus', { size: 16, stroke: 2.4 }),
+          )
+        : null,
     ),
   );
 }
@@ -115,6 +179,7 @@ function render(next = state) {
     ...(ready
       ? [
           header(status),
+          party(status),
           divider(),
           ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }, status.reviewQueue),
           divider(),

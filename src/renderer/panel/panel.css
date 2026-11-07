@@ -66,6 +66,87 @@ body {
   color: var(--text-2);
 }
 
+/* ---------- Companions: a face per pet, one click makes it the active one ---------- */
+.party {
+  padding: 2px 8px 8px;
+}
+.party-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 7px;
+}
+.party-head .eyebrow {
+  font-size: 11px;
+}
+.party-head .link {
+  font-size: 12px;
+}
+.party-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.face {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(29, 24, 48, 0.14);
+  cursor: pointer;
+  transition: transform 100ms;
+}
+.face .sprite {
+  margin-bottom: -2px;
+}
+.face:hover:not(.active) {
+  transform: translateY(-2px);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.face.active {
+  box-shadow: inset 0 0 0 2px var(--accent);
+  cursor: default;
+}
+.face-lv {
+  position: absolute;
+  left: 3px;
+  bottom: 3px;
+  padding: 0 3px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.8);
+  font: 600 9px/12px var(--font-pixel);
+  color: #2a1840;
+}
+.face-bolt {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  display: grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--on-accent);
+}
+.face.add {
+  align-items: center;
+  background: transparent;
+  color: var(--text-3);
+  box-shadow: inset 0 0 0 1.5px var(--border-strong);
+}
+.face.add:hover {
+  color: var(--accent-text);
+  box-shadow: inset 0 0 0 1.5px var(--accent);
+}
+
 /* ---------- Rows ---------- */
 .row {
   display: flex;

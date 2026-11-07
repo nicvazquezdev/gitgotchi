@@ -37,6 +37,7 @@ let waitingVisible = false; // the PR reminder is only up for a moment, so the p
 let waitingTimer = null;
 let waitingCount = null;
 let reviewCount = null;
+let loading = Promise.resolve(); // the creature on screen is being swapped for another one
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
@@ -52,7 +53,9 @@ function setStatus(next) {
   status = next;
   // The animator takes the mood from the status. A cheer that makes the pet happy lasts until the mood changes.
   if (moodChanged || creatureChanged) view.setMood(status.mood);
-  if (creatureChanged) view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
+  if (creatureChanged) {
+    loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
+  }
   const count = status.prs?.waiting?.length ?? 0;
   const reviews = status.reviewQueue?.length ?? 0;
   if (count !== waitingCount || reviews !== reviewCount) {
@@ -310,6 +313,23 @@ api.onEvolved(() => {
 });
 api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
+// A new level: a hop and sparkles (if it also evolves, the evolution that follows takes over).
+api.onLevelUp((level) => {
+  if (!calm()) {
+    replayClass(canvas, 'jump');
+    burst('sparkle');
+  }
+  say(`Level ${level}! ⬆️`, { dot: 'approved', ms: 4000 });
+});
+// The user hatched a pet or switched to another one: it comes in out of a flash and says that it earns the XP now.
+api.onCompanion(({ kind, name }) => {
+  loading.then(() => !calm() && replayClass(canvas, 'swap'));
+  say(kind === 'hatched' ? 'Hello, world! 🥚' : 'My turn! ✨', {
+    sub: `${name} earns all new XP now`,
+    dot: 'approved',
+    ms: 5000,
+  });
+});
 api.onPrefs((next) => {
   prefs = next;
   syncCalm();

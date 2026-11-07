@@ -10,7 +10,9 @@ const popoverWindow = require('./ui/popover-window');
 const settingsWindow = require('./ui/settings-window');
 const prefs = require('./prefs');
 const catalog = require('./game/catalog');
+const collection = require('./game/collection');
 const evolutionWindow = require('./ui/evolution-window');
+const profileWindow = require('./ui/profile-window');
 
 // Only accept messages from our own local pages.
 const isTrusted = (event) => event.senderFrame?.url.startsWith('file://');
@@ -28,10 +30,19 @@ function on(channel, fn) {
 
 // ---- everyday UI (menu bar dropdown, PR popover) ----
 // Dropdown rows. Actions in KEEP_OPEN update the dropdown in place; the rest close it first.
-const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleDoNotDisturb', 'openPopover', 'openProfile', 'openSettings', 'quit'];
+const PANEL_ACTIONS = [
+  'sync',
+  'togglePet',
+  'toggleDoNotDisturb',
+  'openPopover',
+  'openProfile',
+  'openCollection',
+  'openSettings',
+  'quit',
+];
 const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleDoNotDisturb']);
 // Popover buttons and header: they close the popover first.
-const POPOVER_ACTIONS = ['openProfile', 'openSettings'];
+const POPOVER_ACTIONS = ['openProfile', 'openCollection', 'openSettings'];
 // ---- end everyday UI ----
 
 // Settings window controls.
@@ -58,7 +69,12 @@ function registerIpc(actions) {
       user,
       repos,
       pet: pets[activePet] ?? null, // the active pet: the setup flow preselects it
-      catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
+      catalog: {
+        species: catalog.SPECIES,
+        stages: catalog.STAGES,
+        xpRules: catalog.XP_RULES,
+        nameMax: collection.NAME_MAX,
+      },
       status: petService.status(),
     };
   });
@@ -92,6 +108,11 @@ function registerIpc(actions) {
     petService.sync();
   });
 
+  // The collection: every window can switch pets. Each returns nothing or { error, message }.
+  handle('pets:activate', (species) => attempt(() => petService.activate(species)));
+  handle('pets:hatch', (choice) => attempt(() => petService.hatch(choice ?? {})));
+  handle('pets:rename', (choice) => attempt(() => petService.rename(choice ?? {})));
+
   // Pet
   handle('pet:status', () => petService.status());
   handle('pet:refresh', () => petService.sync());
@@ -112,11 +133,12 @@ function registerIpc(actions) {
 
   // --- Profile & evolution windows ---
   handle('profile:status', () => petService.status());
+  handle('profile:view', () => profileWindow.takeView());
   handle('evolution:data', () => evolutionWindow.current());
   on('evolution:close', () => evolutionWindow.close());
-  on('evolution:view-profile', () => {
+  on('evolution:view-profile', (view) => {
     evolutionWindow.close();
-    actions.openProfile();
+    actions.openProfile(view);
   });
   // --- end Profile & evolution windows ---
 

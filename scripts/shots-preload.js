@@ -46,13 +46,16 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onStatus: never,
     onEvolved: never,
     onActivity: never,
+    onCompanion: never,
+    onLevelUp: never,
     // `--celebrate`: the pet gets new achievements a moment after it loads
     onAchievements: (callback) => {
       if (fx.celebrate) setTimeout(() => callback(fx.celebrate), 300);
       return () => {};
     },
   },
-  profile: { status: value(fx.status), onStatus: never },
+  pets: { activate: ignore, hatch: ignore, rename: ignore },
+  profile: { status: value(fx.status), onStatus: never, view: value(null), onView: never },
   evolution: { data: value({ fromIndex: 0, toIndex: 1 }), close: ignore, viewProfile: ignore },
   panel: { state: value(fx.panel), onState: never, action: ignore, setHeight: ignore },
   popover: {

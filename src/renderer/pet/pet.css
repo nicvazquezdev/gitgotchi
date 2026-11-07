@@ -55,6 +55,10 @@ body.dragging .pet {
 .pet.evolve {
   animation: evolve 1.8s steps(12);
 }
+.pet.swap {
+  transform-origin: 50% 100%; /* it grows out of the floor */
+  animation: swap 0.7s steps(7);
+}
 
 /* ---------- Live reactions ---------- */
 .pet.hop {
@@ -119,6 +123,24 @@ body.dragging .pet {
   }
   70% {
     transform: translateY(calc(var(--u) * -1));
+  }
+}
+@keyframes swap {
+  0% {
+    filter: brightness(6) saturate(0);
+    transform: scale(0.15);
+  }
+  45% {
+    filter: brightness(6) saturate(0);
+    transform: scale(1.1);
+  }
+  70% {
+    filter: brightness(2.5) saturate(0.3);
+    transform: scale(0.97);
+  }
+  100% {
+    filter: none;
+    transform: none;
   }
 }
 @keyframes evolve {
@@ -251,6 +273,7 @@ body.dragging .pet {
   .pet.hop,
   .pet.wiggle,
   .pet.evolve,
+  .pet.swap,
   .alert {
     animation: none;
   }

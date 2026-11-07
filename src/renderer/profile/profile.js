@@ -1,14 +1,21 @@
-// Profile window. Two views, switched in the title bar: the overview (pet card, evolution line, this week's
-// activity and the XP rules) and the achievements.
+// Profile window. Three views, switched in the title bar: the overview (the active pet's card, its evolution line, the
+// user's week and the XP rules), the collection of pets, and the achievements.
 import { $, h } from '../shared/dom.js';
 import { icon, spriteImg, xpBar } from '../shared/ui.js';
 import { plural } from '../shared/format.js';
 import { animatePet } from '../shared/sprite.js';
 import { achievementsPage } from './achievements-view.js';
+import { collectionPage } from './collection-view.js';
 
 const api = window.gitgotchi;
 let catalog = null;
 let stopAnimation = () => {};
+
+/** Animates a canvas; the previous animation of the page stops (there is one portrait on show at a time). */
+function animate(canvas, getOptions) {
+  stopAnimation();
+  stopAnimation = animatePet(canvas, getOptions);
+}
 
 const PORTRAIT_MAX = 150; // px: biggest sprite in the portrait (integer scale of its native size)
 const portraitScale = (size) => Math.max(2, Math.floor(PORTRAIT_MAX / size));
@@ -16,8 +23,7 @@ const portraitScale = (size) => Math.max(2, Math.floor(PORTRAIT_MAX / size));
 function portrait({ species, stage, mood }) {
   const size = species.stages[stage.index].size;
   const canvas = h('canvas', { class: 'sprite', style: { width: `${size * portraitScale(size)}px` } });
-  stopAnimation();
-  stopAnimation = animatePet(canvas, () => ({ species, stageIndex: stage.index, mood }), { fit: 'sprite' });
+  animate(canvas, () => ({ species, stageIndex: stage.index, mood }));
   return h(
     'div',
     { class: 'portrait pixel-cut' },
@@ -93,7 +99,22 @@ function petCard(status) {
     'section',
     { class: 'card pet-card' },
     portrait(status),
-    h('div', { class: 'pixel-name pet-name' }, name),
+    h(
+      'div',
+      { class: 'pet-head' },
+      h('div', { class: 'pixel-name pet-name' }, name),
+      h(
+        'button',
+        {
+          class: 'switch-link',
+          type: 'button',
+          title: `Your companions (${status.collection.hatched}/${status.collection.total}): switch or hatch a new one`,
+          onclick: () => show('collection'),
+        },
+        icon('swap', { size: 14, stroke: 2.4 }),
+        'Switch',
+      ),
+    ),
     h('div', { class: 'pet-sub' }, `${creatureName} · ${stage.name} · Level ${level}`),
     xpBar(levelXp / levelXpNeeded, 'lg'),
     h(
@@ -157,7 +178,12 @@ function weekCard({ week }) {
   return h(
     'section',
     { class: 'card week' },
-    h('div', { class: 'card-head' }, h('h2', {}, 'This week'), h('span', { class: 'xp-text' }, `+${week.total} XP`)),
+    h(
+      'div',
+      { class: 'card-head', title: 'Everything you did, whichever companion was earning it' },
+      h('h2', {}, 'Your week'),
+      h('span', { class: 'xp-text' }, `+${week.total} XP`),
+    ),
     h(
       'div',
       { class: 'week-lines' },
@@ -208,27 +234,33 @@ function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
 
 const VIEWS = [
   ['overview', 'Overview'],
+  ['collection', 'Collection'],
   ['achievements', 'Achievements'],
 ];
-let view = location.hash === '#achievements' ? 'achievements' : 'overview';
+const [hashView, hashPick] = location.hash.slice(1).split('/'); // e.g. #collection/koi: that pet on show
+let view = VIEWS.some(([id]) => id === hashView) ? hashView : 'overview';
 let filter = 'all'; // achievements: which ones to show
 let latest = null; // the last status received
 let shownView = null; // the view on screen
 
+/** Switches to another view (the title bar, or a link in a page). */
+function show(next) {
+  view = next;
+  render(latest);
+  $(`#tab-${next}`)?.focus();
+}
+
 /** The switch in the title bar. */
 function viewTabs(status) {
   const { unlocked, total } = status.achievements;
-  const select = (next) => {
-    view = next;
-    render(latest);
-    $(`#tab-${next}`)?.focus();
-  };
+  const { hatched, total: species } = status.collection;
+  const chips = { collection: `${hatched}/${species}`, achievements: `${unlocked}/${total}` };
   const onKey = (e) => {
     const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
     if (!step) return;
     e.preventDefault();
     const at = VIEWS.findIndex(([id]) => id === view);
-    select(VIEWS[(at + step + VIEWS.length) % VIEWS.length][0]);
+    show(VIEWS[(at + step + VIEWS.length) % VIEWS.length][0]);
   };
   return h(
     'div',
@@ -243,20 +275,31 @@ function viewTabs(status) {
           role: 'tab',
           'aria-selected': String(id === view),
           tabIndex: id === view ? 0 : -1,
-          onclick: () => select(id),
+          onclick: () => show(id),
         },
         label,
-        id === 'achievements' ? h('span', { class: 'count-chip' }, `${unlocked}/${total}`) : null,
+        chips[id] ? h('span', { class: 'count-chip' }, chips[id]) : null,
       ),
     ),
   );
 }
 
-function render(status) {
+/** What has the focus (a card, a name field), to give it back after the page is drawn again. */
+const focusKey = () => document.activeElement?.dataset?.key ?? null;
+function restoreFocus(key) {
+  const el = key && $(`[data-key="${CSS.escape(key)}"]`);
+  if (!el) return;
+  el.focus();
+  if (el.setSelectionRange) el.setSelectionRange(el.value.length, el.value.length); // typing goes on at the end
+}
+
+/** `focus`: what to give the focus to after drawing (the data-key of an element); by default what had it before. */
+function render(status, { focus: focusOn } = {}) {
   latest = status;
   const app = $('#app');
   const switched = shownView !== view;
   const scroll = switched ? 0 : app.scrollTop; // a status update keeps the place in the list
+  const focus = focusOn ?? (switched ? null : focusKey());
   shownView = view;
   $('#title').replaceChildren(viewTabs(status));
   app.className = `content ${view}`;
@@ -273,6 +316,18 @@ function render(status) {
         },
       }),
     );
+  } else if (view === 'collection') {
+    stopAnimation();
+    app.replaceChildren(
+      collectionPage(status, {
+        catalog,
+        api,
+        animate,
+        enter: switched,
+        pick: hashPick,
+        rerender: (options) => render(latest, options),
+      }),
+    );
   } else {
     app.replaceChildren(
       petCard(status),
@@ -285,12 +340,16 @@ function render(status) {
     );
   }
   app.scrollTop = scroll;
+  restoreFocus(focus);
 }
 
 async function init() {
   const boot = await api.bootstrap();
   catalog = boot.catalog;
-  api.profile.onStatus(render);
+  const asked = await api.profile.view(); // the tab the window was opened on (the menu's "Collection…", say)
+  if (VIEWS.some(([id]) => id === asked)) view = asked;
+  api.profile.onStatus((status) => render(status));
+  api.profile.onView((next) => VIEWS.some(([id]) => id === next) && show(next)); // asked again while it is open
   render(boot.status ?? (await api.profile.status()));
 }
 

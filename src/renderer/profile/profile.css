@@ -88,10 +88,37 @@ body {
 .pet-card canvas {
   position: relative;
 }
-.pet-name {
+.pet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   margin-top: 14px;
+}
+.pet-name {
+  min-width: 0;
   font-size: 28px;
   line-height: 32px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.switch-link {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font: 600 12px var(--font-ui);
+  cursor: pointer;
+}
+.switch-link:hover {
+  filter: brightness(1.08);
 }
 .pet-sub {
   margin-top: 2px;

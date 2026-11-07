@@ -11,7 +11,7 @@ const ROOT = path.join(__dirname, '..');
 const config = require(path.join(ROOT, 'src/main/config.js'));
 const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
-const { earnedSince } = require(path.join(ROOT, 'src/main/game/collection.js'));
+const { earnedSince, NAME_MAX } = require(path.join(ROOT, 'src/main/game/collection.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
 const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
@@ -151,7 +151,7 @@ const fixtures = {
       ]
     : null,
   status,
-  catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
+  catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES, nameMax: NAME_MAX },
   petSize: config.DEFAULT_PET_SIZE,
   panel: {
     status,

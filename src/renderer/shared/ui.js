@@ -18,6 +18,10 @@ const ICON_PATHS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  bolt: '<path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z"/>',
+  swap: '<path d="M16 3l4 4-4 4M20 7H4M8 21l-4-4 4-4M4 17h16"/>',
+  pencil: '<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
   hand: '<path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5L4 14a2 2 0 0 1 3.5-2L9 14"/>',
 };
 

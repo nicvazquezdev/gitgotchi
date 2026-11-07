@@ -28,6 +28,13 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     restore: invoke('cloud:restore'), // restores the save; main then closes onboarding and shows the pet
   },
 
+  // The collection of pets. Each returns nothing, or { error, message } when it could not be done.
+  pets: {
+    activate: invoke('pets:activate'), // species id: from now on that pet earns the XP
+    hatch: invoke('pets:hatch'), // { species, name }: a new pet, which becomes the active one
+    rename: invoke('pets:rename'), // { species, name }
+  },
+
   pet: {
     status: invoke('pet:status'),
     refresh: invoke('pet:refresh'),
@@ -46,6 +53,8 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onStatus: subscribe('pet:status'),
     onEvolved: subscribe('pet:evolved'),
     onActivity: subscribe('pet:activity'), // { [kind]: count }
+    onCompanion: subscribe('pet:companion'), // { kind: 'hatched' | 'switched', species, name }
+    onLevelUp: subscribe('pet:level-up'), // the new level
     onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
   },
 
@@ -53,12 +62,14 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   profile: {
     status: invoke('profile:status'),
     onStatus: subscribe('profile:status'),
+    view: invoke('profile:view'), // -> the tab the window was opened on ('collection'...), or null
+    onView: subscribe('profile:view'), // an open window is asked to show another tab
   },
 
   evolution: {
     data: invoke('evolution:data'), // -> { fromIndex, toIndex }
     close: send('evolution:close'),
-    viewProfile: send('evolution:view-profile'),
+    viewProfile: send('evolution:view-profile'), // optional tab: 'collection'
   },
   // --- end Profile & evolution windows ---
 
@@ -66,7 +77,8 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   panel: {
     state: invoke('panel:state'), // -> { status, configured, connected, petVisible, doNotDisturb }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'toggleDoNotDisturb' | 'openPopover' | 'openProfile' | 'openSettings' | 'quit'
+    // 'sync' | 'togglePet' | 'toggleDoNotDisturb' | 'openPopover' | 'openProfile' | 'openCollection' | 'openSettings'
+    // | 'quit'
     action: send('panel:action'),
     setHeight: send('panel:height'), // content height in px
   },
@@ -74,7 +86,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   popover: {
     state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
     onState: subscribe('popover:state'),
-    action: send('popover:action'), // 'openProfile' | 'openSettings'
+    action: send('popover:action'), // 'openProfile' | 'openCollection' | 'openSettings'
     openPullRequest: send('popover:open-pr'), // https://github.com URL
     setHeight: send('popover:height'),
   },
