@@ -1,85 +1,88 @@
-// Menu-bar panel: renders the pet's stats and the app actions from the state pushed by main.
+// Menu bar dropdown: the pet, its PR summary, toggles and app actions, from the state pushed by main.
 import { $, h } from '../shared/dom.js';
+import { plural, totalXp, oldestDays, timeAgo } from '../shared/format.js';
+import { xpBar, portraitImg } from '../shared/ui.js';
 
 const api = window.gitgotchi.panel;
 const app = $('#app');
 
-const BAR_MAX_PX = 40;
-const weekdayInitial = (day) => new Date(`${day}T00:00`).toLocaleDateString('en-US', { weekday: 'narrow' });
-
+const REFRESH_LABEL_MS = 30 * 1000; // "Synced N min ago" stays fresh while the dropdown is open
+let state = null;
 let dragging = false; // while the slider is held, pushed states must not rebuild it
 
-// ---------- Sections ----------
+// ---------- Parts ----------
 
-function header({ name, species, stage, nextStage, xp, progress, weekScore, hearts, maxHearts, syncing }) {
-  const creature = species.stages[stage.index].name; // e.g. Chispín
-  const toNext = nextStage ? `${nextStage.minXp - xp} to ${nextStage.name}` : 'Max stage';
+const divider = () => h('hr', { class: 'divider' });
+
+function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
   return h(
-    'section',
-    { class: 'section' },
+    'div',
+    { class: 'head' },
+    h('div', { class: 'thumb', style: { background: species.tint } }, portraitImg({ species, stage })),
     h(
       'div',
-      { class: 'head-top' },
-      h('span', { class: 'name display' }, name),
+      { class: 'head-body' },
       h(
-        'span',
-        { class: 'hearts', title: `${hearts}/${maxHearts} hearts` },
-        ...Array.from({ length: maxHearts }, (_, i) => h('span', { class: i < hearts ? '' : 'empty' }, '♥')),
+        'div',
+        { class: 'head-title' },
+        h('span', { class: 'pixel-name name' }, name),
+        h('span', { class: 'meta' }, `${stage.name} · Lv ${level}`),
       ),
-    ),
-    h(
-      'div',
-      { class: 'head-sub' },
-      h('span', { class: 'badge gold' }, `${creature} · ${stage.name}`),
-      syncing ? h('span', { class: 'sync-dot display' }, '↻') : null,
-    ),
-    h('div', { class: 'xp-bar' }, h('div', { class: 'xp-fill', style: { width: `${Math.round(progress * 100)}%` } })),
-    h(
-      'div',
-      { class: 'stat-row' },
-      h('span', {}, h('b', {}, `${xp} XP`), ` · ${toNext}`),
-      h('span', {}, h('b', {}, weekScore), ' pts/wk'),
+      xpBar(levelXp / levelXpNeeded, 'sm'),
+      h(
+        'div',
+        { class: 'meta xp-line' },
+        `${levelXp} / ${levelXpNeeded} XP · ${levelXpNeeded - levelXp} to level ${level + 1}`,
+      ),
     ),
   );
 }
 
-function streakSection({ streak, bestStreak, history }) {
-  const max = Math.max(...history.map((d) => d.score), 1);
+/** A clickable summary row: colored dot, label, optional detail on the right. */
+const prRow = (dot, label, detail, className = '') =>
+  h(
+    'button',
+    { class: 'row pr-row', type: 'button', onclick: () => api.action('openPopover') },
+    h('span', { class: `dot ${dot}` }),
+    h('span', { class: 'grow' }, label),
+    detail ? h('span', { class: `detail ${className}` }, detail) : null,
+  );
+
+function prSummary({ waiting, approved, mergedToday }) {
+  const rows = [];
+  if (waiting.length) {
+    const days = oldestDays(waiting);
+    rows.push(
+      prRow('waiting', `${plural(waiting.length, 'PR')} waiting for review`, days ? `oldest ${days}d` : 'opened today'),
+    );
+  }
+  if (approved.length) rows.push(prRow('approved', `${plural(approved.length, 'PR')} approved, ready to merge`));
+  if (mergedToday.length)
+    rows.push(prRow('', `${mergedToday.length} merged today`, `+${totalXp(mergedToday)} XP`, 'xp-text'));
+  return rows.length
+    ? rows
+    : [h('div', { class: 'row static muted' }, h('span', { class: 'dot' }), 'No open PRs right now')];
+}
+
+/** A row with a switch; the whole row toggles. */
+function toggleRow(label, name, checked) {
+  const id = `label-${name}`;
   return h(
-    'section',
-    { class: 'section' },
-    h(
-      'div',
-      { class: 'streak' },
-      h('span', { class: `flame${streak === 0 ? ' off' : ''}` }),
-      h('span', {}, streak > 0 ? `${streak}-day streak` : 'No streak'),
-      h('small', {}, `Best ${bestStreak}`),
-    ),
-    h(
-      'div',
-      { class: 'chart' },
-      ...history.map(({ day, score }, i) =>
-        h(
-          'div',
-          { class: `chart-col${i === history.length - 1 ? ' today' : ''}`, title: `${day}: ${score} pts` },
-          h(
-            'div',
-            { class: 'chart-track' },
-            h('div', {
-              class: `chart-bar${score ? '' : ' empty'}`,
-              // Whole pixels (steps of 2) keep the bars crisp.
-              style: score ? { height: `${Math.max(4, Math.round((score / max) * (BAR_MAX_PX / 2)) * 2)}px` } : {},
-            }),
-          ),
-          h('span', { class: 'chart-day display' }, weekdayInitial(day)),
-        ),
-      ),
-    ),
+    'div',
+    { class: 'row toggle', onclick: () => api.action(name) },
+    h('span', { id }, label),
+    h('button', {
+      class: 'switch',
+      type: 'button',
+      role: 'switch',
+      'aria-checked': String(checked),
+      'aria-labelledby': id,
+    }),
   );
 }
 
-function sizeSection({ petSize, sizeRange }) {
-  const value = h('span', { class: 'value display' }, `${petSize} px`);
+function sizeRow({ petSize, sizeRange }) {
+  const value = h('span', { class: 'meta size-value' }, `${petSize} px`);
   const slider = h('input', {
     class: 'slider',
     type: 'range',
@@ -90,8 +93,7 @@ function sizeSection({ petSize, sizeRange }) {
     'aria-label': 'Pet size',
   });
   const paint = () => {
-    const pct = ((slider.value - sizeRange.min) / (sizeRange.max - sizeRange.min)) * 100;
-    slider.style.setProperty('--fill', `${pct}%`);
+    slider.style.setProperty('--fill', `${((slider.value - sizeRange.min) / (sizeRange.max - sizeRange.min)) * 100}%`);
     value.textContent = `${slider.value} px`;
   };
 
@@ -115,74 +117,78 @@ function sizeSection({ petSize, sizeRange }) {
   });
   paint();
 
-  return h(
-    'section',
-    { class: 'section' },
-    h('div', { class: 'label-row display' }, h('span', { class: 'muted' }, 'SIZE'), value),
-    slider,
-  );
+  return h('div', { class: 'row size' }, h('span', {}, 'Pet size'), slider, value);
 }
 
-const action = (name, label, { disabled, danger, end } = {}) =>
+/** A plain text row; `end` is the secondary text on the right. */
+const linkRow = (label, { onclick, end, disabled } = {}) =>
   h(
     'button',
-    { class: `action${danger ? ' danger' : ''}`, type: 'button', disabled, onclick: () => api.action(name) },
-    label,
-    end,
+    { class: 'row item', type: 'button', onclick, disabled },
+    h('span', {}, label),
+    end ? h('span', { class: 'meta' }, end) : null,
   );
 
-function actionsSection({ status, configured, connected, petVisible, openAtLogin }) {
-  const syncing = Boolean(status?.syncing);
-  return h(
-    'section',
-    { class: 'section' },
-    h(
-      'div',
-      { class: 'actions' },
-      configured
-        ? [
-            action('sync', syncing ? 'Syncing…' : 'Sync now', {
-              disabled: syncing,
-              end: syncing ? h('span', { class: 'spin display' }, '↻') : null,
-            }),
-            action('togglePet', petVisible ? 'Hide pet' : 'Show pet'),
-          ]
-        : [],
-      action('openSettings', 'Repos & pet settings…'),
-      action('toggleOpenAtLogin', 'Open at login', {
-        end: h('input', { class: 'check', type: 'checkbox', checked: openAtLogin, tabIndex: -1 }),
-      }),
-      connected ? action('disconnect', 'Disconnect & reset', { danger: true }) : null,
-      action('quit', 'Quit Gitgotchi'),
-    ),
-  );
+function syncedLabel(status) {
+  if (status?.syncing) return 'Syncing…';
+  return status?.lastSyncedAt ? `Synced ${timeAgo(status.lastSyncedAt)}` : 'Not synced yet';
 }
 
 // ---------- Render ----------
 
-function render(state) {
-  if (dragging) return; // the slider owns the screen until released
-  const { status, configured } = state;
+function render(next = state) {
+  state = next;
+  if (dragging || !state) return; // the slider owns the screen until released
+  const { status, configured, petVisible, speechBubbles, doNotDisturb, openAtLogin, cloudSync } = state;
+  const ready = configured && status;
   app.replaceChildren(
-    ...(configured && status
-      ? [header(status), streakSection(status), sizeSection(state)]
-      : [
-          h(
-            'section',
-            { class: 'section' },
-            h('h1', { class: 'title display' }, 'GITGOTCHI'),
-            h('p', { class: 'welcome' }, 'No pet yet. Pick your repos to hatch one.'),
-          ),
-        ]),
-    actionsSection(state),
-    ...(status?.error ? [h('p', { class: 'error', role: 'alert' }, status.error)] : []),
+    ...(ready
+      ? [
+          header(status),
+          divider(),
+          ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }),
+          divider(),
+        ]
+      : [h('p', { class: 'welcome' }, 'No pet yet. Pick your repos to hatch one.'), divider()]),
+    ...(ready
+      ? [
+          toggleRow('Show pet on desktop', 'togglePet', petVisible),
+          toggleRow('Speech bubbles', 'toggleSpeechBubbles', speechBubbles),
+          toggleRow('Do not disturb', 'toggleDoNotDisturb', doNotDisturb),
+          toggleRow('Sync to GitHub', 'toggleCloudSync', cloudSync),
+          sizeRow(state),
+        ]
+      : []),
+    toggleRow('Open at login', 'toggleOpenAtLogin', openAtLogin),
+    divider(),
+    ...(ready
+      ? [
+          linkRow('Open profile…', { onclick: () => api.action('openProfile') }),
+          linkRow('Refresh now', {
+            onclick: () => api.action('sync'),
+            end: syncedLabel(status),
+            disabled: status.syncing,
+          }),
+        ]
+      : []),
+    linkRow('Settings…', { onclick: () => api.action('openSettings'), end: '⌘ ,' }),
+    divider(),
+    linkRow('Quit Gitgotchi', { onclick: () => api.action('quit'), end: '⌘ Q' }),
+    ...(status?.error ? [h('p', { class: 'notice error', role: 'alert' }, status.error)] : []),
   );
 }
 
 // ---------- Boot ----------
 
+document.addEventListener('keydown', (e) => {
+  if (!e.metaKey) return;
+  if (e.key === ',') api.action('openSettings');
+  else if (e.key === 'q') api.action('quit');
+});
+
 // The window height follows the content.
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);
+setInterval(() => render(), REFRESH_LABEL_MS);
 
 api.onState(render);
 api.state().then(render);

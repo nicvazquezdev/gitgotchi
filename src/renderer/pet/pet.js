@@ -1,4 +1,5 @@
 import { $, h, replayClass } from '../shared/dom.js';
+import { plural, oldestDays } from '../shared/format.js';
 import { animatePet, spriteRect, BOX } from '../shared/sprite.js';
 
 const { pet: api } = window.gitgotchi;
@@ -14,7 +15,9 @@ const LINES = {
 };
 
 let status = null;
+let prefs = { speechBubbles: true, doNotDisturb: false };
 let drag = null;
+let spoken = null; // the line being said right now: { title, sub, dot }
 let bubbleTimer = null;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
@@ -26,11 +29,14 @@ const creature = () => status.species.stages[status.stage.index];
 
 function setStatus(next) {
   if (!next) return;
+  const moodChanged = status && status.mood !== next.mood;
   status = next;
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
   $('#zzz').hidden = status.mood !== 'sleeping';
   $('#alert').hidden = !status.error;
+  if (moodChanged) say(pick(LINES[status.mood] ?? LINES.idle));
+  else renderBubble();
 }
 
 const spriteOptions = () => status && { species: status.species, stageIndex: status.stage.index, mood: status.mood };
@@ -38,35 +44,75 @@ const spriteOptions = () => status && { species: status.species, stageIndex: sta
 const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
 
 // ---------- Bubble ----------
+// A card with a dot, a bold line and a secondary line. While PRs wait for review it says so (click to see them);
+// otherwise it only speaks for a moment (mood changes, live reactions). Off with Speech bubbles or Do not disturb.
 
-function say(text, ms = 3500) {
+const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
+
+/** The standing message: PRs waiting for review. */
+function waitingMessage() {
+  const waiting = status?.prs?.waiting ?? [];
+  if (!waiting.length) return null;
+  const days = oldestDays(waiting);
+  return {
+    title: `${plural(waiting.length, 'PR')} waiting for review`,
+    sub: `${days > 0 ? `For ${plural(days, 'day')}` : 'Opened today'}. Click me to see them.`,
+    dot: 'waiting',
+  };
+}
+
+function renderBubble() {
   const bubble = $('#bubble');
-  bubble.textContent = text;
-  bubble.hidden = false;
+  const message = quiet() ? null : (spoken ?? waitingMessage());
+  bubble.hidden = !message;
+  if (!message) return;
+  const key = `${message.title}|${message.sub}`;
+  if (bubble.dataset.key === key) return; // unchanged: don't replay the pop-in
+  bubble.dataset.key = key;
+  bubble.replaceChildren(
+    h('div', { class: 'bubble-title' }, h('span', { class: `dot ${message.dot ?? ''}` }), message.title),
+    message.sub ? h('div', { class: 'bubble-sub' }, message.sub) : null,
+  );
   replayClass(bubble, 'bubble');
+}
+
+/** Says a line for a moment; the standing message comes back afterwards. */
+function say(title, { sub, dot, ms = 3500 } = {}) {
+  spoken = { title, sub, dot };
+  renderBubble();
   clearTimeout(bubbleTimer);
-  bubbleTimer = setTimeout(() => (bubble.hidden = true), ms);
+  bubbleTimer = setTimeout(() => {
+    spoken = null;
+    renderBubble();
+  }, ms);
+}
+
+/** Opens the PR popover above the creature (a second click closes it). */
+function openPopover() {
+  const r = canvas.getBoundingClientRect();
+  const scale = r.width / BOX;
+  const { x, y, size } = spriteRect(status.species, status.stage.index);
+  api.openPopover({ x: r.left + x * scale, y: r.top + y * scale, width: size * scale, height: size * scale });
 }
 
 function reactToClick() {
   if (!status) return;
   replayClass(canvas, 'jump');
-  if (status.error) return say(`Oops: ${status.error}`, 5000);
-  say(pick(LINES[status.mood] ?? LINES.idle));
+  openPopover();
 }
 
 // ---------- Live reactions (new GitHub activity) ----------
 
 // Most exciting first. `anim` is a CSS class on the pet, `fx` the particle style.
 const REACTIONS = [
-  { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉' },
-  { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!' },
-  { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!' },
+  { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉', dot: 'approved' },
+  { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
+  { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!', dot: 'approved' },
   { kind: 'issues', anim: 'wiggle', text: 'Issue noted!' },
   { kind: 'comments', anim: 'wiggle', text: 'Chatty today!' },
   { kind: 'pushes', anim: 'hop', text: 'Nom nom, a push!' },
 ];
-const FX_COLORS = ['var(--gold)', 'var(--pink)', 'var(--sky)', 'var(--green)', 'var(--red)'];
+const FX_COLORS = ['var(--accent)', 'var(--dot-waiting)', 'var(--dot-approved)', 'var(--accent-text)', 'var(--fx-red)'];
 let fxTimer = null;
 
 function burst(style) {
@@ -92,7 +138,7 @@ function reactToActivity(delta) {
   const count = delta[reaction.kind];
   replayClass(canvas, reaction.anim);
   if (reaction.fx) burst(reaction.fx);
-  say(count > 1 ? `${reaction.text} x${count}` : reaction.text, 4000);
+  say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { dot: reaction.dot, ms: 4000 });
 }
 
 // ---------- Mouse: hover, click and drag ----------
@@ -109,6 +155,13 @@ function isOverPet(e) {
   return nx >= x && nx < x + size && ny >= y - 2 && ny < y + size; // -2: room for the hop
 }
 
+const isOverBubble = (e) => {
+  const bubble = $('#bubble');
+  if (bubble.hidden) return false;
+  const r = bubble.getBoundingClientRect();
+  return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+};
+
 function setHover(active) {
   if (document.body.classList.contains('hover') === active) return;
   document.body.classList.toggle('hover', active);
@@ -116,7 +169,7 @@ function setHover(active) {
 }
 
 // With click-through on, Electron still forwards mouse moves, so hover keeps working.
-document.addEventListener('mousemove', (e) => !drag && setHover(isOverPet(e)));
+document.addEventListener('mousemove', (e) => !drag && setHover(isOverPet(e) || isOverBubble(e)));
 document.addEventListener('mouseleave', () => !drag && setHover(false));
 
 canvas.addEventListener('pointerdown', (e) => {
@@ -141,8 +194,10 @@ canvas.addEventListener('pointerup', (e) => {
   drag = null;
   document.body.classList.remove('dragging');
   if (wasClick) reactToClick();
-  setHover(isOverPet(e));
+  setHover(isOverPet(e) || isOverBubble(e));
 });
+
+$('#bubble').addEventListener('click', () => status && openPopover());
 
 canvas.addEventListener('contextmenu', (e) => {
   if (!isOverPet(e)) return;
@@ -156,11 +211,17 @@ api.onSize(setSize);
 api.onStatus(setStatus);
 api.onEvolved(() => {
   replayClass(canvas, 'evolve');
-  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}! ✨`, 6000);
+  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}! ✨`, { ms: 6000 });
 });
 api.onActivity(reactToActivity);
+api.onPrefs((next) => {
+  prefs = next;
+  renderBubble();
+});
+api.onPopoverRequest(() => status && openPopover());
 
 setSize(await api.size());
+prefs = await api.prefs();
 setStatus(await api.status());
 animatePet(canvas, spriteOptions);
-if (status) say(`Hi! I'm ${status.name}`);
+if (status && !waitingMessage()) say(`Hi! I'm ${status.name}`);

@@ -5,6 +5,8 @@ const session = require('./services/session');
 const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
 const panelWindow = require('./ui/panel-window');
+const popoverWindow = require('./ui/popover-window');
+const prefs = require('./prefs');
 const catalog = require('./game/catalog');
 
 // Only accept messages from our own local pages.
@@ -21,13 +23,36 @@ function on(channel, fn) {
   ipcMain.on(channel, (event, payload) => isTrusted(event) && fn(payload));
 }
 
-// Panel buttons. Actions in KEEP_OPEN update the panel in place; the rest close it first.
-const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleOpenAtLogin', 'openSettings', 'disconnect', 'quit'];
-const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleOpenAtLogin']);
+// ---- everyday UI (menu bar dropdown, PR popover) ----
+// Dropdown rows. Actions in KEEP_OPEN update the dropdown in place; the rest close it first.
+const PANEL_ACTIONS = [
+  'sync',
+  'togglePet',
+  'toggleSpeechBubbles',
+  'toggleDoNotDisturb',
+  'toggleCloudSync',
+  'toggleOpenAtLogin',
+  'openPopover',
+  'openProfile',
+  'openSettings',
+  'quit',
+];
+const KEEP_OPEN = new Set([
+  'sync',
+  'togglePet',
+  'toggleSpeechBubbles',
+  'toggleDoNotDisturb',
+  'toggleCloudSync',
+  'toggleOpenAtLogin',
+]);
+// Popover buttons and header: they close the popover first.
+const POPOVER_ACTIONS = ['nudgeReviewers', 'openProfile', 'openSettings'];
+// ---- end everyday UI ----
 
 /**
  * @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
- *           setPetSize: (size: number, persist?: boolean) => void }} actions
+ *           setPetSize: (size: number, persist?: boolean) => void, togglePopover: (rect: object) => void,
+ *           openPullRequest: (url: string) => void }} actions
  */
 function registerIpc(actions) {
   // App
@@ -72,8 +97,16 @@ function registerIpc(actions) {
   on('pet:drag-end', () => petWindow.stopDrag());
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());
+  // ---- everyday UI ----
+  handle('pet:prefs', () => prefs.petPrefs());
+  on('pet:popover', (rect) => {
+    const { x, y, width, height } = rect ?? {};
+    if ([x, y, width, height].every(Number.isFinite)) actions.togglePopover({ x, y, width, height });
+  });
+  // ---- end everyday UI ----
 
-  // Panel
+  // ---- everyday UI ----
+  // Panel (menu bar dropdown)
   handle('panel:state', () => actions.panelState());
   on('panel:action', (name) => {
     if (!PANEL_ACTIONS.includes(name)) return;
@@ -82,6 +115,17 @@ function registerIpc(actions) {
   });
   on('panel:size', ({ size, commit }) => actions.setPetSize(Number(size), Boolean(commit)));
   on('panel:height', (height) => Number.isFinite(height) && panelWindow.setHeight(height));
+
+  // Popover (PRs)
+  handle('popover:state', () => popoverWindow.state());
+  on('popover:action', (name) => {
+    if (!POPOVER_ACTIONS.includes(name)) return;
+    popoverWindow.hide();
+    actions[name]();
+  });
+  on('popover:open-pr', (url) => typeof url === 'string' && actions.openPullRequest(url));
+  on('popover:height', (height) => Number.isFinite(height) && popoverWindow.setHeight(height));
+  // ---- end everyday UI ----
 }
 
 module.exports = { registerIpc };

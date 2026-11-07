@@ -67,6 +67,7 @@
   --pet-shadow: rgba(42, 24, 64, 0.16);
 
   /* Elevation */
+  --ring: rgba(29, 24, 48, 0.1); /* 1px edge of floating cards (the OS draws the shadow) */
   --shadow-menu: 0 0 0 1px rgba(29, 24, 48, 0.1), 0 14px 36px rgba(29, 24, 48, 0.22);
   --shadow-popover: 0 0 0 1px rgba(29, 24, 48, 0.08), 0 16px 40px rgba(29, 24, 48, 0.2);
   --shadow-bubble: 0 0 0 1px rgba(29, 24, 48, 0.06), 0 10px 28px rgba(29, 24, 48, 0.18);
@@ -127,6 +128,7 @@
     --frame: #0f0d16;
     --pet-shadow: rgba(0, 0, 0, 0.35);
 
+    --ring: rgba(255, 255, 255, 0.08);
     --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 36px rgba(0, 0, 0, 0.5);
     --shadow-popover: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.5);
     --shadow-bubble: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 28px rgba(0, 0, 0, 0.45);

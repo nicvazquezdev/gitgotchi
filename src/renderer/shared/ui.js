@@ -55,3 +55,9 @@ export function spriteImg(file, nativeSize, scale, alt = '') {
     height: nativeSize * scale,
   });
 }
+
+/** The creature of the current stage for a portrait box: the largest whole-pixel scale that fits `box` px. */
+export function portraitImg(status, box = 64) {
+  const stage = status.species.stages[status.stage.index];
+  return spriteImg(stage.file, stage.size, Math.max(1, Math.floor(box / stage.size)), stage.name);
+}

@@ -1,42 +1,28 @@
-// Menu bar / tray icon. Clicking it opens the panel (see panel-window.js).
+// Menu bar / tray icon: the pixel pet glyph plus the number of PRs waiting for review.
+// Clicking it opens the dropdown (see panel-window.js).
 const { Tray, nativeImage } = require('electron');
 const { IS_MAC } = require('../config');
+const { glyphBitmap, trayTitle } = require('./tray-glyph');
 
-// 16x16 pixel blob. On macOS it's a "template image" (adapts to light/dark mode).
-const ICON_ART = [
-  '................',
-  '.....######.....',
-  '...##########...',
-  '..############..',
-  '.##############.',
-  '.###..####..###.',
-  '.###..####..###.',
-  '################',
-  '################',
-  '####.######.####',
-  '#####......#####',
-  '################',
-  '################',
-  '################',
-  '##.###.##.###.##',
-  '#...#...#...#..#',
-];
-
-function pixelIcon(art, scale = 2) {
-  const size = art.length * scale;
-  const buffer = Buffer.alloc(size * size * 4); // transparent black
-  for (let y = 0; y < size; y++)
-    for (let x = 0; x < size; x++)
-      if (art[Math.floor(y / scale)][Math.floor(x / scale)] === '#') buffer[(y * size + x) * 4 + 3] = 255;
-  const img = nativeImage.createFromBitmap(buffer, { width: size, height: size, scaleFactor: scale });
+/** @1x and @2x bitmaps in one image; on macOS a "template image" (adapts to light/dark menu bars). */
+function glyphIcon() {
+  const img = nativeImage.createEmpty();
+  for (const scaleFactor of [1, 2]) img.addRepresentation(glyphBitmap(scaleFactor));
   if (IS_MAC) img.setTemplateImage(true);
   return img;
 }
 
 function createTray() {
-  const tray = new Tray(pixelIcon(ICON_ART));
+  const tray = new Tray(glyphIcon());
   tray.setToolTip('Gitgotchi');
   return tray;
 }
 
-module.exports = { createTray };
+/** Shows the waiting-PR count next to the icon (macOS only; empty when nothing waits). */
+function updateTray(tray, status) {
+  if (!IS_MAC) return;
+  const waiting = status?.prs?.waiting?.length ?? 0;
+  tray.setTitle(trayTitle(waiting), { fontType: 'monospacedDigit' });
+}
+
+module.exports = { createTray, updateTray };
