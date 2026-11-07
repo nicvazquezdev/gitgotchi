@@ -5,6 +5,7 @@ const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
 const { xpForLevel, levelAt, stageIndexFor } = require('./levels');
 const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
+const { achievementProgress, groupAchievements } = require('./achievements');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
@@ -241,6 +242,10 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
     ...stats(sinceBirth, now), // streaks and the 7-day chart are the pet's, like its XP
+    // What the pet has achieved: derived from its history, plus what was recorded as reached (`pet.achievements`).
+    achievements: groupAchievements(
+      achievementProgress({ days: sinceBirth, prs: mine, since: birthDay, stored: pet.achievements }),
+    ),
   };
 }
 

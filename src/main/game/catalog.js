@@ -102,6 +102,104 @@ const COMMIT_KEEP_DAYS = 14;
 // The PR list in the state keeps open PRs and PRs merged within this many days (older ones live on in the day ledger).
 const PR_KEEP_MERGED_DAYS = 14;
 
+// ---------- Achievements ----------
+
+// Counted from the pet's own history (since its birth day), like XP. `metric` is what is counted: a ledger kind
+// (prs, reviews, merges, commits, issues), `streak` (best streak, see game/stats.js), `fullDays` (days with a PR
+// opened, a review and a merge) or `quickMerges` (PRs merged soon after opening them). `quickMerges` reads the
+// stored PR list, which only keeps recent PRs, so its target must be 1 (a reached achievement is stored and kept).
+// `icon` names an icon of renderer/shared/ui.js.
+const ACHIEVEMENT_RULES = { quickMergeMinutes: 60 };
+
+const ACHIEVEMENT_GROUPS = [
+  { id: 'prs', name: 'Pull requests' },
+  { id: 'merges', name: 'Merges' },
+  { id: 'reviews', name: 'Reviews' },
+  { id: 'code', name: 'Commits and issues' },
+  { id: 'streaks', name: 'Streaks', note: 'Weekends never break a streak' },
+  { id: 'special', name: 'Special' },
+];
+
+// One family per metric (they share group, icon and metric); each step is [id, target, name, description].
+const ACHIEVEMENT_FAMILIES = [
+  {
+    group: 'prs',
+    icon: 'pr',
+    metric: 'prs',
+    steps: [
+      ['first-pr', 1, 'First PR', 'Open your first pull request'],
+      ['pr-10', 10, 'PR regular', 'Open 10 pull requests'],
+      ['pr-50', 50, 'PR factory', 'Open 50 pull requests'],
+    ],
+  },
+  {
+    group: 'merges',
+    icon: 'merge',
+    metric: 'merges',
+    steps: [
+      ['first-merge', 1, 'First merge', 'Get a pull request merged'],
+      ['merge-10', 10, 'Shipper', 'Get 10 pull requests merged'],
+      ['merge-50', 50, 'Release train', 'Get 50 pull requests merged'],
+    ],
+  },
+  {
+    group: 'reviews',
+    icon: 'eye',
+    metric: 'reviews',
+    steps: [
+      ['first-review', 1, 'First review', "Review someone else's pull request"],
+      ['review-10', 10, 'Second pair of eyes', 'Submit 10 reviews'],
+      ['review-50', 50, 'Code guardian', 'Submit 50 reviews'],
+      ['review-100', 100, 'Review machine', 'Submit 100 reviews'],
+    ],
+  },
+  {
+    group: 'code',
+    icon: 'commit',
+    metric: 'commits',
+    steps: [
+      ['commit-100', 100, 'Commit habit', 'Push 100 commits'],
+      ['commit-500', 500, 'Commit marathon', 'Push 500 commits'],
+    ],
+  },
+  {
+    group: 'code',
+    icon: 'issue',
+    metric: 'issues',
+    steps: [
+      ['first-issue', 1, 'First issue', 'Open an issue'],
+      ['issue-10', 10, 'Issue hunter', 'Open 10 issues'],
+    ],
+  },
+  {
+    group: 'streaks',
+    icon: 'flame',
+    metric: 'streak',
+    steps: [
+      ['streak-3', 3, 'Warming up', 'Be active 3 days in a row'],
+      ['streak-5', 5, 'Full work week', 'Be active 5 days in a row'],
+      ['streak-10', 10, 'Two weeks strong', 'Be active 10 days in a row'],
+      ['streak-20', 20, 'A month of work', 'Be active 20 days in a row'],
+    ],
+  },
+  {
+    group: 'special',
+    icon: 'bolt',
+    metric: 'quickMerges',
+    steps: [['quick-merge', 1, 'Speed run', 'Get a PR merged within an hour of opening it']],
+  },
+  {
+    group: 'special',
+    icon: 'cycle',
+    metric: 'fullDays',
+    steps: [['full-cycle', 1, 'Full cycle', 'Open a PR, submit a review and get a PR merged on the same day']],
+  },
+];
+
+const ACHIEVEMENTS = ACHIEVEMENT_FAMILIES.flatMap(({ steps, ...shared }) =>
+  steps.map(([id, target, name, description]) => ({ id, ...shared, name, description, target })),
+);
+
 // "How you earn XP", as the UI shows it (derived from PR_SIZES and WEIGHTS).
 const XP_RULES = {
   sizes: PR_SIZES.map(({ id, name, maxLines, xp }) => ({
@@ -131,4 +229,7 @@ module.exports = {
   MOOD,
   PR_KEEP_MERGED_DAYS,
   XP_RULES,
+  ACHIEVEMENT_RULES,
+  ACHIEVEMENT_GROUPS,
+  ACHIEVEMENTS,
 };
