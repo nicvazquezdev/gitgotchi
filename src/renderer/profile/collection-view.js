@@ -208,8 +208,8 @@ function titleBlock(entry, { nameMax, onRename, onSaveName, onCancelName }) {
   );
 }
 
-/** The evolution line in small: the forms reached, the one it is in, and the ones still hidden. */
-function miniLine(species, stages, stageIndex) {
+/** The evolution line in small: the forms reached, the one it is in (`nowLabel` says so), and the ones still hidden. */
+function miniLine(species, stages, stageIndex, nowLabel = 'now') {
   return h(
     'div',
     { class: 'col-line' },
@@ -229,7 +229,7 @@ function miniLine(species, stages, stageIndex) {
         h(
           'div',
           { class: 'mini-lv' },
-          state === 'locked' ? `Lv ${stages[i].level}` : state === 'now' ? 'now' : 'reached',
+          state === 'locked' ? `Lv ${stages[i].level}` : state === 'now' ? nowLabel : 'reached',
         ),
       );
     }),
@@ -340,7 +340,13 @@ function actionBlock(entry, status, { onActivate }) {
     { class: 'col-action' },
     h(
       'button',
-      { class: 'btn primary pixel-cut block lg', type: 'button', disabled: busy, onclick: () => onActivate(entry.id) },
+      {
+        class: 'btn primary pixel-cut block lg',
+        type: 'button',
+        disabled: busy,
+        dataset: { key: 'action' },
+        onclick: () => onActivate(entry.id),
+      },
       bolt(16),
       `Make ${entry.name} active`,
     ),
@@ -405,23 +411,7 @@ function lockedDetail(entry, species, status, ctx) {
         h('span', { class: 'meta' }, 'Revealed as it grows'),
       ),
     ),
-    h(
-      'div',
-      { class: 'col-line' },
-      species.stages.map((stage, i) =>
-        h(
-          'div',
-          { class: `mini ${i === 0 ? 'now' : 'locked'}` },
-          h(
-            'div',
-            { class: 'mini-art' },
-            spriteImg(i === 0 ? stage.file : stage.silhouette, stage.size, 1, i === 0 ? stage.name : ''),
-          ),
-          h('div', { class: 'mini-name' }, i === 0 ? stage.name : '???'),
-          h('div', { class: 'mini-lv' }, i === 0 ? 'Baby' : `Lv ${ctx.catalog.stages[i].level}`),
-        ),
-      ),
-    ),
+    miniLine(species, ctx.catalog.stages, 0, 'Baby'),
     h(
       'div',
       { class: 'col-action' },
@@ -432,6 +422,7 @@ function lockedDetail(entry, species, status, ctx) {
           class: 'btn primary pixel-cut block lg',
           type: 'button',
           disabled: busy,
+          dataset: { key: 'action' },
           onclick: () => ctx.onHatch(entry.id),
         },
         icon('plus', { size: 16, stroke: 2.6 }),
@@ -512,7 +503,10 @@ export function collectionPage(status, { catalog, api, rerender, animate, pick, 
     forget();
     rerender({ focus: id });
   };
-  /** Asks the main process; it answers `{ error, message }` when it cannot. The status that follows redraws the page. */
+  /**
+   * Asks the main process; it answers `{ error, message }` when it cannot (the page says why). The status that follows
+   * redraws the page; the focus goes to the card of the pet, or stays on the button when it did not work.
+   */
   const ask = async (request) => {
     busy = true;
     problem = null;
@@ -520,7 +514,7 @@ export function collectionPage(status, { catalog, api, rerender, animate, pick, 
     const result = await request();
     busy = false;
     if (result?.error) problem = result.message;
-    rerender();
+    rerender({ focus: result?.error ? 'action' : selected });
     return !result?.error;
   };
   const ctx = {
@@ -529,30 +523,27 @@ export function collectionPage(status, { catalog, api, rerender, animate, pick, 
     animate,
     onActivate: (id) => ask(() => api.pets.activate(id)),
     onHatch: async (id) => {
-      const name = draft.trim();
-      if (await ask(() => api.pets.hatch({ species: id, name }))) {
-        fresh = id;
-        forget();
-        rerender();
-      }
+      if (!(await ask(() => api.pets.hatch({ species: id, name: draft.trim() })))) return;
+      fresh = id;
+      forget();
+      rerender({ focus: id });
     },
     onRename: () => {
       renaming = true;
       draft = entry.name;
-      rerender();
+      rerender({ focus: 'name' });
     },
     onSaveName: async () => {
       const name = draft.trim();
-      if (name === entry.name || (await ask(() => api.pets.rename({ species: entry.id, name })))) {
-        renaming = false;
-        draft = '';
-        rerender();
-      }
+      if (name !== entry.name && !(await ask(() => api.pets.rename({ species: entry.id, name })))) return;
+      renaming = false;
+      draft = '';
+      rerender({ focus: 'rename' });
     },
     onCancelName: () => {
       renaming = false;
       draft = '';
-      rerender();
+      rerender({ focus: 'rename' });
     },
   };
 

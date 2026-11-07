@@ -75,6 +75,15 @@ test('hatching adds a baby with no XP, makes it the active pet and tells everyon
   assert.equal(petService.status().collection.hatched, 2);
 });
 
+test('hatching tells about the new pet first and the achievements it earns after, so the toast is not covered', () => {
+  state.achievements = {}; // already recorded once: what comes now is news
+  const order = [];
+  petService.on('companion', () => order.push('companion'));
+  petService.on('achievements', (list) => order.push(...list.map((a) => a.id)));
+  petService.hatch({ species: 'koi' }); // the second pet: "Dynamic duo"
+  assert.deepEqual(order, ['companion', 'duo']);
+});
+
 test('a pet without a name gets its baby’s name; the same species cannot be hatched twice, nor an unknown one', () => {
   petService.hatch({ species: 'koi' });
   assert.equal(state.pets.koi.name, SPECIES.find((s) => s.id === 'koi').stages[0].name);

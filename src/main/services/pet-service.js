@@ -134,10 +134,12 @@ class PetService extends EventEmitter {
   #changeCollection(patch, companion) {
     store.update({ ...patch, profileUpdatedAt: new Date().toISOString() });
     this.#checkProgress();
-    this.#checkAchievements();
-    this.notify();
+    this.notify(); // the windows show the new pet before they hear about it
     this.emit('configured');
     if (companion) this.emit('companion', companion);
+    // After the greeting, so that the toast of a collection achievement (hatching a second pet) is not covered by it.
+    this.#checkAchievements();
+    this.notify();
   }
 
   /** The one sync loop: syncs every SYNC_INTERVAL_MS, or GitHub's X-Poll-Interval if that is longer. */
