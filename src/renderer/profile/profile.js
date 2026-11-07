@@ -22,8 +22,38 @@ function portrait({ species, stage, mood }) {
   );
 }
 
+const WARNING_MOODS = ['anxious', 'sad'];
+
+/** Mood line: amber only when something needs attention; otherwise a calm line that says what is going on. */
+function moodNotice({ mood, moodLabel, moodReason }) {
+  if (mood === 'sleeping')
+    return h(
+      'div',
+      { class: 'notice calm' },
+      icon('moon'),
+      h(
+        'span',
+        {},
+        h('strong', {}, 'Sleeping'),
+        h('span', { class: 'notice-sub' }, `${moodReason}. Your XP keeps counting meanwhile.`),
+      ),
+    );
+  if (WARNING_MOODS.includes(mood) && moodReason)
+    return h(
+      'div',
+      { class: 'notice' },
+      icon('clock'),
+      h('span', {}, h('strong', {}, moodLabel), h('span', { class: 'notice-sub' }, moodReason)),
+    );
+  return h(
+    'div',
+    { class: 'notice calm' },
+    h('span', {}, h('strong', {}, moodLabel), moodReason ? h('span', { class: 'notice-sub' }, moodReason) : null),
+  );
+}
+
 function petCard(status) {
-  const { name, level, levelXp, levelXpNeeded, stage, species, moodLabel, moodReason } = status;
+  const { name, level, levelXp, levelXpNeeded, stage, species } = status;
   const creatureName = species.stages[stage.index].name;
   return h(
     'section',
@@ -38,9 +68,7 @@ function petCard(status) {
       h('b', {}, `${levelXp} / ${levelXpNeeded} XP`),
       h('span', { class: 'meta' }, `${levelXpNeeded - levelXp} XP to level ${level + 1}`),
     ),
-    moodReason
-      ? h('div', { class: 'notice' }, icon('clock'), h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`))
-      : h('div', { class: 'notice calm' }, h('span', {}, h('strong', {}, moodLabel))),
+    moodNotice(status),
   );
 }
 
@@ -57,7 +85,11 @@ function stageCard(stage, i, current) {
       'div',
       {},
       h('div', { class: 'pixel-name' }, state === 'locked' ? '???' : stage.name),
-      h('div', { class: 'stage-label' }, state === 'now' ? `${name} · now` : `${name} · level ${level}`),
+      h(
+        'div',
+        { class: 'stage-label' },
+        state === 'now' ? `${name} · now` : state === 'locked' ? `Unlocks at level ${level}` : `${name} · reached`,
+      ),
     ),
   );
 }
@@ -101,9 +133,12 @@ function weekCard({ week }) {
   );
 }
 
-function rulesCard({ prBySize, review, merged }) {
-  const points = Object.values(prBySize);
-  const rule = (label, value) => h('div', { class: 'rule' }, h('span', {}, label), h('span', {}, value));
+const sizeLimit = (sizes, i) =>
+  sizes[i].maxLines === null ? `More than ${sizes[i - 1].maxLines} lines` : `Up to ${sizes[i].maxLines} lines`;
+
+function rulesCard({ sizes, review, merged }) {
+  const row = (label, xp, lead) =>
+    h('div', { class: 'rule' }, lead ?? null, h('span', { class: 'rule-label' }, label), h('b', {}, `+${xp} XP`));
   return h(
     'section',
     { class: 'card rules' },
@@ -111,15 +146,11 @@ function rulesCard({ prBySize, review, merged }) {
     h(
       'div',
       { class: 'rule-list' },
-      rule('Open a PR', `+${Math.min(...points)} to +${Math.max(...points)} by size`),
-      h(
-        'div',
-        { class: 'sizes' },
-        Object.entries(prBySize).map(([size, xp]) => h('span', { class: 'size-badge' }, `${size} ${xp}`)),
-      ),
+      h('div', { class: 'rule-group' }, 'Open a PR (by its size)'),
+      sizes.map(({ id, xp }, i) => row(sizeLimit(sizes, i), xp, h('span', { class: 'size-badge' }, id))),
       h('hr'),
-      rule('Review a PR', `+${review}`),
-      rule('Get a PR merged', `+${merged}`),
+      row('Review a PR', review),
+      row('Get a PR merged', merged),
     ),
   );
 }

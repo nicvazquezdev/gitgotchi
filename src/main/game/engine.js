@@ -148,8 +148,7 @@ const MOOD_LABELS = { happy: 'Happy', idle: 'Content', anxious: 'Anxious', sad: 
 function moodFor({ waiting, mergedRecently, ratio, petAgeDays }, now) {
   const result = (mood, reason = null) => ({ mood, moodLabel: MOOD_LABELS[mood], moodReason: reason });
   const hour = now.getHours();
-  if (hour >= SLEEP_HOURS.from && hour < SLEEP_HOURS.to)
-    return result('sleeping', `Resting until ${SLEEP_HOURS.to}:00`);
+  if (hour >= SLEEP_HOURS.from && hour < SLEEP_HOURS.to) return result('sleeping', `Wakes up at ${SLEEP_HOURS.to}:00`);
 
   const stale = waiting.filter((pr) => pr.ageDays >= MOOD.anxiousAfterDays);
   if (stale.length > 0) {

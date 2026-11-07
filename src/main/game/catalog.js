@@ -98,7 +98,7 @@ const SLEEP_HOURS = { from: 0, to: 7 };
 
 // "How you earn XP", as the UI shows it (derived from PR_SIZES and WEIGHTS).
 const XP_RULES = {
-  prBySize: Object.fromEntries(PR_SIZES.map(({ id, xp }) => [id, xp])),
+  sizes: PR_SIZES.map(({ id, maxLines, xp }) => ({ id, maxLines: Number.isFinite(maxLines) ? maxLines : null, xp })),
   review: WEIGHTS.reviews,
   merged: WEIGHTS.merges,
 };
