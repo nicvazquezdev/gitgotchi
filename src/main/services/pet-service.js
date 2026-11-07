@@ -1,12 +1,14 @@
 // Orchestrates the pet: setup, GitHub sync and derived status.
-// Events: 'status' (status), 'evolved' (stage), 'activity' (new activity per kind, e.g. { merges: 1 }).
+// Events: 'status' (status), 'evolved' (stage), 'activity' (new activity per kind, e.g. { merges: 1 }),
+// 'configured' (setup saved: repos may have changed).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
 const session = require('./session');
 const engine = require('../game/engine');
 const { SPECIES } = require('../game/catalog');
 const { fromDay } = require('../dates');
-const { SYNC_INTERVAL_MS } = require('../config');
+const { SYNC_INTERVAL_MS, LIVE } = require('../config');
+const { addCredits, subtractCredits } = require('../live/credits');
 
 class PetService extends EventEmitter {
   #syncing = null;
@@ -15,6 +17,8 @@ class PetService extends EventEmitter {
   #poll = { etag: null, interval: null };
   // Reactions only after a baseline sync in this session, so old activity never triggers them.
   #baselined = false;
+  // Live reactions the Events diff has not reported yet (see live/credits.js).
+  #credits = [];
 
   isConfigured() {
     const { pet, repos } = store.get();
@@ -61,6 +65,7 @@ class PetService extends EventEmitter {
     });
     if (isNewPet || reposChanged) this.#resetBaseline();
     this.notify();
+    this.emit('configured');
     this.sync();
   }
 
@@ -73,7 +78,15 @@ class PetService extends EventEmitter {
     setTimeout(loop, SYNC_INTERVAL_MS);
   }
 
+  /** Reaction from a live source (local push, PR watcher). The later Events diff will not repeat it. */
+  react(delta) {
+    if (!this.isConfigured()) return;
+    this.#credits = addCredits(this.#credits, delta, Date.now(), LIVE.CREDIT_TTL_MS);
+    this.emit('activity', delta);
+  }
+
   #resetBaseline() {
+    this.#credits = [];
     this.#poll.etag = null;
     this.#baselined = false;
   }
@@ -101,7 +114,14 @@ class PetService extends EventEmitter {
       const days = engine.mergeDays(before, engine.buildDays({ events, repos: state.repos }));
       store.update({ activity: { days, lastSyncedAt: new Date().toISOString() } });
 
-      const delta = engine.diffDays(before, days);
+      // Activity a live source already celebrated must not trigger a second reaction.
+      const { delta, credits } = subtractCredits(
+        this.#credits,
+        engine.diffDays(before, days),
+        Date.now(),
+        LIVE.CREDIT_TTL_MS,
+      );
+      this.#credits = credits;
       if (this.#baselined && Object.keys(delta).length > 0) this.emit('activity', delta);
       this.#baselined = true;
       this.#checkEvolution();

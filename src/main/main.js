@@ -9,6 +9,7 @@ const onboardingWindow = require('./ui/onboarding-window');
 const { createTray, buildMenu } = require('./ui/tray');
 const { registerIpc } = require('./ipc');
 const loginItem = require('./login-item');
+const { startLive } = require('./live');
 
 let tray = null;
 
@@ -95,6 +96,9 @@ app.whenReady().then(() => {
   }
 
   petService.startPolling();
+  // --- live reactions (local pushes + PR watcher) ---
+  startLive({ petService, powerMonitor });
+  // --- end live reactions ---
   setInterval(() => petService.notify(), TICK_INTERVAL_MS);
   powerMonitor.on('resume', actions.sync);
   screen.on('display-removed', petWindow.ensureOnScreen);

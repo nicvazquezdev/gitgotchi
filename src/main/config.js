@@ -30,6 +30,21 @@ module.exports = {
   // Recomputes mood (e.g. sleeping at night) without hitting GitHub.
   TICK_INTERVAL_MS: 5 * 60 * 1000,
 
+  // Near-real-time reactions (see live/).
+  LIVE: {
+    PR_POLL_MS: 10 * 1000,
+    // Used when the system has been idle longer than IDLE_AFTER_S.
+    PR_POLL_IDLE_MS: 60 * 1000,
+    IDLE_AFTER_S: 5 * 60,
+    // A live reaction hides the same activity from the Events diff for this long.
+    CREDIT_TTL_MS: 10 * 60 * 1000,
+    // Local clone discovery: folders under the home dir, scanned to a limited depth and size.
+    CLONE_ROOTS: ['Documents', 'Developer', 'dev', 'code', 'projects', 'src', 'repos', 'workspace', 'github', 'git'],
+    CLONE_SCAN_DEPTH: 3,
+    CLONE_SCAN_MAX_DIRS: 5000,
+    CLONE_SCAN_SKIP: ['node_modules', 'Library'],
+  },
+
   GITHUB: {
     HOST: 'github.com', // Only github.com accounts are listed (GitHub Enterprise hosts are not supported yet)
     API: 'https://api.github.com',

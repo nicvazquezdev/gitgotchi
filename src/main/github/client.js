@@ -85,6 +85,31 @@ class GitHubClient {
     return result;
   }
 
+  /** Minimal GraphQL call. Throws on transport or GraphQL errors. */
+  async graphql(query, variables = {}) {
+    const res = await fetch(`${GITHUB.API}/graphql`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.token}`,
+        'Content-Type': 'application/json',
+        'User-Agent': GITHUB.USER_AGENT,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    if (res.status === 401) throw new Error('GitHub rejected the gh token. Run `gh auth login`.');
+    if (!res.ok) throw new Error(`GitHub ${res.status} at graphql`);
+    const body = await res.json();
+    if (body.errors?.length) throw new Error(`GitHub GraphQL: ${body.errors[0].message}`);
+    return body.data;
+  }
+
+  /** The viewer's 20 most recently updated open or merged PRs: [{ id, state, createdAt, mergedAt, repo }]. Costs 1 point. */
+  async recentPullRequests() {
+    const data = await this.graphql(`{ viewer { pullRequests(first: 20, orderBy: {field: UPDATED_AT, direction: DESC},
+      states: [OPEN, MERGED]) { nodes { id number title state createdAt mergedAt repository { nameWithOwner } } } } }`);
+    return data.viewer.pullRequests.nodes.map(({ repository, ...pr }) => ({ ...pr, repo: repository.nameWithOwner }));
+  }
+
   /** Repos the user can access, sorted by last push. */
   async accessibleRepos() {
     const repos = [];
