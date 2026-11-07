@@ -1,4 +1,4 @@
-// Menu bar / tray icon: the user's current pet (sprite of its current stage), no text. Until the status is known
+// Menu bar / tray icon: the silhouette of the user's current pet (current stage), no text. Until the status is known
 // it shows the generic pixel glyph. Clicking it opens the dropdown (see panel-window.js).
 const path = require('node:path');
 const { Tray, nativeImage } = require('electron');
@@ -16,17 +16,19 @@ function glyphIcon() {
   return img;
 }
 
-/** The pet sprite as a full-color icon, scaled with nearest-neighbor to ICON_POINTS. */
+/** The pet silhouette as a macOS template image (drawn in the menu bar's own color), scaled with nearest-neighbor to ICON_POINTS. */
 function petIcon(file) {
   const sprite = nativeImage.createFromPath(path.join(PETS_DIR, file));
   const { width: side } = sprite.getSize();
   if (!side) return null;
   const px = ICON_POINTS * 2;
-  return nativeImage.createFromBitmap(scaleNearest(sprite.toBitmap(), side, px), {
+  const icon = nativeImage.createFromBitmap(scaleNearest(sprite.toBitmap(), side, px), {
     width: px,
     height: px,
     scaleFactor: 2,
   });
+  if (IS_MAC) icon.setTemplateImage(true);
+  return icon;
 }
 
 function createTray() {
@@ -40,10 +42,10 @@ let shownFile = null;
 /** Shows the pet's current stage in the menu bar. */
 function updateTray(tray, status) {
   const stage = status?.species?.stages?.[status.stage?.index];
-  if (!stage?.file || stage.file === shownFile) return;
-  const icon = petIcon(stage.file);
+  if (!stage?.silhouette || stage.silhouette === shownFile) return;
+  const icon = petIcon(stage.silhouette);
   if (!icon) return;
-  shownFile = stage.file;
+  shownFile = stage.silhouette;
   tray.setImage(icon);
 }
 

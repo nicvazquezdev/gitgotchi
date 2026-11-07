@@ -63,12 +63,10 @@ contextBridge.exposeInMainWorld('gitgotchi', {
 
   // ---- everyday UI ----
   panel: {
-    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, speechBubbles, doNotDisturb, openAtLogin, cloudSync, petSize, sizeRange }
+    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, doNotDisturb }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'toggleSpeechBubbles' | 'toggleDoNotDisturb' | 'toggleCloudSync' | 'toggleOpenAtLogin'
-    // | 'openPopover' | 'openProfile' | 'openSettings' | 'quit'
+    // 'sync' | 'togglePet' | 'toggleDoNotDisturb' | 'openPopover' | 'openProfile' | 'openSettings' | 'quit'
     action: send('panel:action'),
-    setSize: send('panel:size'), // { size, commit }: live while dragging, commit on release
     setHeight: send('panel:height'), // content height in px
   },
 
@@ -80,4 +78,13 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     setHeight: send('popover:height'),
   },
   // ---- end everyday UI ----
+
+  settings: {
+    // -> { login, repoCount, speechBubbles, doNotDisturb, openAtLogin, cloud: { enabled, repo, error, lastPushAt },
+    //      petSize, sizeRange: { min, max }, defaultPetSize }
+    state: invoke('settings:state'),
+    onState: subscribe('settings:state'),
+    action: send('settings:action'), // 'toggleSpeechBubbles' | 'toggleOpenAtLogin' | 'toggleCloudSync' | 'openSetup'
+    setSize: send('settings:size'), // { size, commit }: live while dragging, commit on release
+  },
 });

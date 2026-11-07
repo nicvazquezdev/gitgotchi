@@ -22,8 +22,15 @@ class CloudSync extends EventEmitter {
     return Boolean(store.get().cloudSync);
   }
 
+  /** `repo`: where the save lives ("<login>/gitgotchi-save"); `lastPushAt`: last write in this session. */
   status() {
-    return { enabled: this.isEnabled(), error: this.#error, lastPushAt: this.#lastPushAt || null };
+    const login = store.get().user?.login;
+    return {
+      enabled: this.isEnabled(),
+      repo: login ? `${login}/${SAVE.repo}` : null,
+      error: this.#error,
+      lastPushAt: this.#lastPushAt || null,
+    };
   }
 
   /** Onboarding: is there a saved pet in this account? → `{ found, pet? }` */
@@ -144,6 +151,7 @@ class CloudSync extends EventEmitter {
     }
     this.#lastSaved = JSON.stringify(json);
     this.#lastPushAt = Date.now();
+    this.emit('status', this.status());
   }
 }
 

@@ -7,6 +7,7 @@ const cloud = require('./cloud/cloud-sync');
 const petWindow = require('./ui/pet-window');
 const panelWindow = require('./ui/panel-window');
 const popoverWindow = require('./ui/popover-window');
+const settingsWindow = require('./ui/settings-window');
 const prefs = require('./prefs');
 const catalog = require('./game/catalog');
 const evolutionWindow = require('./ui/evolution-window');
@@ -27,29 +28,14 @@ function on(channel, fn) {
 
 // ---- everyday UI (menu bar dropdown, PR popover) ----
 // Dropdown rows. Actions in KEEP_OPEN update the dropdown in place; the rest close it first.
-const PANEL_ACTIONS = [
-  'sync',
-  'togglePet',
-  'toggleSpeechBubbles',
-  'toggleDoNotDisturb',
-  'toggleCloudSync',
-  'toggleOpenAtLogin',
-  'openPopover',
-  'openProfile',
-  'openSettings',
-  'quit',
-];
-const KEEP_OPEN = new Set([
-  'sync',
-  'togglePet',
-  'toggleSpeechBubbles',
-  'toggleDoNotDisturb',
-  'toggleCloudSync',
-  'toggleOpenAtLogin',
-]);
+const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleDoNotDisturb', 'openPopover', 'openProfile', 'openSettings', 'quit'];
+const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleDoNotDisturb']);
 // Popover buttons and header: they close the popover first.
 const POPOVER_ACTIONS = ['nudgeReviewers', 'openProfile', 'openSettings'];
 // ---- end everyday UI ----
+
+// Settings window controls.
+const SETTINGS_ACTIONS = ['toggleSpeechBubbles', 'toggleOpenAtLogin', 'toggleCloudSync', 'openSetup'];
 
 /**
  * @param {{ openProfile: () => void, finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
@@ -134,7 +120,6 @@ function registerIpc(actions) {
     if (!KEEP_OPEN.has(name)) panelWindow.hide();
     actions[name]();
   });
-  on('panel:size', ({ size, commit }) => actions.setPetSize(Number(size), Boolean(commit)));
   on('panel:height', (height) => Number.isFinite(height) && panelWindow.setHeight(height));
 
   // Popover (PRs)
@@ -147,6 +132,11 @@ function registerIpc(actions) {
   on('popover:open-pr', (url) => typeof url === 'string' && actions.openPullRequest(url));
   on('popover:height', (height) => Number.isFinite(height) && popoverWindow.setHeight(height));
   // ---- end everyday UI ----
+
+  // Settings
+  handle('settings:state', () => settingsWindow.state());
+  on('settings:action', (name) => SETTINGS_ACTIONS.includes(name) && actions[name]());
+  on('settings:size', ({ size, commit } = {}) => actions.setPetSize(Number(size), Boolean(commit)));
 }
 
 module.exports = { registerIpc };
