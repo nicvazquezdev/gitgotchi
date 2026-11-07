@@ -8,6 +8,7 @@ const petWindow = require('./ui/pet-window');
 const onboardingWindow = require('./ui/onboarding-window');
 const { createTray, buildMenu } = require('./ui/tray');
 const { registerIpc } = require('./ipc');
+const loginItem = require('./login-item');
 
 let tray = null;
 
@@ -31,6 +32,10 @@ const actions = {
     actions.openSettings();
     refreshMenu();
   },
+  toggleOpenAtLogin: () => {
+    loginItem.setEnabled(!loginItem.isEnabled());
+    refreshMenu();
+  },
   showMenu: () => menu().popup({ window: petWindow.window }),
   quit: () => app.quit(),
 };
@@ -41,6 +46,7 @@ function menu() {
     configured: petService.isConfigured(),
     connected: session.isConnected(),
     petVisible: petWindow.isVisible(),
+    openAtLogin: loginItem.isEnabled(),
     actions,
   });
 }

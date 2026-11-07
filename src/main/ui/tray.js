@@ -39,9 +39,10 @@ function pixelIcon(art, scale = 2) {
  * @param {boolean} ctx.configured
  * @param {boolean} ctx.connected
  * @param {boolean} ctx.petVisible
- * @param {object} ctx.actions          { sync, togglePet, openSettings, disconnect, quit }
+ * @param {boolean} ctx.openAtLogin
+ * @param {object} ctx.actions          { sync, togglePet, openSettings, toggleOpenAtLogin, disconnect, quit }
  */
-function buildMenu({ status, configured, connected, petVisible, actions }) {
+function buildMenu({ status, configured, connected, petVisible, openAtLogin, actions }) {
   const header = status
     ? [
         { label: `${status.name} · ${status.stage.name} · ${status.xp} XP`, enabled: false },
@@ -59,6 +60,7 @@ function buildMenu({ status, configured, connected, petVisible, actions }) {
     },
     { label: petVisible ? 'Hide pet' : 'Show pet', enabled: configured, click: actions.togglePet },
     { label: 'Repos & pet settings…', click: actions.openSettings },
+    { label: 'Open at login', type: 'checkbox', checked: openAtLogin, click: actions.toggleOpenAtLogin },
     { type: 'separator' },
     { label: 'Disconnect & reset', enabled: connected, click: actions.disconnect },
     { label: 'Quit Gitgotchi', click: actions.quit },

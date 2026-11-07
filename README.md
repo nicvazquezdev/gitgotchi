@@ -22,7 +22,7 @@ npm run dev   # auto-reloads on changes
 - Syncs every 15 minutes, on wake from sleep, or via _Sync now_. GitHub only returns your latest 300 events, so the app keeps its own per-day history.
 - Points and thresholds live in `src/main/game/catalog.js`.
 
-**Usage:** drag the pet anywhere. Click: it talks. Hover: stats. Right-click or the menu bar icon: options.
+**Usage:** drag the pet anywhere. Click: it talks. Hover: stats. Right-click or the menu bar icon: options, including _Open at login_ (on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
 
 ## Structure
 
