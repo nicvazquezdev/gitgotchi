@@ -1,4 +1,5 @@
-// PR popover: the pet's header, its mood and the PRs that need attention. Rows open the PR in the browser.
+// PR popover: the pet's header and two tabs. "To review" is the queue of PRs waiting for the user's review;
+// "My PRs" is the user's own PRs (waiting, approved, merged today). Rows open the PR in the browser.
 import { $, h } from '../shared/dom.js';
 import { plural, timeAgo } from '../shared/format.js';
 import { icon, xpBar, portraitImg } from '../shared/ui.js';
@@ -6,12 +7,24 @@ import { icon, xpBar, portraitImg } from '../shared/ui.js';
 const api = window.gitgotchi.popover;
 const app = $('#app');
 
-const MAX_ROWS = 5; // per section; the rest is summarized
 const NOTICE_MOODS = ['anxious'];
+const STALE_AFTER_DAYS = 2; // a PR that has waited this long stands out (same threshold as the anxious mood)
+const TABS = ['review', 'mine'];
 
 const days = (n) => (n > 0 ? plural(n, 'day') : 'today');
+const shortAge = (n) => (n > 0 ? `${n}d` : 'today');
 
-// ---------- Parts ----------
+// The last state received, and the tab the user picked (null: the default, see `currentTab`).
+let latest = {};
+let picked = null;
+
+/** To review when something waits for the user (it is the part they can act on), else My PRs. */
+function currentTab({ status } = latest) {
+  if (picked) return picked;
+  return status?.reviewQueue?.length ? 'review' : 'mine';
+}
+
+// ---------- Header ----------
 
 function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
   return h(
@@ -57,6 +70,52 @@ const moodNotice = ({ mood, moodLabel, moodReason }) =>
       )
     : null;
 
+// ---------- Tabs ----------
+
+function tabs(status) {
+  const mine = status.prs ?? { waiting: [], approved: [] };
+  // `null`: the queue has not been fetched yet, so there is no number to show.
+  const counts = { review: status.reviewQueue?.length ?? null, mine: mine.waiting.length + mine.approved.length };
+  const labels = { review: 'To review', mine: 'My PRs' };
+  const active = currentTab({ status });
+
+  const select = (tab) => {
+    picked = tab;
+    render(latest, { resetScroll: true });
+    $(`#tab-${tab}`)?.focus();
+  };
+  const onKey = (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    select(TABS[(TABS.indexOf(active) + step + TABS.length) % TABS.length]);
+  };
+
+  return h(
+    'div',
+    { class: 'tabs', role: 'tablist', 'aria-label': 'Pull requests', onkeydown: onKey },
+    TABS.map((tab) =>
+      h(
+        'button',
+        {
+          id: `tab-${tab}`,
+          class: 'tab',
+          type: 'button',
+          role: 'tab',
+          'aria-selected': String(tab === active),
+          'aria-controls': 'panel',
+          tabIndex: tab === active ? 0 : -1,
+          onclick: () => select(tab),
+        },
+        labels[tab],
+        counts[tab] != null && h('span', { class: 'count-chip' }, counts[tab]),
+      ),
+    ),
+  );
+}
+
+// ---------- Rows ----------
+
 /**
  * One PR row. `badge` is the left chip, `meta` the second line, `end` the right-hand text.
  * Hovering swaps the end text for the "open" icon.
@@ -80,6 +139,7 @@ function prRow(pr, { badge, meta, end, endClass = 'xp-text', done = false }) {
 const sizeBadge = (pr) => h('span', { class: 'size-badge' }, pr.size ?? 'M');
 const doneBadge = () => h('span', { class: 'size-badge done' }, icon('check', { size: 14, stroke: 3 }));
 const repoRef = (pr) => `${pr.repo} #${pr.number}`;
+const xpText = (pr, suffix = 'XP') => (pr.xp ? `+${pr.xp} ${suffix}` : null);
 
 function section(title, prs, render) {
   if (!prs.length) return null;
@@ -87,14 +147,81 @@ function section(title, prs, render) {
     'section',
     { class: 'prs' },
     h('div', { class: 'section-title eyebrow' }, title, h('span', { class: 'count-chip' }, prs.length)),
-    ...prs.slice(0, MAX_ROWS).map(render),
-    prs.length > MAX_ROWS ? h('div', { class: 'meta more' }, `+${prs.length - MAX_ROWS} more`) : null,
+    ...prs.map(render),
   );
 }
 
-const xpText = (pr, suffix = 'XP') => (pr.xp ? `+${pr.xp} ${suffix}` : null);
+// ---------- Tab contents ----------
 
-function footer(waiting) {
+function reviewTab(queue) {
+  if (queue === null) return h('p', { class: 'empty' }, 'Looking for review requests…');
+  if (!queue.length) {
+    return h(
+      'div',
+      { class: 'empty calm' },
+      h('span', { class: 'empty-icon' }, icon('check', { size: 18, stroke: 3 })),
+      h('div', {}, h('strong', {}, 'All caught up'), h('div', { class: 'meta' }, 'Nobody is waiting for your review.')),
+    );
+  }
+  const earned = queue[0].xp;
+  return h(
+    'section',
+    { class: 'prs' },
+    h('div', { class: 'list-note meta' }, `Oldest first · each review gives +${earned} XP`),
+    ...queue.map((pr) =>
+      prRow(pr, {
+        badge: sizeBadge(pr),
+        meta: [repoRef(pr), pr.author].filter(Boolean).join(' · '),
+        end: shortAge(pr.ageDays),
+        endClass: pr.ageDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',
+      }),
+    ),
+  );
+}
+
+function minePrsTab({ waiting, approved, mergedToday }) {
+  if (!waiting.length && !approved.length && !mergedToday.length) {
+    return h('p', { class: 'empty' }, 'No open PRs. Nothing of yours is waiting.');
+  }
+  return h(
+    'div',
+    {},
+    section('Waiting for review', waiting, (pr) =>
+      prRow(pr, { badge: sizeBadge(pr), meta: `${repoRef(pr)} · ${days(pr.ageDays)}`, end: xpText(pr) }),
+    ),
+    section('Approved', approved, (pr) =>
+      prRow(pr, {
+        badge: sizeBadge(pr),
+        meta: `${repoRef(pr)} · ready to merge`,
+        end: xpText(pr, 'on merge'),
+        endClass: 'success',
+      }),
+    ),
+    section('Merged today', mergedToday, (pr) =>
+      prRow(pr, {
+        badge: doneBadge(),
+        meta: `${repoRef(pr)} · ${timeAgo(pr.mergedAt)}`,
+        end: xpText(pr),
+        endClass: 'quiet',
+        done: true,
+      }),
+    ),
+  );
+}
+
+// ---------- Footer ----------
+
+/** The main action depends on the tab: review the oldest request, or nudge the reviewers of my PRs. */
+function footer(tab, { reviewQueue, prs }) {
+  const [oldest] = reviewQueue ?? [];
+  const primary =
+    tab === 'review'
+      ? {
+          label: oldest ? `Review oldest · ${shortAge(oldest.ageDays)}` : 'Review oldest',
+          action: 'reviewOldest',
+          on: Boolean(oldest),
+        }
+      : { label: 'Nudge reviewers', action: 'nudgeReviewers', on: Boolean(prs?.waiting.length) };
   return h(
     'div',
     { class: 'actions' },
@@ -103,10 +230,10 @@ function footer(waiting) {
       {
         class: 'btn primary sm pixel-cut grow',
         type: 'button',
-        disabled: !waiting.length,
-        onclick: () => api.action('nudgeReviewers'),
+        disabled: !primary.on,
+        onclick: () => api.action(primary.action),
       },
-      'Nudge reviewers',
+      primary.label,
     ),
     h(
       'button',
@@ -118,10 +245,11 @@ function footer(waiting) {
 
 // ---------- Render ----------
 
-function render({ status, placement = 'above', tailX = 180 } = {}) {
-  const prs = status?.prs ?? { waiting: [], approved: [], mergedToday: [] };
-  const { waiting, approved, mergedToday } = prs;
-  const empty = !waiting.length && !approved.length && !mergedToday.length;
+/** `resetScroll`: start at the top of the list (another tab, or the popover reopened); a sync keeps the scroll. */
+function render(state = latest, { resetScroll = false } = {}) {
+  latest = state;
+  const { status, placement = 'above', tailX = 180 } = state;
+  const tab = currentTab(state);
 
   const card = h(
     'div',
@@ -129,43 +257,39 @@ function render({ status, placement = 'above', tailX = 180 } = {}) {
     ...(status
       ? [
           header(status),
-          moodNotice(status),
-          section('Waiting for review', waiting, (pr) =>
-            prRow(pr, { badge: sizeBadge(pr), meta: `${repoRef(pr)} · ${days(pr.ageDays)}`, end: xpText(pr) }),
+          tabs(status),
+          h(
+            'div',
+            { class: 'list', id: 'panel', role: 'tabpanel', 'aria-labelledby': `tab-${tab}` },
+            tab === 'review'
+              ? reviewTab(status.reviewQueue ?? null)
+              : [moodNotice(status), minePrsTab(status.prs ?? { waiting: [], approved: [], mergedToday: [] })],
           ),
-          section('Approved', approved, (pr) =>
-            prRow(pr, {
-              badge: sizeBadge(pr),
-              meta: `${repoRef(pr)} · ready to merge`,
-              end: xpText(pr, 'on merge'),
-              endClass: 'success',
-            }),
-          ),
-          section('Merged today', mergedToday, (pr) =>
-            prRow(pr, {
-              badge: doneBadge(),
-              meta: `${repoRef(pr)} · ${timeAgo(pr.mergedAt)}`,
-              end: xpText(pr),
-              endClass: 'quiet',
-              done: true,
-            }),
-          ),
-          empty ? h('p', { class: 'empty' }, 'No open PRs. Nothing is waiting for you.') : null,
-          footer(waiting),
+          footer(tab, status),
         ]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 
   // The tail points at the pet: below the card when the popover is above the pet, above it otherwise.
   const tail = h('div', { class: 'tail-zone' }, h('i', { class: 'tail', style: { left: `${tailX}px` } }));
+  const scroll = resetScroll ? 0 : ($('.list')?.scrollTop ?? 0);
   app.className = `wrap ${placement}`;
   app.replaceChildren(card, tail);
+  const list = $('.list');
+  if (list) list.scrollTop = scroll;
 }
 
 // ---------- Boot ----------
 
+// Every time the popover is reopened, the default tab and the top of the list apply again.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) return;
+  picked = null;
+  render(latest, { resetScroll: true });
+});
+
 // The window height follows the content (card plus tail).
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);
 
-api.onState(render);
-api.state().then(render);
+api.onState((state) => render(state));
+api.state().then((state) => render(state));
