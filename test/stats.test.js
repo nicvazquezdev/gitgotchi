@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { stats } = require('../src/main/game/stats');
+const { stats, streakLengths } = require('../src/main/game/stats');
 
 const push = (n = 1) => ({ reviews: n });
 const run = (days, today) => stats(days, new Date(`${today}T15:00:00`));
@@ -27,17 +27,20 @@ test('empty yesterday and today means no streak', () => {
   assert.equal(run({ '2026-03-08': push() }, '2026-03-10').streak, 0);
 });
 
-test('a gap ends the streak', () => {
+test('a missed weekday ends the streak', () => {
   const days = {
-    '2026-03-05': push(),
-    '2026-03-06': push(),
-    '2026-03-07': push(),
-    '2026-03-09': push(),
-    '2026-03-10': push(),
+    '2026-02-27': push(), // Fri
+    '2026-03-02': push(), // Mon
+    '2026-03-03': push(),
+    '2026-03-04': push(), // Wed
+    // Thu 5 missed
+    '2026-03-06': push(), // Fri
+    '2026-03-09': push(), // Mon
+    '2026-03-10': push(), // Tue
   };
   const s = run(days, '2026-03-10');
-  assert.equal(s.streak, 2);
-  assert.equal(s.bestStreak, 3);
+  assert.equal(s.streak, 3);
+  assert.equal(s.bestStreak, 4);
 });
 
 test('streak crosses month and year boundaries', () => {
@@ -69,4 +72,57 @@ test('history is the last 7 days, oldest first, missing days padded with 0', () 
   const scores = s.history.map((d) => d.score);
   assert.ok(scores[0] > scores[6] && scores[6] > 0);
   assert.deepEqual(scores.slice(1, 6), [0, 0, 0, 0, 0]);
+});
+
+// 2026-03-06 is a Friday, 07 Saturday, 08 Sunday, 09 Monday, 10 Tuesday.
+test('a weekend without activity does not break the streak', () => {
+  const days = { '2026-03-05': push(), '2026-03-06': push(), '2026-03-09': push(), '2026-03-10': push() };
+  const s = run(days, '2026-03-10');
+  assert.equal(s.streak, 4);
+  assert.equal(s.bestStreak, 4);
+});
+
+test('a weekend day with activity counts', () => {
+  const days = { '2026-03-06': push(), '2026-03-07': push(), '2026-03-09': push() };
+  assert.equal(run(days, '2026-03-09').streak, 3);
+  assert.equal(run({ '2026-03-06': push(), '2026-03-08': push(), '2026-03-09': push() }, '2026-03-09').streak, 3);
+});
+
+test('Monday morning: the streak from Friday is still alive, Tuesday morning it is not', () => {
+  const days = { '2026-03-05': push(), '2026-03-06': push() };
+  assert.equal(run(days, '2026-03-07').streak, 2); // Saturday
+  assert.equal(run(days, '2026-03-08').streak, 2); // Sunday
+  assert.equal(run(days, '2026-03-09').streak, 2); // Monday, nothing yet
+  assert.equal(run(days, '2026-03-10').streak, 0); // Tuesday: Monday was missed
+});
+
+test('a missed Friday breaks it even if the weekend is free', () => {
+  const days = { '2026-03-04': push(), '2026-03-05': push() }; // Wed, Thu
+  assert.equal(run(days, '2026-03-09').streak, 0); // Monday morning: Friday was missed
+});
+
+test('best streak is counted with the same weekend rule', () => {
+  const days = {
+    '2026-02-26': push(), // Thu
+    '2026-02-27': push(), // Fri
+    '2026-03-02': push(), // Mon
+    '2026-03-03': push(), // Tue
+    // Wed 4 missed
+    '2026-03-05': push(), // Thu
+  };
+  assert.equal(run(days, '2026-03-05').bestStreak, 4);
+  assert.equal(run(days, '2026-03-05').streak, 1);
+});
+
+test('streakLengths gives the streak length on each active day', () => {
+  const lengths = streakLengths(['2026-03-05', '2026-03-06', '2026-03-09', '2026-03-11']);
+  assert.deepEqual(
+    [...lengths],
+    [
+      ['2026-03-05', 1],
+      ['2026-03-06', 2],
+      ['2026-03-09', 3],
+      ['2026-03-11', 1], // Tuesday 10 was missed
+    ],
+  );
 });

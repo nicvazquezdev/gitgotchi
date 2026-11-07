@@ -21,6 +21,7 @@ npm run dev   # auto-reloads on changes
 - **XP:** PR opened 5–30 by size · review 10 · PR merged +15 · issue opened 5 · commit 1 (up to 10 XP a day). Commits are counted per push, only yours (no merge commits), with one extra GitHub request per push.
 - **Level and stage** come from the XP since the pet was adopted: Baby → Kid → Young → Adult. Levels scale with your own weekly baseline.
 - **Mood** has three states: anxious (a PR has waited 2+ days for review), happy (a PR merged in the last 48 h, or a strong week) and neutral (everything else).
+- **Streak:** days in a row with activity, since the pet was adopted. Weekends never break it: a Saturday or Sunday without activity is skipped, one with activity counts. Missing a weekday starts over.
 - XP syncs from the Events API every 90 s (GitHub only returns your latest 300 events, so the app keeps its own per-day history).
 - **Review queue:** the open PRs where you (or a team you are in) were asked for a review, in the repos you picked. It refreshes with every sync and when the popover or the menu opens. The pet mentions it and reacts when a new request arrives. Drafts are left out.
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds.

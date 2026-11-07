@@ -56,7 +56,12 @@ function activityBlock({ streak, bestStreak, history }) {
   return h(
     'div',
     { class: 'activity' },
-    h('div', { class: 'activity-head' }, h('b', {}, title), h('span', { class: 'meta' }, hint)),
+    h(
+      'div',
+      { class: 'activity-head', title: 'Days in a row with activity. Weekends never break a streak.' },
+      h('b', {}, title),
+      h('span', { class: 'meta' }, hint),
+    ),
     h(
       'div',
       { class: 'bars', role: 'img', 'aria-label': `XP per day, last 7 days` },
