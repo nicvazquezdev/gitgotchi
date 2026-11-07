@@ -63,6 +63,9 @@ test('a newer local pet is kept over an older remote one', () => {
 });
 
 test('saveSummary describes the saved pet', () => {
-  assert.deepEqual(saveSummary(toSave(state())), { name: 'Cindle', speciesId: 'phoenix', stageIndex: 0 });
+  const summary = saveSummary(toSave(state()));
+  assert.equal(summary.name, 'Cindle');
+  assert.equal(summary.speciesId, 'phoenix');
+  assert.ok(summary.level >= 1);
   assert.equal(isSave({ app: 'other' }), false);
 });

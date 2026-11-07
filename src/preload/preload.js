@@ -20,7 +20,12 @@ contextBridge.exposeInMainWorld('gitgotchi', {
 
   onboarding: {
     listRepos: invoke('repos:list'),
-    finish: invoke('onboarding:finish'), // { repos, species, name }
+    finish: invoke('onboarding:finish'), // { repos, species, name, cloudSync }
+  },
+
+  cloud: {
+    find: invoke('cloud:find'), // -> { found: false } | { found: true, pet: { name, speciesId, stageIndex, level } }
+    restore: invoke('cloud:restore'), // restores the save; main then closes onboarding and shows the pet
   },
 
   pet: {

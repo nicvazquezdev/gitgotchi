@@ -1,90 +1,166 @@
-// Step 3: pick a creature line and a name, then adopt.
-import { $, h } from '../../shared/dom.js';
-import { animatePet } from '../../shared/sprite.js';
+// Step 3: pick a companion (and its name), then start.
+import { h } from '../../shared/dom.js';
+import { spriteImg } from '../../shared/ui.js';
+import { button, stepProgress } from './parts.js';
 
-const THUMB_SCALE = 2; // sprites are drawn at whole multiples of their native size
+const NAME_MAX = 16;
 
-export function createPetStep({ api, catalog, state, toast }) {
-  const nameInput = $('#pet-name');
-  const adoptBtn = $('#btn-adopt');
+export function createPetStep({ api, catalog, state, go, toast }) {
   const speciesById = (id) => catalog.species.find((s) => s.id === id);
-  const selected = () => speciesById(state.species);
-  const defaultName = (species) => species.stages[0].name;
-  const sized = (canvas, nativeSize) =>
-    Object.assign(canvas.style, { width: `${nativeSize * THUMB_SCALE}px`, height: `${nativeSize * THUMB_SCALE}px` });
-
-  // Picker: the baby of every line (built once; the animation reads live state).
-  const cards = catalog.species.map((species) => {
-    const canvas = h('canvas');
-    sized(canvas, species.stages[0].size);
-    animatePet(canvas, () => ({ species, stageIndex: 0, mood: state.species === species.id ? 'happy' : 'idle' }), {
-      fit: 'sprite',
-    });
-    return h(
-      'button',
-      {
-        class: 'species-card pixel-border',
-        role: 'radio',
-        title: species.desc,
-        dataset: { id: species.id },
-        onclick: () => select(species.id),
-      },
-      canvas,
-      h('span', { class: 'name' }, species.stages[0].name),
-    );
-  });
-  $('#species-grid').replaceChildren(...cards);
-
-  // Evolution line of the selected species: same native sizes for every line, names change.
-  const evoNames = [];
-  $('#evolution-line').replaceChildren(
-    ...catalog.stages.flatMap((stage, i) => {
-      const canvas = h('canvas');
-      sized(canvas, catalog.species[0].stages[i].size);
-      animatePet(canvas, () => ({ species: selected(), stageIndex: i, mood: 'idle' }), { fit: 'sprite' });
-      const name = h('span', { class: 'evo-name' });
-      evoNames.push(name);
-      const item = h('div', { class: 'evo-stage', title: stage.name }, canvas, name, h('small', {}, stage.name));
-      return i === 0 ? [item] : [h('span', { class: 'evo-arrow' }, '▸'), item];
-    }),
-  );
-
-  function select(id) {
-    const prev = selected();
-    const next = speciesById(id);
-    // Keep a custom name; replace the previous line's default.
-    if (!nameInput.value.trim() || nameInput.value === (prev && defaultName(prev))) nameInput.value = defaultName(next);
-    state.species = id;
-    cards.forEach((c) => c.setAttribute('aria-checked', String(c.dataset.id === id)));
-    $('#species-name').textContent = next.line;
-    $('#species-blurb').textContent = next.desc;
-    next.stages.forEach((s, i) => (evoNames[i].textContent = s.name));
-    $('#species-warning').hidden = !state.existingPet || state.existingPet.species === id;
-  }
-
-  async function adopt() {
-    adoptBtn.disabled = true;
-    try {
-      await api.onboarding.finish({
-        repos: [...state.selectedRepos],
-        species: state.species,
-        name: nameInput.value.trim(),
-      });
-      // Main closes this window and shows the pet on the desktop.
-    } catch (err) {
-      toast(err);
-      adoptBtn.disabled = false;
-    }
-  }
-
-  adoptBtn.addEventListener('click', adopt);
-  nameInput.addEventListener('keydown', (e) => e.key === 'Enter' && adopt());
+  const babyName = (species) => species.stages[0].name;
 
   return {
-    enter() {
+    render() {
       if (!speciesById(state.species)) state.species = catalog.species[0].id;
-      nameInput.value ||= state.name || defaultName(selected());
+      let cloudSync = false;
+      let nameTouched = Boolean(state.name); // a typed (or saved) name survives switching creatures
+
+      const nameInput = h('input', {
+        maxLength: NAME_MAX,
+        autocomplete: 'off',
+        spellcheck: false,
+        'aria-label': 'Name your companion',
+        oninput: () => {
+          nameTouched = true;
+          updateStart();
+        },
+        onkeydown: (e) => e.key === 'Enter' && start(),
+      });
+      const startBtn = button('', { onclick: start }, { primary: true });
+      const detail = h('section', { class: 'detail', 'aria-label': 'Selected companion' });
+      const footerText = h('p', { class: 'footer-text' });
+
+      const cards = catalog.species.map((species) => {
+        const baby = species.stages[0];
+        return h(
+          'button',
+          { class: 'pick', role: 'radio', title: species.desc, onclick: () => select(species.id) },
+          h('span', { class: 'tile', style: { background: species.tint } }, spriteImg(baby.file, baby.size, 3)),
+          h('span', { class: 'pixel-name' }, baby.name),
+        );
+      });
+
+      const currentName = () => nameInput.value.trim() || babyName(speciesById(state.species));
+      const updateStart = () => (startBtn.textContent = `Start with ${currentName()}`);
+
+      function renderDetail(species) {
+        const [baby, ...hidden] = species.stages;
+        // `info` is the generic stage ({ name: 'Kid', level: 5 }); locked stages show a silhouette.
+        const tile = (stage, info, locked) =>
+          h(
+            'div',
+            { class: 'evo-stage' },
+            h(
+              'div',
+              { class: `evo-tile${locked ? '' : ' current'}`, style: { background: species.tint } },
+              spriteImg(locked ? stage.silhouette : stage.file, stage.size, 2, locked ? 'Hidden evolution' : baby.name),
+            ),
+            h('div', { class: locked ? 'pixel-name locked' : 'pixel-name' }, locked ? '???' : stage.name),
+            locked
+              ? h('div', { class: 'meta' }, `${info.name} · Lv ${info.level}`)
+              : h('div', { class: 'stage-now' }, info.name),
+          );
+        detail.replaceChildren(
+          h(
+            'div',
+            { class: 'detail-top' },
+            h(
+              'div',
+              { class: 'portrait pixel-cut', style: { width: '140px', height: '140px' } },
+              h(
+                'div',
+                { class: 'inner', style: { background: species.tint } },
+                spriteImg(baby.file, baby.size, 4, baby.name),
+              ),
+            ),
+            h(
+              'div',
+              {},
+              h('div', { class: 'eyebrow' }, `${species.type} · ${species.line}`),
+              h('div', { class: 'pixel-name detail-name' }, baby.name),
+              h('p', { class: 'desc' }, species.desc),
+            ),
+          ),
+          h(
+            'div',
+            { class: 'evo-head' },
+            h('strong', {}, 'Evolution line'),
+            h('span', { class: 'meta' }, 'Revealed as you level up'),
+          ),
+          h(
+            'div',
+            { class: 'evo-grid' },
+            tile(baby, catalog.stages[0], false),
+            hidden.map((s, i) => tile(s, catalog.stages[i + 1], true)),
+          ),
+        );
+      }
+
+      function select(id) {
+        const species = speciesById(id);
+        state.species = id;
+        if (!nameTouched) nameInput.value = '';
+        nameInput.placeholder = babyName(species);
+        cards.forEach((c, i) => c.setAttribute('aria-checked', String(catalog.species[i].id === id)));
+        renderDetail(species);
+        const adoptsNew = state.existingPet && state.existingPet.species !== id;
+        footerText.textContent = adoptsNew
+          ? 'Switching creatures adopts a new pet: it starts over as a baby.'
+          : 'Its evolutions stay a secret until you unlock them.';
+        updateStart();
+      }
+
+      async function start() {
+        startBtn.disabled = true;
+        try {
+          await api.onboarding.finish({
+            repos: [...state.selectedRepos],
+            species: state.species,
+            name: currentName(),
+            cloudSync,
+          });
+          // Main closes this window and shows the pet on the desktop.
+        } catch (err) {
+          toast(err);
+          startBtn.disabled = false;
+        }
+      }
+
+      nameInput.value = state.name;
       select(state.species);
+
+      return h(
+        'div',
+        { class: 'pet-step' },
+        h(
+          'header',
+          { class: 'pet-head' },
+          h('div', {}, stepProgress(3), h('h1', { class: 'pixel-title small' }, 'Choose your companion')),
+          h('p', { class: 'muted' }, 'Every companion starts as a baby and evolves three times.'),
+        ),
+        h(
+          'div',
+          { class: 'pet-main' },
+          h(
+            'div',
+            { class: 'pet-left' },
+            h('div', { class: 'picker', role: 'radiogroup', 'aria-label': 'Companion' }, cards),
+            h(
+              'div',
+              { class: 'pet-options' },
+              h('label', { class: 'field' }, h('span', { class: 'meta' }, 'Name'), nameInput),
+              h(
+                'label',
+                { class: 'check-row' },
+                h('input', { type: 'checkbox', onchange: (e) => (cloudSync = e.target.checked) }),
+                'Back up my pet to a private repo in my GitHub account (sync across computers)',
+              ),
+            ),
+          ),
+          detail,
+        ),
+        h('footer', { class: 'pet-footer' }, footerText, button('Back', { onclick: () => go('repos') }), startBtn),
+      );
     },
   };
 }

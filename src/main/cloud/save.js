@@ -1,6 +1,6 @@
 // Cloud save format and merge rules (pure, no I/O).
 // The save lives in a private repo in the user's own GitHub account: <login>/gitgotchi-save/save.json.
-const { mergeDays } = require('../game/engine');
+const { mergeDays, computeStatus } = require('../game/engine');
 
 const SAVE = {
   repo: 'gitgotchi-save',
@@ -52,10 +52,17 @@ function mergeSave(state, save) {
   };
 }
 
-/** Short description for the "restore your pet?" prompt. */
+/** Short description for the "restore your pet?" prompt (level computed from the saved history). */
 function saveSummary(save) {
   const { pet } = save.profile;
-  return pet ? { name: pet.name, speciesId: pet.species, stageIndex: pet.stageIndex ?? 0 } : null;
+  if (!pet) return null;
+  const status = computeStatus({ pet, activity: { days: save.activity.days ?? {}, lastSyncedAt: null } });
+  return {
+    name: pet.name,
+    speciesId: pet.species,
+    stageIndex: status?.stage.index ?? pet.stageIndex ?? 0,
+    level: status?.level ?? (status?.stage.index ?? 0) + 1,
+  };
 }
 
 module.exports = { SAVE, toSave, isSave, mergeSave, saveSummary };
