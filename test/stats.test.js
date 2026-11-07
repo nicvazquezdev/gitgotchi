@@ -126,3 +126,35 @@ test('streakLengths gives the streak length on each active day', () => {
     ],
   );
 });
+
+// 2026-03-02 is a Monday, 03-09 the next one.
+test('days of time off break nothing, like a weekend', () => {
+  const days = { '2026-03-02': push(), '2026-03-03': push(), '2026-03-09': push(), '2026-03-10': push() };
+  const off = (day) => day >= '2026-03-04' && day <= '2026-03-06'; // Wednesday to Friday
+  const today = new Date('2026-03-10T15:00:00');
+  assert.equal(stats(days, today).streak, 2, 'without time off the missed Wednesday starts over');
+  const s = stats(days, today, off);
+  assert.equal(s.streak, 4);
+  assert.equal(s.bestStreak, 4);
+});
+
+test('back from time off: the streak lives until the first working day that is missed after it', () => {
+  const days = { '2026-03-02': push(), '2026-03-03': push() };
+  const off = (day) => day >= '2026-03-04' && day <= '2026-03-06';
+  assert.equal(stats(days, new Date('2026-03-09T09:00:00'), off).streak, 2); // Monday morning: nothing yet
+  assert.equal(stats(days, new Date('2026-03-10T09:00:00'), off).streak, 0); // Tuesday: Monday was missed
+  // while the time off is on, the streak waits: today is off too
+  const away = (day) => day >= '2026-03-04';
+  assert.equal(stats(days, new Date('2026-03-12T09:00:00'), away).streak, 2);
+});
+
+test('streakLengths takes the time off into account too', () => {
+  const lengths = streakLengths(['2026-03-03', '2026-03-09'], (day) => day >= '2026-03-04' && day <= '2026-03-06');
+  assert.deepEqual(
+    [...lengths],
+    [
+      ['2026-03-03', 1],
+      ['2026-03-09', 2],
+    ],
+  );
+});

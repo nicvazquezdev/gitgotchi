@@ -84,17 +84,18 @@ function measure({ metric, target }, { series, lengths, collection }) {
  * @param {string} [input.since]  the pet's birth day: PRs merged before it do not count
  * @param {{ [id: string]: string }} [input.stored]  achievements recorded as reached: id -> day. They stay reached
  *   whatever the ledger says now (it can be rebuilt), and their day is the one recorded.
+ * @param {(day: string) => boolean} [input.isOff]  whether a day was time off (it does not break a streak)
  * @param {{ bornDay: string, matureDay: string | null }[]} [input.pets]  when each pet hatched and grew up
  * @returns {{ id, group, metric, tier, points, icon, name, description, unit, target, value, unlockedAt }[]}
  *   `unlockedAt`: the day reached ('YYYY-MM-DD') or null; `value` never goes past `target`
  */
-function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [] }) {
+function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [], isOff }) {
   const active = Object.keys(days)
     .filter((day) => dayXp(days[day]) > 0)
     .sort();
   const context = {
     series: seriesByMetric(days, prs, since),
-    lengths: streakLengths(active),
+    lengths: streakLengths(active, isOff),
     collection: collectionDays(pets),
   };
   return ACHIEVEMENTS.map((def) => {

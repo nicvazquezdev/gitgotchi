@@ -85,6 +85,7 @@ const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
 
 /** The standing message: PRs waiting for the user's review first (they can act on those), else their own PRs. */
 function waitingMessage() {
+  if (status?.timeOff?.active) return null; // on time off nothing is waiting for the person
   const queue = status?.reviewQueue ?? [];
   if (queue.length) {
     const days = oldestWaitingDays(queue); // since the user was asked; null when no request has a known date

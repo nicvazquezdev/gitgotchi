@@ -137,6 +137,34 @@ test('without achievements on both sides there are none (the first check records
   assert.equal('achievements' in merged, false);
 });
 
+test('time off travels with the save: the ranges of both computers are kept, and one that ended stays ended', () => {
+  const local = state({
+    timeOff: [
+      { from: '2026-06-01', to: '2026-06-05' },
+      { from: '2026-06-12', to: null },
+    ],
+  });
+  assert.deepEqual(toSave(local).profile.timeOff, local.timeOff);
+  assert.deepEqual(toSave(state()).profile.timeOff, []); // none yet
+  const remote = toSave(
+    state({
+      timeOff: [
+        { from: '2026-06-12', to: '2026-06-14' },
+        { from: '2026-05-01', to: '2026-05-03' },
+      ],
+    }),
+  );
+  assert.deepEqual(mergeSave(local, remote).timeOff, [
+    { from: '2026-05-01', to: '2026-05-03' },
+    { from: '2026-06-01', to: '2026-06-05' },
+    { from: '2026-06-12', to: '2026-06-14' }, // it ended on the other computer
+  ]);
+  // a save from before time off existed has none: what this computer knows stays
+  const old = toSave(state());
+  delete old.profile.timeOff;
+  assert.deepEqual(mergeSave(local, old).timeOff, local.timeOff);
+});
+
 test('the save never contains the name of a repo, only ids', () => {
   const save = toSave(state({ user: { login: 'me' }, repos: ['acme/secret-project', 'acme/web-app'] }));
   const text = JSON.stringify(save);

@@ -26,3 +26,10 @@ export function timeAgo(date, now = Date.now()) {
   if (hours < 24) return `${plural(hours, 'hour')} ago`;
   return `${plural(Math.floor(hours / 24), 'day')} ago`;
 }
+
+/** 'YYYY-MM-DD' as "Nov 7" (with the year when it is not this one). */
+export function dayLabel(day, now = new Date()) {
+  const date = new Date(`${day}T12:00:00`);
+  const sameYear = date.getFullYear() === now.getFullYear();
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
+}

@@ -77,6 +77,15 @@ const actions = {
     petWindow.close();
     actions.openSetup();
   },
+  toggleTimeOff: () => {
+    if (petService.isOnTimeOff()) petService.endTimeOff();
+    else petService.startTimeOff();
+    settingsWindow.send();
+  },
+  setTimeOffReturn: (day) => {
+    petService.setTimeOffReturn(day);
+    settingsWindow.send();
+  },
   toggleOpenAtLogin: () => {
     loginItem.setEnabled(!loginItem.isEnabled());
     settingsWindow.send();
@@ -137,6 +146,7 @@ const actions = {
       doNotDisturb: prefs.doNotDisturb(),
       notifications: prefs.notifications(),
       menuBarCount: prefs.menuBarCount(),
+      timeOff: petService.timeOff(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
       petSize: petWindow.size(),
@@ -162,9 +172,10 @@ function refreshTray() {
   if (tray) setTrayLabel(tray, trayLabel(petService.status()?.reviewQueue?.length ?? 0, prefs.menuBarCount()));
 }
 
-// System notifications for the moments worth interrupting for (see notify-plan.js). Do not disturb silences them.
+// System notifications for the moments worth interrupting for (see notify-plan.js). Do not disturb and time off
+// silence them.
 const notifier = createNotifier({
-  isEnabled: () => prefs.notifications() && !prefs.doNotDisturb(),
+  isEnabled: () => prefs.notifications() && !prefs.doNotDisturb() && !petService.isOnTimeOff(),
   openPullRequest: (url) => openGithub(url),
   openPopover: () => popoverWindow.show(trayAnchor()),
 });

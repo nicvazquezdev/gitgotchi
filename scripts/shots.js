@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -13,6 +13,7 @@ const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { earnedSince, NAME_MAX } = require(path.join(ROOT, 'src/main/game/collection.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
+const { timeOffView } = require(path.join(ROOT, 'src/main/game/time-off.js'));
 
 const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
@@ -23,6 +24,7 @@ const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(),
 const light = process.argv.includes('--light');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
+const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
 const levelUp = process.argv.includes('--level-up'); // pet: a new level (the hop and the toast)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
 const complete = process.argv.includes('--complete'); // a pet with every achievement
@@ -115,7 +117,8 @@ const pets = fresh
     };
 if (pets.mushroom) pets.mushroom.matureAt = dayKey(30);
 const achievements = complete ? Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)])) : undefined;
-const status = computeStatus({ pets, activePet: 'phoenix', achievements, activity: history, repos }, NOW);
+const timeOff = away ? [{ from: dayKey(2), to: dayKey(-4) }] : [];
+const status = computeStatus({ pets, activePet: 'phoenix', achievements, activity: history, repos, timeOff }, NOW);
 status.reviewQueue = reviewQueue(
   [
     // Asked 25 minutes ago: a review now still earns the fast-review bonus.
@@ -181,6 +184,7 @@ const fixtures = {
     doNotDisturb: false,
     notifications: true,
     menuBarCount: true,
+    timeOff: timeOffView(timeOff, dayKey(0)),
     openAtLogin: false,
     cloud: { enabled: false, repo: null, saved: false, phase: null, error: null, lastPushAt: null },
     petSize: config.DEFAULT_PET_SIZE,
@@ -237,7 +241,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

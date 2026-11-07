@@ -3,6 +3,7 @@
 const crypto = require('node:crypto');
 const { mergeDays, computeStatus } = require('../game/engine');
 const { fromSinglePet } = require('../game/collection');
+const { mergeTimeOff } = require('../game/time-off');
 
 const SAVE = {
   repo: 'gitgotchi-save',
@@ -30,8 +31,8 @@ function repoId(login, fullName) {
 
 /**
  * What travels between computers: the pets (with the XP each earned per day), which one is active, the achievements,
- * which repos were selected (as ids, never names), and the XP history: counts per day and kind. No PR titles, no
- * code. Device settings (window position, pet size, open at login, sync on/off) stay local.
+ * the days of time off, which repos were selected (as ids, never names), and the XP history: counts per day and kind.
+ * No PR titles, no code. Device settings (window position, pet size, open at login, sync on/off) stay local.
  */
 function toSave(state) {
   const login = state.user?.login ?? '';
@@ -42,6 +43,7 @@ function toSave(state) {
       pets: state.pets,
       activePet: state.activePet,
       achievements: state.achievements,
+      timeOff: state.timeOff ?? [],
       repoIds: (state.repos ?? []).map((repo) => repoId(login, repo)),
       updatedAt: state.profileUpdatedAt ?? null,
     },
@@ -114,6 +116,7 @@ const remoteWins = (state, save) =>
  * - Pets: both collections are kept, one per species (see mergePets); the XP each pet earned merges like the history.
  * - Which pet is active, the repos: the most recently changed profile wins (last-write-wins on `updatedAt`).
  * - Achievements: the ones of both computers, with the earliest day.
+ * - Time off: the ranges of both computers (see mergeTimeOff).
  * `remoteRepos`: the names the remote `repoIds` stand for (cloud-sync.js finds them); a save from before schema 2
  * has the names itself.
  */
@@ -132,6 +135,7 @@ function mergeSave(state, rawSave, remoteRepos) {
     activePet:
       [winner.activePet, state.activePet, remote.activePet].find((id) => pets[id]) ?? Object.keys(pets)[0] ?? null,
     ...(achievements && { achievements }),
+    timeOff: mergeTimeOff(state.timeOff, remote.timeOff),
     // A winning remote profile whose repos could not be found keeps the local ones rather than leaving none.
     repos: winner.repos ?? (remoteWon && remote.repoIds ? state.repos : []),
     profileUpdatedAt: [remote.updatedAt, state.profileUpdatedAt].filter(Boolean).sort().at(-1) ?? null,

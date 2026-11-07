@@ -38,6 +38,7 @@ const CASES = [
   { name: 'panel-light', page: 'panel', flags: ['--light'] },
   { name: 'settings-dark', page: 'settings', flags: [] },
   { name: 'settings-light', page: 'settings', flags: ['--light'] },
+  { name: 'settings-time-off-dark', page: 'settings', flags: ['--time-off'] },
   { name: 'evolution-dark', page: 'evolution', flags: [] },
   { name: 'evolution-final-dark', page: 'evolution', flags: ['--final'] },
 ];

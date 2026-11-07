@@ -21,6 +21,7 @@ const { commitKey, pendingPushes } = require('../game/commits');
 const { reviewQueue, attentionOf } = require('../game/pull-requests');
 const { unlockedOf } = require('../game/achievements');
 const { rememberRequests, fastReviewsIn } = require('../game/review-speed');
+const timeOffRules = require('../game/time-off');
 const { fromDay, toDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
@@ -61,6 +62,38 @@ class PetService extends EventEmitter {
 
   notify() {
     this.emit('status', this.status());
+  }
+
+  /** Time off (a vacation): `{ active, since, backOn }`. The days it covers break no streak and nothing nags the person. */
+  timeOff() {
+    return timeOffRules.timeOffView(store.get().timeOff ?? [], toDay(new Date()));
+  }
+
+  isOnTimeOff() {
+    return this.timeOff().active;
+  }
+
+  /** Starts time off today, with no set return. */
+  startTimeOff() {
+    this.#changeTimeOff(timeOffRules.startTimeOff);
+  }
+
+  /** The person is back: the time off lasted until yesterday. */
+  endTimeOff() {
+    this.#changeTimeOff(timeOffRules.endTimeOff);
+  }
+
+  /** The first day that counts again ('YYYY-MM-DD', after today), or null for no set return. */
+  setTimeOffReturn(backOn) {
+    this.#changeTimeOff((ranges, today) => timeOffRules.setReturn(ranges, today, backOn));
+  }
+
+  #changeTimeOff(change) {
+    const current = store.get().timeOff ?? [];
+    const next = change(current, toDay(new Date()));
+    if (JSON.stringify(next) === JSON.stringify(current)) return;
+    store.update({ timeOff: next });
+    this.notify(); // the streak, the mood and the reminders follow right away
   }
 
   async listRepos() {

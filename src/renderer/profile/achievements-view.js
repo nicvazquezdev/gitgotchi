@@ -2,6 +2,9 @@
 // is closest to unlock, a filter, and every achievement as a collectible tile (pixel medals by tier).
 import { h } from '../shared/dom.js';
 import { medal, cup, lock, digits } from '../shared/pixel-art.js';
+import { dayLabel } from '../shared/format.js';
+
+export { dayLabel }; // the collection view uses it too
 
 const NEW_FOR_DAYS = 2; // an achievement unlocked this recently gets a NEW tag
 const NEXT_UP = 3; // how many are suggested
@@ -45,13 +48,6 @@ export function daysSince(day, now = new Date()) {
   const [y, m, d] = day.split('-').map(Number);
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   return Math.round((today - new Date(y, m - 1, d)) / 86400000);
-}
-
-/** 'YYYY-MM-DD' as "Nov 7" (with the year when it is not this one). */
-export function dayLabel(day, now = new Date()) {
-  const date = new Date(`${day}T12:00:00`);
-  const sameYear = date.getFullYear() === now.getFullYear();
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' });
 }
 
 /** What a filter shows: the groups with their matching items; groups left empty are dropped. */

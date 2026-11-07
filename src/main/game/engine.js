@@ -7,6 +7,7 @@ const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = requ
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
+const { isOffDay, timeOffView } = require('./time-off');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
@@ -178,11 +179,13 @@ const MOOD_LABELS = { happy: 'Happy', neutral: 'Neutral', anxious: 'Anxious' };
 /**
  * Mood and why. Three moods, in this order: anxious (PRs waiting for review), happy (merged recently or a strong
  * week), else neutral.
- * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number }} input
+ * A day of time off is always neutral: nothing is expected of the person, so nothing worries the pet.
+ * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number, off?: boolean }} input
  * @returns {{ mood: 'anxious' | 'happy' | 'neutral', moodLabel: string, moodReason: string | null }}
  */
-function moodFor({ waiting, mergedRecently, ratio }) {
+function moodFor({ waiting, mergedRecently, ratio, off = false }) {
   const result = (mood, reason = null) => ({ mood, moodLabel: MOOD_LABELS[mood], moodReason: reason });
+  if (off) return result('neutral', 'On time off');
   const stale = waiting.filter((pr) => pr.ageDays >= MOOD.anxiousAfterDays);
   if (stale.length > 0) {
     const days = Math.max(...stale.map((pr) => pr.ageDays));
@@ -215,13 +218,14 @@ function weekSummary(days, today, since = '') {
  * to the person and not to one pet: mood, PRs, the week, streaks and achievements (all counted from the day the first
  * pet hatched), plus the whole `collection`. `repos`: the selected repos (the PR list is filtered by them).
  */
-function computeStatus({ pets = {}, activePet, achievements, activity, repos = [] }, now = new Date()) {
+function computeStatus({ pets = {}, activePet, achievements, activity, repos = [], timeOff = [] }, now = new Date()) {
   const pet = pets[activePet];
   if (!pet) return null;
 
   const today = toDay(now);
   const start = startDay(pets);
   const days = activity.days ?? {};
+  const isOff = (day) => isOffDay(timeOff, day, today); // time off: like a weekend, it breaks nothing
 
   const sinceStart = Object.fromEntries(Object.entries(days).filter(([day]) => day >= start));
   const week = weekSummary(days, today, start); // what the person did since the first pet hatched
@@ -247,16 +251,24 @@ function computeStatus({ pets = {}, activePet, achievements, activity, repos = [
     xp: progress.xp,
     levelXp: progress.levelXp,
     levelXpNeeded: progress.levelXpNeeded,
-    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline }),
+    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline, off: isOff(today) }),
+    timeOff: timeOffView(timeOff, today),
     week,
     prs,
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
-    ...stats(sinceStart, now),
+    ...stats(sinceStart, now, isOff),
     collection: collectionView({ pets, activePet, baseline, now }),
     // What the person has achieved: derived from their history, plus what was recorded as reached (`achievements`).
     achievements: groupAchievements(
-      achievementProgress({ days: sinceStart, prs: mine, since: start, stored: achievements, pets: petFacts(pets) }),
+      achievementProgress({
+        days: sinceStart,
+        prs: mine,
+        since: start,
+        stored: achievements,
+        pets: petFacts(pets),
+        isOff,
+      }),
     ),
   };
 }

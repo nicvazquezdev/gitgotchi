@@ -1,7 +1,7 @@
 // Settings window: preferences that are set once. The page is built once; every state pushed by main
 // updates it in place, so keyboard focus and a slider being dragged are never lost.
 import { $, h } from '../shared/dom.js';
-import { plural, timeAgo } from '../shared/format.js';
+import { plural, timeAgo, dayLabel } from '../shared/format.js';
 
 const api = window.gitgotchi.settings;
 const REFRESH_LABEL_MS = 30 * 1000; // keeps "Last saved N min ago" current
@@ -101,6 +101,38 @@ function sizeRow() {
   };
 }
 
+/** 'YYYY-MM-DD' of tomorrow in the person's day: the first day that can be the return from time off. */
+function tomorrow() {
+  const date = new Date();
+  date.setDate(date.getDate() + 1);
+  return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+}
+
+/** The day the person is back from time off; only shown while time off is on. Empty: it stays on until turned off. */
+function returnRow() {
+  const input = h('input', { id: 'time-off-return', class: 'date', type: 'date' });
+  input.addEventListener('change', () => api.setTimeOffReturn(input.value || null));
+  const el = h(
+    'div',
+    { class: 'setting' },
+    h(
+      'div',
+      { class: 'setting-text' },
+      h('label', { htmlFor: input.id }, 'Back on'),
+      h('p', { class: 'hint' }, 'The first day that counts again. Without a date, it stays on until you turn it off.'),
+    ),
+    input,
+  );
+  return {
+    el,
+    update({ timeOff }) {
+      el.hidden = !timeOff.active;
+      input.min = tomorrow();
+      if (document.activeElement !== input) input.value = timeOff.backOn ?? ''; // do not move it under the person's hands
+    },
+  };
+}
+
 /** Connected account and repo count; the button reopens the setup flow. */
 function accountRow() {
   const hint = h('p', { class: 'hint' });
@@ -140,7 +172,7 @@ function backupHint({ cloud }) {
     }
     return {
       checked: false,
-      hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers. It saves the pet, its achievements and daily XP counts, and your repos as ids: no repo names, PR titles or code.',
+      hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers. It saves the pets, your achievements, your time off and daily XP counts, and your repos as ids: no repo names, PR titles or code.',
     };
   }
   const saved = cloud.lastPushAt ? ` Last saved ${timeAgo(cloud.lastPushAt)}.` : '';
@@ -179,6 +211,13 @@ const rows = {
     checked: menuBarCount,
     hint: 'The number of PRs waiting for your review, next to the pet icon.',
   })),
+  timeOff: switchRow('Time off', 'toggleTimeOff', ({ timeOff }) => ({
+    checked: timeOff.active,
+    hint: timeOff.active
+      ? `On since ${dayLabel(timeOff.since)}. Your streak is safe, and reminders and notifications are paused.`
+      : 'Away for a while? Turn it on: your streak is safe, the pet stays calm, and reminders and notifications pause.',
+  })),
+  timeOffReturn: returnRow(),
   account: accountRow(),
   backup: switchRow('Back up pet to GitHub', 'toggleCloudSync', backupHint),
   openAtLogin: switchRow('Open at login', 'toggleOpenAtLogin', ({ openAtLogin }) => ({
@@ -192,6 +231,7 @@ app.hidden = true; // until the first state arrives
 app.append(
   section('Pet', rows.size, rows.bubbles),
   section('Reviews', rows.notifications, rows.menuBarCount),
+  section('Away', rows.timeOff, rows.timeOffReturn),
   section('GitHub', rows.account, rows.backup),
   section('General', rows.openAtLogin),
 );

@@ -434,6 +434,42 @@ describe('PR lists', () => {
   });
 });
 
+describe('time off', () => {
+  const waiting = [pr({ createdAt: daysAgo(5) })]; // a PR that would make the pet anxious
+  const withTimeOff = (timeOff, acts = activity({}, { prs: waiting })) =>
+    computeStatus({ ...stateOf(acts, pet(undefined)), timeOff }, NOON);
+
+  test('the pet is not anxious on a day of time off, and says why', () => {
+    assert.equal(withTimeOff([]).mood, 'anxious');
+    const away = withTimeOff([{ from: toDay(daysAgo(2)), to: null }]);
+    assert.deepEqual([away.mood, away.moodLabel, away.moodReason], ['neutral', 'Neutral', 'On time off']);
+  });
+
+  test('once it is over, the mood is back', () => {
+    const over = withTimeOff([{ from: toDay(daysAgo(10)), to: toDay(daysAgo(3)) }]);
+    assert.equal(over.mood, 'anxious');
+    assert.deepEqual(over.timeOff, { active: false, since: null, backOn: null });
+  });
+
+  test('the status says whether time off is on, since when and when it ends', () => {
+    const view = withTimeOff([{ from: toDay(daysAgo(2)), to: toDay(addDays(toDay(NOON), 3)) }]).timeOff;
+    assert.deepEqual(view, { active: true, since: toDay(daysAgo(2)), backOn: toDay(addDays(toDay(NOON), 4)) });
+    assert.deepEqual(status(activity()).timeOff, { active: false, since: null, backOn: null });
+  });
+
+  test('the streak and the streak achievements wait through the time off', () => {
+    // NOON is Monday 2026-06-15: active Wed 10 and Thu 11, time off Fri 12 to Sun 14 (the weekend was free anyway),
+    // nothing yet today. A free Friday would have broken the streak without it.
+    const days = { '2026-06-10': day({ reviews: 1 }), '2026-06-11': day({ reviews: 1 }) };
+    assert.equal(computeStatus(stateOf(activity(days), pet(undefined)), NOON).streak, 0);
+    const kept = computeStatus(
+      { ...stateOf(activity(days), pet(undefined)), timeOff: [{ from: '2026-06-12', to: '2026-06-14' }] },
+      NOON,
+    );
+    assert.equal(kept.streak, 2);
+  });
+});
+
 describe('mood', () => {
   const regular = (weekly = 100) => ({
     [toDay(daysAgo(20))]: day({ reviews: 1 }),

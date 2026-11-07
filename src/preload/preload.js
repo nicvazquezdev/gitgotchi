@@ -93,14 +93,17 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, doNotDisturb, notifications, menuBarCount, openAtLogin,
+    // -> { login, repoCount, speechBubbles, doNotDisturb, notifications, menuBarCount, timeOff, openAtLogin,
+    //      timeOff: { active, since, backOn },
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'toggleMenuBarCount' | 'toggleOpenAtLogin' | 'toggleCloudSync'
+    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'toggleMenuBarCount' | 'toggleTimeOff' | 'toggleOpenAtLogin'
+    // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'
     action: send('settings:action'),
     setSize: send('settings:size'), // { size, commit }: live while dragging, commit on release
+    setTimeOffReturn: send('settings:time-off-return'), // 'YYYY-MM-DD' (the first day that counts again), or null
   },
 });

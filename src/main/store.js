@@ -14,6 +14,7 @@ const defaults = () => ({
   pets: {}, // the collection, one pet per species: { [species]: { species, name, bornAt, earned, level, stageIndex } }
   activePet: null, // species id of the pet being raised: the only one that earns XP
   achievements: undefined, // { [id]: day } reached by the person (undefined until the first check records them)
+  timeOff: [], // vacations and holidays: [{ from, to }] days ('YYYY-MM-DD'); `to` null while away (game/time-off.js)
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
