@@ -6,6 +6,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { IS_MAC } = require('./config');
 const { launchAgentPlist } = require('./launch-agent');
+const store = require('./store');
 
 const LABEL = 'com.gitgotchi.app';
 const plistPath = () => path.join(os.homedir(), 'Library/LaunchAgents', `${LABEL}.plist`);
@@ -24,4 +25,11 @@ function setEnabled(enabled) {
   fs.writeFileSync(plistPath(), launchAgentPlist({ label: LABEL, args: launchArgs() }));
 }
 
-module.exports = { isEnabled, setEnabled };
+/** "Open at login" is on by default: enable it once, the first time the app runs. */
+function applyDefault() {
+  if (store.get().openAtLoginDefaulted) return;
+  setEnabled(true);
+  store.update({ openAtLoginDefaulted: true });
+}
+
+module.exports = { isEnabled, setEnabled, applyDefault };

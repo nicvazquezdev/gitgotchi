@@ -85,6 +85,7 @@ app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : 
 app.whenReady().then(() => {
   if (IS_MAC) app.dock?.hide();
   registerIpc(actions);
+  loginItem.applyDefault();
   tray = createTray();
   refreshMenu();
 

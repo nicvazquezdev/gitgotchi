@@ -13,6 +13,7 @@ const defaults = () => ({
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // sprite size in px
+  openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
 });
 
 let state = null;
@@ -40,8 +41,8 @@ function update(patch) {
 
 /** Clears everything except the pet's screen position and size. */
 function reset() {
-  const { position, petSize } = get();
-  update({ ...defaults(), position, petSize });
+  const { position, petSize, openAtLoginDefaulted } = get();
+  update({ ...defaults(), position, petSize, openAtLoginDefaulted });
 }
 
 module.exports = { get, update, reset };
