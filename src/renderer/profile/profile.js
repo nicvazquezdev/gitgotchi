@@ -131,7 +131,7 @@ const SIZE_NAMES = { XS: 'Tiny', S: 'Small', M: 'Medium', L: 'Large' };
 const sizeLimit = (sizes, i) =>
   sizes[i].maxLines === null ? `over ${sizes[i - 1].maxLines} lines` : `up to ${sizes[i].maxLines} lines`;
 
-function rulesCard({ sizes, review, merged }) {
+function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
   const xpPill = (xp) => h('b', { class: 'xp-pill' }, `+${xp} XP`);
   const sizeRow = ({ id, xp }, i) =>
     h(
@@ -140,7 +140,13 @@ function rulesCard({ sizes, review, merged }) {
       h('span', {}, h('b', {}, SIZE_NAMES[id] ?? id), h('span', { class: 'rule-hint' }, ` · ${sizeLimit(sizes, i)}`)),
       xpPill(xp),
     );
-  const row = (label, xp) => h('div', { class: 'rule' }, h('span', {}, label), xpPill(xp));
+  const row = (label, xp, hint) =>
+    h(
+      'div',
+      { class: 'rule' },
+      h('span', {}, label, hint ? h('span', { class: 'rule-hint' }, ` · ${hint}`) : null),
+      xpPill(xp),
+    );
   return h(
     'section',
     { class: 'card rules' },
@@ -150,8 +156,15 @@ function rulesCard({ sizes, review, merged }) {
       { class: 'rule-list' },
       h('div', { class: 'rule-group' }, 'Open a PR', h('span', { class: 'meta' }, 'The bigger, the more XP')),
       h('div', { class: 'size-list' }, sizes.map(sizeRow)),
-      h('div', { class: 'rule-group' }, 'Review and merge'),
-      h('div', { class: 'size-list' }, row('Review a PR', review), row('Get a PR merged', merged)),
+      h('div', { class: 'rule-group' }, 'Other activity'),
+      h(
+        'div',
+        { class: 'size-list' },
+        row('Review a PR', review),
+        row('Get a PR merged', merged),
+        issue != null && row('Open an issue', issue),
+        commit != null && row('Push a commit', commit, `up to ${commitsPerDay} a day`),
+      ),
     ),
   );
 }
