@@ -1,15 +1,20 @@
 // Orchestrates the pet: setup, GitHub sync and derived status.
-// Events: 'status' (status), 'evolved' (stage).
+// Events: 'status' (status), 'evolved' (stage), 'activity' (new activity per kind, e.g. { merges: 1 }).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
 const session = require('./session');
 const engine = require('../game/engine');
 const { SPECIES } = require('../game/catalog');
 const { fromDay } = require('../dates');
+const { SYNC_INTERVAL_MS } = require('../config');
 
 class PetService extends EventEmitter {
   #syncing = null;
   #error = null;
+  // Conditional-request state for the events feed (in memory: the first sync after launch is always full).
+  #poll = { etag: null, interval: null };
+  // Reactions only after a baseline sync in this session, so old activity never triggers them.
+  #baselined = false;
 
   isConfigured() {
     const { pet, repos } = store.get();
@@ -54,8 +59,23 @@ class PetService extends EventEmitter {
       // New repos or a new pet: history is rebuilt from scratch.
       ...((isNewPet || reposChanged) && { activity: { days: {}, lastSyncedAt: null } }),
     });
+    if (isNewPet || reposChanged) this.#resetBaseline();
     this.notify();
     this.sync();
+  }
+
+  /** The one sync loop: syncs every SYNC_INTERVAL_MS, or GitHub's X-Poll-Interval if that is longer. */
+  startPolling() {
+    const loop = async () => {
+      await this.sync();
+      setTimeout(loop, Math.max(SYNC_INTERVAL_MS, (this.#poll.interval ?? 0) * 1000));
+    };
+    setTimeout(loop, SYNC_INTERVAL_MS);
+  }
+
+  #resetBaseline() {
+    this.#poll.etag = null;
+    this.#baselined = false;
   }
 
   /** Fetches new activity. Reuses the in-flight sync if there is one. */
@@ -74,15 +94,20 @@ class PetService extends EventEmitter {
     const from = fromDay(engine.syncStartDay(state));
     try {
       const gh = await session.client();
-      const events = await gh.activity(state.user.login, from);
-      const days = engine.buildDays({ events, repos: state.repos });
-      store.update((s) => ({
-        activity: { days: engine.mergeDays(s.activity.days, days), lastSyncedAt: new Date().toISOString() },
-      }));
+      const events = await gh.activity(state.user.login, from, this.#poll);
       this.#error = null;
+      if (!events) return; // 304: nothing new
+      const before = store.get().activity.days;
+      const days = engine.mergeDays(before, engine.buildDays({ events, repos: state.repos }));
+      store.update({ activity: { days, lastSyncedAt: new Date().toISOString() } });
+
+      const delta = engine.diffDays(before, days);
+      if (this.#baselined && Object.keys(delta).length > 0) this.emit('activity', delta);
+      this.#baselined = true;
       this.#checkEvolution();
     } catch (err) {
       console.error('[sync]', err);
+      this.#poll.etag = null; // a failed sync must not hide events behind a 304
       this.#error = err.message;
     }
   }

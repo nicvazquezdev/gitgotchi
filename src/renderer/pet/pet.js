@@ -65,6 +65,46 @@ function reactToClick() {
   say(pick(LINES[status.mood] ?? LINES.idle));
 }
 
+// ---------- Live reactions (new GitHub activity) ----------
+
+// Most exciting first. `anim` is a CSS class on the pet, `fx` the particle style.
+const REACTIONS = [
+  { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉' },
+  { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!' },
+  { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!' },
+  { kind: 'issues', anim: 'wiggle', text: 'Issue noted!' },
+  { kind: 'comments', anim: 'wiggle', text: 'Chatty today!' },
+  { kind: 'pushes', anim: 'hop', text: 'Nom nom, a push!' },
+];
+const FX_COLORS = ['var(--gold)', 'var(--pink)', 'var(--sky)', 'var(--green)', 'var(--red)'];
+let fxTimer = null;
+
+function burst(style) {
+  const count = style === 'confetti' ? 14 : 6;
+  const particles = Array.from({ length: count }, (_, i) => {
+    const angle = (i / count) * Math.PI + Math.PI; // upper half-circle
+    const dist = 44 + (i % 3) * 16;
+    const particle = h('i', { class: `particle ${style}`, style: { background: FX_COLORS[i % FX_COLORS.length] } });
+    // Custom properties need setProperty (Object.assign on style ignores them).
+    particle.style.setProperty('--x', `${Math.round(Math.cos(angle) * dist)}px`);
+    particle.style.setProperty('--y', `${Math.round(Math.sin(angle) * dist)}px`);
+    return particle;
+  });
+  $('#fx').replaceChildren(...particles);
+  clearTimeout(fxTimer);
+  fxTimer = setTimeout(() => $('#fx').replaceChildren(), 1400);
+}
+
+/** Shows only the most exciting reaction for a delta like `{ merges: 1, pushes: 3 }`. */
+function reactToActivity(delta) {
+  const reaction = REACTIONS.find((r) => delta[r.kind] > 0);
+  if (!reaction) return;
+  const count = delta[reaction.kind];
+  replayClass(canvas, reaction.anim);
+  if (reaction.fx) burst(reaction.fx);
+  say(count > 1 ? `${reaction.text} x${count}` : reaction.text, 4000);
+}
+
 // ---------- Mouse: hover, click and drag ----------
 
 function setHover(active) {
@@ -117,6 +157,8 @@ api.onEvolved((stage) => {
   replayClass(canvas, 'evolve');
   say(`${status?.name ?? 'Your pet'} evolved into a ${stage.name}! ✨`, 6000);
 });
+
+api.onActivity(reactToActivity);
 
 setStatus(await api.status());
 animatePet(canvas, spriteOptions);

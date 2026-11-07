@@ -13,7 +13,9 @@ module.exports = {
   // Default size is also the minimum: below it the pet step doesn't fit.
   ONBOARDING_WINDOW: { width: 640, height: 800, minWidth: 640, minHeight: 800 },
 
-  SYNC_INTERVAL_MS: 15 * 60 * 1000,
+  // Base poll period. Cheap: conditional requests answer 304 when nothing changed.
+  // GitHub's X-Poll-Interval header can only raise it.
+  SYNC_INTERVAL_MS: 90 * 1000,
   // Recomputes mood (e.g. sleeping at night) without hitting GitHub.
   TICK_INTERVAL_MS: 5 * 60 * 1000,
 
