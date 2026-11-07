@@ -1,5 +1,5 @@
 // Pure game rules: no I/O, easy to test.
-const { SPECIES, STAGES, KINDS, BASELINE, MOOD, SLEEP_HOURS } = require('./catalog');
+const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
 const { stats, dayXp, dayXpByKind } = require('./stats');
 const { xpForLevel, levelAt, stageIndexFor } = require('./levels');
@@ -137,19 +137,16 @@ function diffDays(oldDays, newDays) {
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-const MOOD_LABELS = { happy: 'Happy', idle: 'Content', anxious: 'Anxious', sad: 'Bored', sleeping: 'Sleeping' };
+const MOOD_LABELS = { happy: 'Happy', neutral: 'Neutral', anxious: 'Anxious' };
 
 /**
- * Mood and why. Order: sleeping (night), anxious (PRs waiting for review), happy (merged recently or a strong
- * week), sad (quiet week, once the pet is old enough to judge), else idle.
- * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number, petAgeDays: number }} input
- * @returns {{ mood: string, moodLabel: string, moodReason: string | null }}
+ * Mood and why. Three moods, in this order: anxious (PRs waiting for review), happy (merged recently or a strong
+ * week), else neutral.
+ * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number }} input
+ * @returns {{ mood: 'anxious' | 'happy' | 'neutral', moodLabel: string, moodReason: string | null }}
  */
-function moodFor({ waiting, mergedRecently, ratio, petAgeDays }, now) {
+function moodFor({ waiting, mergedRecently, ratio }) {
   const result = (mood, reason = null) => ({ mood, moodLabel: MOOD_LABELS[mood], moodReason: reason });
-  const hour = now.getHours();
-  if (hour >= SLEEP_HOURS.from && hour < SLEEP_HOURS.to) return result('sleeping', `Wakes up at ${SLEEP_HOURS.to}:00`);
-
   const stale = waiting.filter((pr) => pr.ageDays >= MOOD.anxiousAfterDays);
   if (stale.length > 0) {
     const days = Math.max(...stale.map((pr) => pr.ageDays));
@@ -157,8 +154,7 @@ function moodFor({ waiting, mergedRecently, ratio, petAgeDays }, now) {
   }
   if (mergedRecently > 0) return result('happy', `${plural(mergedRecently, 'PR')} merged recently`);
   if (ratio >= MOOD.strongWeekRatio) return result('happy', 'A strong week');
-  if (ratio < MOOD.quietWeekRatio && petAgeDays >= BASELINE.minHistoryDays) return result('sad', 'A quiet week');
-  return result('idle');
+  return result('neutral');
 }
 
 /** XP and counts per kind for the last 7 days. */
@@ -202,7 +198,6 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
   const prs = classify(mine, now);
   const recentSince = now.getTime() - MOOD.happyMergeHours * 3600000;
   const mergedRecently = mine.filter((pr) => pr.state === 'MERGED' && new Date(pr.mergedAt) >= recentSince).length;
-  const petAgeDays = (now.getTime() - new Date(pet.bornAt).getTime()) / DAY_MS;
 
   return {
     name: pet.name,
@@ -213,7 +208,7 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
     xp,
     levelXp: Math.min(levelXpNeeded, Math.max(0, xp - levelStart)),
     levelXpNeeded,
-    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: week.total / baseline, petAgeDays }, now),
+    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: week.total / baseline }),
     week,
     prs,
     baseline,

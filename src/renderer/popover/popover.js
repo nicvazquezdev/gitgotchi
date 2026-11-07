@@ -7,7 +7,7 @@ const api = window.gitgotchi.popover;
 const app = $('#app');
 
 const MAX_ROWS = 5; // per section; the rest is summarized
-const NOTICE_MOODS = ['anxious', 'sad'];
+const NOTICE_MOODS = ['anxious'];
 
 const days = (n) => (n > 0 ? plural(n, 'day') : 'today');
 

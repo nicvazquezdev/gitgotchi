@@ -33,7 +33,7 @@ module.exports = {
   // Base poll period. Cheap: conditional requests answer 304 when nothing changed.
   // GitHub's X-Poll-Interval header can only raise it.
   SYNC_INTERVAL_MS: 90 * 1000,
-  // Recomputes mood (e.g. sleeping at night) without hitting GitHub.
+  // Recomputes mood (PRs age as time passes) without hitting GitHub.
   TICK_INTERVAL_MS: 5 * 60 * 1000,
 
   // Near-real-time reactions (see live/).

@@ -9,7 +9,7 @@ const {
   applyActivity,
   computeStatus,
 } = require('../src/main/game/engine');
-const { WEIGHTS, SLEEP_HOURS, BASELINE, MOOD, PR_KEEP_MERGED_DAYS } = require('../src/main/game/catalog');
+const { WEIGHTS, BASELINE, MOOD, PR_KEEP_MERGED_DAYS } = require('../src/main/game/catalog');
 const { toDay, addDays } = require('../src/main/dates');
 
 const NOON = new Date(2026, 5, 15, 12);
@@ -335,14 +335,6 @@ describe('mood', () => {
   });
   const moodOf = (acts, now = NOON) => status(acts, {}, now);
 
-  test('sleeping at night wins over everything', () => {
-    const waiting = [pr({ createdAt: daysAgo(5) })];
-    const at = (hour) => moodOf(activity({}, { prs: waiting }), new Date(2026, 5, 15, hour)).mood;
-    assert.equal(at(SLEEP_HOURS.from), 'sleeping');
-    assert.equal(at(SLEEP_HOURS.to - 1), 'sleeping');
-    assert.equal(at(SLEEP_HOURS.to), 'anxious');
-  });
-
   test('anxious when a PR has waited MOOD.anxiousAfterDays, with a reason', () => {
     const fresh = moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(MOOD.anxiousAfterDays - 1) })] }));
     assert.notEqual(fresh.mood, 'anxious');
@@ -380,19 +372,12 @@ describe('mood', () => {
     assert.equal(moodOf(activity({}, { prs: [merged, waiting] })).mood, 'anxious');
   });
 
-  test('sad on a quiet week, but only once the pet is old enough', () => {
-    const quiet = { [toDay(daysAgo(25))]: day({ reviews: 20 }) }; // plenty of history, nothing this week
-    const s = moodOf(activity(quiet));
-    assert.equal(s.mood, 'sad');
-    assert.equal(s.moodLabel, 'Bored');
-    assert.equal(s.moodReason, 'A quiet week');
-    const newborn = computeStatus({ pet: pet(new Date(2026, 5, 14)), activity: activity(quiet), repos: [] }, NOON);
-    assert.equal(newborn.mood, 'idle');
-  });
-
-  test('idle otherwise, labelled Content, with no reason', () => {
+  test('neutral otherwise, with no reason (quiet weeks and nights are not moods)', () => {
     const s = moodOf(activity({ ...regular(100), [toDay(daysAgo(2))]: day({ reviews: 5 }) }));
-    assert.deepEqual([s.mood, s.moodLabel, s.moodReason], ['idle', 'Content', null]);
+    assert.deepEqual([s.mood, s.moodLabel, s.moodReason], ['neutral', 'Neutral', null]);
+    const quiet = { [toDay(daysAgo(25))]: day({ reviews: 20 }) }; // plenty of history, nothing this week
+    assert.equal(moodOf(activity(quiet)).mood, 'neutral');
+    assert.equal(moodOf(activity(quiet), new Date(2026, 5, 15, 3)).mood, 'neutral'); // 3 AM
   });
 
   test('light and heavy users get the same mood for the same relative effort', () => {

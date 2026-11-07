@@ -20,12 +20,10 @@ const SHADOW = [
 // Motion per mood: which LIFT steps to cycle and how fast. Floating creatures always hover.
 const MOTIONS = {
   happy: { steps: [0, 1, 2, 1], ms: 250 },
-  idle: { steps: [0, 0, 1, 1], ms: 450 },
-  sad: { steps: [0], ms: 800 },
-  sleeping: { steps: [0], ms: 900 },
+  neutral: { steps: [0, 0, 1, 1], ms: 450 },
+  anxious: { steps: [0, 1], ms: 200 }, // fidgety
 };
 const FLOAT = { steps: [0, 1, 2, 1], ms: 450 };
-const MOOD_FILTERS = { sad: 'saturate(0.6) brightness(0.92)', sleeping: 'saturate(0.8) brightness(0.8)' };
 
 const images = new Map();
 
@@ -43,7 +41,7 @@ function image(file) {
 const stageOf = (species, stageIndex) =>
   species.stages[Math.max(0, Math.min(species.stages.length - 1, stageIndex ?? 0))];
 
-const motionFor = (stage, mood) => (stage.floats && mood !== 'sleeping' ? FLOAT : (MOTIONS[mood] ?? MOTIONS.idle));
+const motionFor = (stage, mood) => (stage.floats ? FLOAT : (MOTIONS[mood] ?? MOTIONS.neutral));
 
 /**
  * Where the sprite sits inside the box, in native px. Used for hit-testing (clicks only count on the pet).
@@ -87,10 +85,7 @@ export function drawPet(canvas, { species, stageIndex, mood, frame = 0 }, { fit 
   ctx.drawImage(shadow, -e.cx, -e.cy);
   ctx.restore();
 
-  ctx.save();
-  if (MOOD_FILTERS[mood]) ctx.filter = MOOD_FILTERS[mood];
   ctx.drawImage(sprite, x, y + LIFT[step]);
-  ctx.restore();
 }
 
 /**

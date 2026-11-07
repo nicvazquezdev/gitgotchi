@@ -20,7 +20,7 @@ npm run dev   # auto-reloads on changes
 - **Source:** your GitHub activity (Events API, private repos included), only for the repos you pick.
 - **Points:** push 1 · PR opened 4 · PR merged 3 · review 3 · comment 1 · issue 2.
 - **XP** = points since the pet was adopted. It sets the stage: Baby → Kid → Teen → Adult. Thresholds scale with your own weekly baseline.
-- **Mood** = points in the last 7 days: happy, idle or sad. Sleeps from midnight to 7 AM.
+- **Mood** has three states: anxious (a PR has waited 2+ days for review), happy (a PR merged in the last 48 h, or a strong week) and neutral (everything else).
 - XP syncs from the Events API every 90 s (GitHub only returns your latest 300 events, so the app keeps its own per-day history).
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds.
 - Points and thresholds live in `src/main/game/catalog.js`.

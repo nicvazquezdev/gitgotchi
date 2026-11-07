@@ -82,19 +82,15 @@ const STAGES = [
 // - Never below `floorWeekly` (40 = two small PRs and a review), so an almost inactive user cannot level up trivially.
 const BASELINE = { windowDays: 28, minHistoryDays: 7, defaultWeekly: 120, floorWeekly: 40 };
 
-// Mood rules (see engine.moodFor). Order: sleeping, anxious, happy, sad, else idle.
+// Mood rules (see engine.moodFor). Three moods. Order: anxious, happy, else neutral.
 const MOOD = {
   anxiousAfterDays: 2, // anxious: at least one open PR has waited for review this long
   happyMergeHours: 48, // happy: a PR merged within this time
   strongWeekRatio: 1.25, // happy: week XP / baseline at least this
-  quietWeekRatio: 0.4, // sad: week XP / baseline below this (only once the pet is `BASELINE.minHistoryDays` old)
 };
 
 // The PR list in the state keeps open PRs and PRs merged within this many days (older ones live on in the day ledger).
 const PR_KEEP_MERGED_DAYS = 14;
-
-// Local hours when the pet sleeps.
-const SLEEP_HOURS = { from: 0, to: 7 };
 
 // "How you earn XP", as the UI shows it (derived from PR_SIZES and WEIGHTS).
 const XP_RULES = {
@@ -113,6 +109,5 @@ module.exports = {
   BASELINE,
   MOOD,
   PR_KEEP_MERGED_DAYS,
-  SLEEP_HOURS,
   XP_RULES,
 };

@@ -9,9 +9,8 @@ const DRAG_THRESHOLD_PX = 4;
 
 const LINES = {
   happy: ['What a week! 🔥', 'Yum, fresh pushes!', 'I feel huge today', 'Keep it up!'],
-  idle: ['All quiet here', 'One more PR?', "I'm a little hungry…", 'A push would be nice'],
-  sad: ["I'm hungry… 🥺", "You haven't pushed in a while", 'I miss your PRs', 'A review would cheer me up'],
-  sleeping: ['Zzz…', 'Five more minutes…'],
+  neutral: ['All quiet here', 'One more PR?', "I'm a little hungry…", 'A push would be nice'],
+  anxious: ['Someone needs a review…', 'That PR has been waiting a while', 'A review would calm me down'],
 };
 
 let status = null;
@@ -41,9 +40,8 @@ function setStatus(next) {
   }
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
-  $('#zzz').hidden = status.mood !== 'sleeping';
   $('#alert').hidden = !status.error;
-  if (moodChanged) say(pick(LINES[status.mood] ?? LINES.idle));
+  if (moodChanged) say(pick(LINES[status.mood] ?? LINES.neutral));
   else renderBubble();
 }
 

@@ -22,35 +22,18 @@ function portrait({ species, stage, mood }) {
   );
 }
 
-const WARNING_MOODS = ['anxious', 'sad'];
-
-/** Mood line: amber only when something needs attention; otherwise a calm line that says what is going on. */
+/** Why the pet feels the way it does. Only anxious and happy have a reason; neutral has nothing to explain. */
 function moodNotice({ name, mood, moodLabel, moodReason }) {
-  const title = `${name} is ${moodLabel.toLowerCase()}`;
-  if (mood === 'sleeping')
-    return h(
-      'div',
-      { class: 'notice calm' },
-      icon('moon'),
-      h(
-        'span',
-        {},
-        h('strong', {}, `${name} is sleeping`),
-        h('span', { class: 'notice-sub' }, `${moodReason}. Your XP still counts.`),
-      ),
-    );
-  if (WARNING_MOODS.includes(mood) && moodReason)
-    return h(
-      'div',
-      { class: 'notice' },
-      icon('clock'),
-      h('span', {}, h('strong', {}, title), h('span', { class: 'notice-sub' }, moodReason)),
-    );
-  return h(
-    'div',
-    { class: 'notice calm' },
-    h('span', {}, h('strong', {}, title), moodReason ? h('span', { class: 'notice-sub' }, moodReason) : null),
+  if (!moodReason) return null;
+  const text = h(
+    'span',
+    {},
+    h('strong', {}, `${name} is ${moodLabel.toLowerCase()}`),
+    h('span', { class: 'notice-sub' }, moodReason),
   );
+  return mood === 'anxious'
+    ? h('div', { class: 'notice' }, icon('clock'), text)
+    : h('div', { class: 'notice calm' }, text);
 }
 
 function petCard(status) {
