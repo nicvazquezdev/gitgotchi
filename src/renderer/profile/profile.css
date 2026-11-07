@@ -30,7 +30,7 @@ body {
 
 /* ---------- Left: pet card ---------- */
 .pet-card {
-  width: 300px;
+  width: 280px;
   flex: none;
   display: flex;
   flex-direction: column;
@@ -193,38 +193,52 @@ body {
   min-height: 0;
 }
 .week {
-  flex: 1.5;
+  flex: 1.1;
+  min-width: 0;
 }
 .rules {
-  flex: 1;
+  flex: 2;
+  min-width: 0;
 }
-.tiles {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 14px;
+.week-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
 }
-.tile {
-  padding: 12px;
-  border-radius: var(--radius-lg);
+.week-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius);
   background: var(--surface);
-  font-size: 12px;
+  font-size: 13px;
 }
-.tile .count {
-  font: 600 30px/34px var(--font-pixel);
+.week-line .count {
+  min-width: 24px;
+  font-size: 16px;
+  font-weight: 600;
 }
-.tile .xp-text {
-  display: block;
-  margin-top: 4px;
+.week-label {
+  flex: 1;
+  color: var(--text-2);
+  white-space: nowrap;
 }
 .week .card-head .xp-text {
   font-size: 13px;
 }
-.rule-list {
+.rule-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 12px;
+}
+.rule-col {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  margin-top: 10px;
+  min-width: 0;
   font-size: 13px;
   line-height: 1.25;
 }
@@ -232,39 +246,33 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  margin-top: 4px;
+  gap: 8px;
+  margin-bottom: 2px;
   font-weight: 600;
-}
-.rule-group:first-child {
-  margin-top: 0;
 }
 .rule-group .meta {
   font-size: 11px;
   font-weight: 400;
-}
-.size-list {
-  padding: 2px 12px;
-  border-radius: var(--radius);
-  background: var(--surface);
 }
 .rule {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
-  color: var(--text);
-}
-.rule + .rule {
-  border-top: 1px solid var(--divider);
+  padding: 7px 10px;
+  border-radius: var(--radius);
+  background: var(--surface);
 }
 .rule b {
   font-weight: 600;
 }
 .rule-hint {
+  margin-top: 1px;
+  font-size: 11px;
   color: var(--text-3);
 }
 .xp-pill {
+  flex: none;
   padding: 2px 8px;
   border-radius: 999px;
   background: var(--accent-soft);

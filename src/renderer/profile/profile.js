@@ -103,12 +103,12 @@ function evolutionCard({ species, stage }) {
 }
 
 function weekCard({ week }) {
-  const tile = (count, label, xp) =>
+  const line = (count, label, xp) =>
     h(
       'div',
-      { class: 'tile' },
-      h('div', { class: 'count' }, count),
-      h('div', {}, label),
+      { class: 'week-line' },
+      h('b', { class: 'count' }, count),
+      h('span', { class: 'week-label' }, label),
       h('span', { class: 'xp-text' }, `+${xp} XP`),
     );
   return h(
@@ -117,10 +117,12 @@ function weekCard({ week }) {
     h('div', { class: 'card-head' }, h('h2', {}, 'This week'), h('span', { class: 'xp-text' }, `+${week.total} XP`)),
     h(
       'div',
-      { class: 'tiles' },
-      tile(week.prs, 'PRs opened', week.xp.prs),
-      tile(week.reviews, 'Reviews', week.xp.reviews),
-      tile(week.merges, 'PRs merged', week.xp.merges),
+      { class: 'week-lines' },
+      line(week.prs, 'PRs opened', week.xp.prs),
+      line(week.reviews, 'Reviews', week.xp.reviews),
+      line(week.merges, 'PRs merged', week.xp.merges),
+      line(week.commits, 'Commits', week.xp.commits),
+      line(week.issues, 'Issues', week.xp.issues),
     ),
   );
 }
@@ -132,38 +134,30 @@ const sizeLimit = (sizes, i) =>
   sizes[i].maxLines === null ? `over ${sizes[i - 1].maxLines} lines` : `up to ${sizes[i].maxLines} lines`;
 
 function rulesCard({ sizes, review, merged, issue, commit, commitsPerDay }) {
-  const xpPill = (xp) => h('b', { class: 'xp-pill' }, `+${xp} XP`);
-  const sizeRow = ({ id, xp }, i) =>
+  const rule = (name, hint, xp) =>
     h(
       'div',
       { class: 'rule' },
-      h('span', {}, h('b', {}, SIZE_NAMES[id] ?? id), h('span', { class: 'rule-hint' }, ` · ${sizeLimit(sizes, i)}`)),
-      xpPill(xp),
+      h('div', {}, h('b', {}, name), h('div', { class: 'rule-hint' }, hint)),
+      h('b', { class: 'xp-pill' }, `+${xp} XP`),
     );
-  const row = (label, xp, hint) =>
-    h(
-      'div',
-      { class: 'rule' },
-      h('span', {}, label, hint ? h('span', { class: 'rule-hint' }, ` · ${hint}`) : null),
-      xpPill(xp),
-    );
+  const sizeRule = ({ id, xp }, i) => rule(SIZE_NAMES[id] ?? id, sizeLimit(sizes, i), xp);
   return h(
     'section',
     { class: 'card rules' },
     h('h2', {}, 'How you earn XP'),
     h(
       'div',
-      { class: 'rule-list' },
-      h('div', { class: 'rule-group' }, 'Open a PR', h('span', { class: 'meta' }, 'The bigger, the more XP')),
-      h('div', { class: 'size-list' }, sizes.map(sizeRow)),
-      h('div', { class: 'rule-group' }, 'Other activity'),
+      { class: 'rule-cols' },
+      h('div', { class: 'rule-col' }, h('div', { class: 'rule-group' }, 'Open a PR'), sizes.map(sizeRule)),
       h(
         'div',
-        { class: 'size-list' },
-        row('Review a PR', review),
-        row('Get a PR merged', merged),
-        issue != null && row('Open an issue', issue),
-        commit != null && row('Push a commit', commit, `up to ${commitsPerDay} a day`),
+        { class: 'rule-col' },
+        h('div', { class: 'rule-group' }, 'Other activity'),
+        rule('Review a PR', 'per review', review),
+        rule('PR merged', 'per PR', merged),
+        issue != null && rule('Open an issue', 'per issue', issue),
+        commit != null && rule('Push a commit', `max ${commitsPerDay} a day`, commit),
       ),
     ),
   );
