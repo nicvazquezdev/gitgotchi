@@ -36,32 +36,75 @@ const SPECIES = SPRITES.map(({ id, title, bg, stages }) => ({
   })),
 }));
 
-// Evolution pace, in "typical weeks" of the person's own activity.
-// Stage XP threshold = minWeeks * baseline (see BASELINE), so everyone reaches Adult
-// after about 9 weeks of their normal pace, whether they score 40 or 370 points a week.
-// One entry per sprite stage (assets/pets/<id>_<1..4>.png). `level`: the level that unlocks the stage.
-const STAGES = [
-  { id: 'baby', name: 'Baby', level: 1, minWeeks: 0 },
-  { id: 'kid', name: 'Kid', level: 5, minWeeks: 0.8 },
-  { id: 'young', name: 'Young', level: 10, minWeeks: 3.5 },
-  { id: 'adult', name: 'Adult', level: 18, minWeeks: 9 },
+// ---------- Rules: XP comes only from pull requests and reviews in the selected repos ----------
+
+// Opening a PR gives XP by size (lines = additions + deletions). The first bucket whose `maxLines` is above the size wins.
+const PR_SIZES = [
+  { id: 'XS', maxLines: 10, xp: 5 },
+  { id: 'S', maxLines: 100, xp: 10 },
+  { id: 'M', maxLines: 500, xp: 20 },
+  { id: 'L', maxLines: Infinity, xp: 30 },
 ];
 
-// Points per activity type.
-const WEIGHTS = { pushes: 1, prs: 4, merges: 3, reviews: 3, comments: 1, issues: 2 };
+// XP per counted event. (Opening a PR is not here: its XP depends on the size, see PR_SIZES.)
+const WEIGHTS = { reviews: 10, merges: 15 };
 
-// Baseline = the person's typical weekly score (points per 7 days).
+// Kinds kept in the per-day ledger (`activity.days[day]`) and reported in 'activity' deltas.
+// The ledger also keeps `prsXp`: the XP of the PRs opened that day (it depends on each PR's size).
+const KINDS = ['prs', 'reviews', 'merges'];
+
+// Levels and stages. Cumulative XP to reach a level is `weeks * baseline`, interpolated linearly between
+// the anchors [level, weeks], so everyone evolves at a similar pace whether they ship 5 or 50 PRs a week.
+// After the last anchor each level costs `weeksPerLevelAfter` typical weeks.
+const LEVELS = {
+  anchors: [
+    [1, 0],
+    [5, 0.8], // Kid
+    [10, 3.5], // Young
+    [18, 9], // Adult
+  ],
+  weeksPerLevelAfter: 0.7,
+};
+
+// One entry per sprite stage (assets/pets/<id>_<1..4>.png). `level`: the level that unlocks the stage.
+const STAGES = [
+  { id: 'baby', name: 'Baby', level: 1 },
+  { id: 'kid', name: 'Kid', level: 5 },
+  { id: 'young', name: 'Young', level: 10 },
+  { id: 'adult', name: 'Adult', level: 18 },
+];
+
+// Baseline = the person's typical weekly XP (XP per 7 days).
 // - Measured over the last `windowDays` of recorded history, scaled to a week.
 //   The span starts at the first recorded day, so a young history is not diluted by empty days.
 // - With less than `minHistoryDays` of history there is no reliable signal: use `defaultWeekly`.
-// - Never below `floorWeekly`, so an almost inactive user cannot max everything out trivially.
-const BASELINE = { windowDays: 28, minHistoryDays: 7, defaultWeekly: 100, floorWeekly: 25 };
+//   (120 = about 3 small PRs, 2 reviews and 2 merges.)
+// - Never below `floorWeekly` (40 = two small PRs and a review), so an almost inactive user cannot level up trivially.
+const BASELINE = { windowDays: 28, minHistoryDays: 7, defaultWeekly: 120, floorWeekly: 40 };
 
-// Mood from weekScore / baseline. Below `ok`: sad.
-const MOOD_RATIOS = { happy: 1.0, ok: 0.4 };
-const MAX_HEARTS = 4;
+// Mood rules (see engine.moodFor). Order: sleeping, anxious, happy, sad, else idle.
+const MOOD = {
+  anxiousAfterDays: 2, // anxious: at least one open PR has waited for review this long
+  happyMergeHours: 48, // happy: a PR merged within this time
+  strongWeekRatio: 1.25, // happy: week XP / baseline at least this
+  quietWeekRatio: 0.4, // sad: week XP / baseline below this (only once the pet is `BASELINE.minHistoryDays` old)
+};
+
+// The PR list in the state keeps open PRs and PRs merged within this many days (older ones live on in the day ledger).
+const PR_KEEP_MERGED_DAYS = 14;
 
 // Local hours when the pet sleeps.
 const SLEEP_HOURS = { from: 0, to: 7 };
 
-module.exports = { SPECIES, STAGES, WEIGHTS, BASELINE, MOOD_RATIOS, MAX_HEARTS, SLEEP_HOURS };
+module.exports = {
+  SPECIES,
+  STAGES,
+  LEVELS,
+  PR_SIZES,
+  WEIGHTS,
+  KINDS,
+  BASELINE,
+  MOOD,
+  PR_KEEP_MERGED_DAYS,
+  SLEEP_HOURS,
+};

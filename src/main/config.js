@@ -51,5 +51,6 @@ module.exports = {
     GH_PATHS: ['/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/usr/bin/gh'],
     REPO_PAGES: 3,
     EVENT_PAGES: 3,
+    PR_PAGES: 20, // pages of 50 PRs when backfilling the user's PRs
   },
 };

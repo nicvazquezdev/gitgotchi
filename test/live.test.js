@@ -84,6 +84,28 @@ test('diffPullRequests: unselected repos are ignored', () => {
   assert.deepEqual(diffPullRequests(snapshot, [merged], REPOS, NOW + 10_000).delta, {});
 });
 
+test('PrWatcher: reacts first, then hands over the fetched PRs', async () => {
+  const { PrWatcher } = require('../src/main/live/pr-watcher');
+  const calls = [];
+  let prs = [pr('1', 'OPEN')];
+  const watcher = new PrWatcher({
+    powerMonitor: { on() {}, getSystemIdleTime: () => 0 },
+    isEnabled: () => true,
+    fetchPrs: async () => prs,
+    getRepos: () => REPOS,
+    onActivity: (delta) => calls.push(['activity', delta]),
+    onPullRequests: (list) => calls.push(['prs', list.length]),
+  });
+  await watcher.check(); // baseline
+  prs = [pr('1', 'MERGED', { mergedAt: new Date().toISOString() })];
+  await watcher.check();
+  assert.deepEqual(calls, [
+    ['prs', 1],
+    ['activity', { merges: 1 }],
+    ['prs', 1],
+  ]);
+});
+
 const TTL = 10 * 60 * 1000;
 
 test('credits: subtracted from the Events diff', () => {

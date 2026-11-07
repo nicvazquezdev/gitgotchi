@@ -1,43 +1,65 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { buildDays, rankRepos, syncStartDay, mergeDays, computeStatus } = require('../src/main/game/engine');
-const { WEIGHTS, SLEEP_HOURS } = require('../src/main/game/catalog');
+const {
+  buildDays,
+  rankRepos,
+  syncStartDay,
+  prSyncStart,
+  mergeDays,
+  applyActivity,
+  computeStatus,
+} = require('../src/main/game/engine');
+const { WEIGHTS, SLEEP_HOURS, BASELINE, MOOD, PR_KEEP_MERGED_DAYS } = require('../src/main/game/catalog');
+const { toDay, addDays } = require('../src/main/dates');
 
 const NOON = new Date(2026, 5, 15, 12);
 const ev = (kind, repo, day) => ({ kind, repo, day });
-const counts = (c = {}) => ({ ...Object.fromEntries(Object.keys(WEIGHTS).map((k) => [k, 0])), ...c });
-const activity = (days = {}, lastSyncedAt = null) => ({ days, lastSyncedAt });
-const pet = (bornAt = new Date(2026, 0, 1)) => ({ name: 'Pixel', species: 'blob', bornAt: bornAt.toISOString() });
+const day = (c = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, ...c });
+const activity = (days = {}, extra = {}) => ({ days, prs: [], lastSyncedAt: null, prsSyncedAt: null, ...extra });
+const pet = (bornAt = new Date(2026, 0, 1), extra = {}) => ({
+  name: 'Pixel',
+  species: 'phoenix',
+  bornAt: bornAt.toISOString(),
+  ...extra,
+});
+const hoursAgo = (h) => new Date(NOON.getTime() - h * 3600000).toISOString();
+const daysAgo = (d) => hoursAgo(d * 24);
+let nextId = 0;
+/** A normalized PR (as the client returns it). */
+const pr = (o = {}) => ({
+  id: `pr${nextId++}`,
+  number: 1,
+  title: 'Fix things',
+  url: 'https://github.com/a/b/pull/1',
+  repo: 'a/b',
+  state: 'OPEN',
+  isDraft: false,
+  reviewDecision: null,
+  lines: 50,
+  createdAt: hoursAgo(1),
+  mergedAt: null,
+  ...o,
+});
+const status = (acts, extra = {}, now = NOON) =>
+  computeStatus({ pet: pet(undefined, extra.pet), activity: acts, repos: ['a/b'] }, now);
 
 describe('buildDays', () => {
-  test('counts events per day and kind', () => {
+  test('counts review events per day for the selected repos only', () => {
     const events = [
-      ev('pushes', 'a/b', '2026-06-01'),
-      ev('pushes', 'a/b', '2026-06-01'),
-      ev('prs', 'a/b', '2026-06-02'),
+      ev('reviews', 'a/b', '2026-06-01'),
+      ev('reviews', 'a/b', '2026-06-01'),
+      ev('reviews', 'x/y', '2026-06-01'),
     ];
-    assert.deepEqual(buildDays({ events, repos: ['a/b'] }), {
-      '2026-06-01': counts({ pushes: 2 }),
-      '2026-06-02': counts({ prs: 1 }),
-    });
+    assert.deepEqual(buildDays({ events, repos: ['A/B'] }), { '2026-06-01': day({ reviews: 2 }) });
   });
 
-  test('filters repos case-insensitively', () => {
-    const events = [ev('pushes', 'Owner/Repo', '2026-06-01'), ev('pushes', 'other/x', '2026-06-01')];
-    assert.deepEqual(buildDays({ events, repos: ['owner/REPO'] }), { '2026-06-01': counts({ pushes: 1 }) });
+  test('other kinds give no XP and are ignored', () => {
+    const events = ['pushes', 'comments', 'issues', 'prs', 'merges', 'stars'].map((k) => ev(k, 'a/b', '2026-06-01'));
+    assert.deepEqual(buildDays({ events, repos: ['a/b'] }), {});
   });
 
   test('returns nothing when no repo is selected', () => {
-    assert.deepEqual(buildDays({ events: [ev('pushes', 'a/b', '2026-06-01')], repos: [] }), {});
-  });
-
-  test('an unknown kind does not touch known counters', () => {
-    // The client never emits unknown kinds; this documents the current behavior.
-    const days = buildDays({ events: [ev('stars', 'a/b', '2026-06-01')], repos: ['a/b'] });
-    assert.deepEqual(
-      Object.keys(WEIGHTS).map((k) => days['2026-06-01'][k]),
-      Object.keys(WEIGHTS).map(() => 0),
-    );
+    assert.deepEqual(buildDays({ events: [ev('reviews', 'a/b', '2026-06-01')], repos: [] }), {});
   });
 });
 
@@ -77,7 +99,7 @@ describe('rankRepos', () => {
 });
 
 describe('syncStartDay', () => {
-  const synced = (...date) => ({ activity: activity({}, new Date(...date).toISOString()) });
+  const synced = (...date) => ({ activity: activity({}, { lastSyncedAt: new Date(...date).toISOString() }) });
 
   test('without prior sync starts 6 days ago', () => {
     assert.equal(syncStartDay({ activity: activity() }, NOON), '2026-06-09');
@@ -92,25 +114,114 @@ describe('syncStartDay', () => {
   });
 });
 
+describe('prSyncStart', () => {
+  test('first sync backfills from birth minus the baseline window', () => {
+    const { backfill, since } = prSyncStart({ pet: pet(new Date(2026, 5, 10, 9)), activity: activity() });
+    assert.equal(backfill, true);
+    assert.equal(toDay(since), addDays('2026-06-10', -BASELINE.windowDays));
+  });
+
+  test('later syncs are incremental from the last PR sync, with a small overlap', () => {
+    const prsSyncedAt = new Date(2026, 5, 15, 11).toISOString();
+    const { backfill, since } = prSyncStart({ pet: pet(), activity: activity({}, { prsSyncedAt }) });
+    assert.equal(backfill, false);
+    assert.ok(since < new Date(prsSyncedAt) && new Date(prsSyncedAt) - since <= 3600000);
+  });
+});
+
 describe('mergeDays', () => {
   test('keeps the max per day and kind', () => {
     const merged = mergeDays(
-      { '2026-06-01': counts({ pushes: 5, prs: 1 }) },
-      { '2026-06-01': counts({ pushes: 2, prs: 3 }) },
+      { '2026-06-01': day({ reviews: 5, prs: 1 }) },
+      { '2026-06-01': day({ reviews: 2, prs: 3 }) },
     );
-    assert.deepEqual(merged['2026-06-01'], counts({ pushes: 5, prs: 3 }));
+    assert.deepEqual(merged['2026-06-01'], day({ reviews: 5, prs: 3 }));
   });
 
   test('keeps old days missing from new data and adds new days', () => {
-    const merged = mergeDays({ '2026-05-01': counts({ pushes: 4 }) }, { '2026-06-01': counts({ pushes: 1 }) });
+    const merged = mergeDays({ '2026-05-01': day({ reviews: 4 }) }, { '2026-06-01': day({ reviews: 1 }) });
     assert.deepEqual(Object.keys(merged).sort(), ['2026-05-01', '2026-06-01']);
-    assert.equal(merged['2026-05-01'].pushes, 4);
+    assert.equal(merged['2026-05-01'].reviews, 4);
+  });
+
+  test('drops old kinds and survives an old-shaped day', () => {
+    const merged = mergeDays(
+      { '2026-06-01': { pushes: 9, comments: 3, issues: 1, reviews: 2 } },
+      { '2026-06-01': day() },
+    );
+    assert.deepEqual(merged['2026-06-01'], day({ reviews: 2 }));
   });
 
   test('does not mutate inputs', () => {
-    const old = { '2026-06-01': counts({ pushes: 1 }) };
-    mergeDays(old, { '2026-06-01': counts({ pushes: 9 }) });
-    assert.equal(old['2026-06-01'].pushes, 1);
+    const old = { '2026-06-01': day({ reviews: 1 }) };
+    mergeDays(old, { '2026-06-01': day({ reviews: 9 }) });
+    assert.equal(old['2026-06-01'].reviews, 1);
+  });
+});
+
+describe('applyActivity', () => {
+  const apply = (acts, data) => applyActivity(acts, { repos: ['a/b'], now: NOON, ...data });
+
+  test('opened and merged PRs fill the day ledger with size XP', () => {
+    const merged = pr({ lines: 600, state: 'MERGED', createdAt: daysAgo(3), mergedAt: hoursAgo(2) });
+    const small = pr({ lines: 5, createdAt: daysAgo(3) });
+    const result = apply(activity(), { prs: [merged, small] });
+    assert.deepEqual(result.days[toDay(daysAgo(3))], day({ prs: 2, prsXp: 30 + 5 }));
+    assert.deepEqual(result.days[toDay(hoursAgo(2))], day({ merges: 1 }));
+    assert.equal(result.prs.length, 2);
+  });
+
+  test('PRs of unselected repos are ignored', () => {
+    const result = apply(activity(), { prs: [pr({ repo: 'other/x' })] });
+    assert.deepEqual(result.days, {});
+    assert.deepEqual(result.prs, []);
+  });
+
+  test('applying the same PRs twice changes nothing (idempotent)', () => {
+    const data = { prs: [pr({ lines: 20 }), pr({ state: 'MERGED', mergedAt: hoursAgo(1) })] };
+    const once = apply(activity(), data);
+    assert.deepEqual(apply(once, data), once);
+  });
+
+  test('a PR keeps its slot: state changes replace it by id', () => {
+    const open = pr({ id: 'x' });
+    const first = apply(activity(), { prs: [open] });
+    const second = apply(first, { prs: [{ ...open, state: 'MERGED', mergedAt: hoursAgo(0.5) }] });
+    assert.equal(second.prs.length, 1);
+    assert.equal(second.prs[0].state, 'MERGED');
+  });
+
+  test('closed-unmerged PRs leave the list but keep the XP they gave when opened', () => {
+    const open = pr({ id: 'x', lines: 50, createdAt: daysAgo(1) });
+    const first = apply(activity(), { prs: [open] });
+    const second = apply(first, { prs: [{ ...open, state: 'CLOSED' }] });
+    assert.deepEqual(second.prs, []);
+    assert.equal(second.days[toDay(daysAgo(1))].prsXp, 10);
+  });
+
+  test('old merged PRs count once in the ledger but are not kept in the list', () => {
+    const old = pr({ createdAt: daysAgo(40), state: 'MERGED', mergedAt: daysAgo(PR_KEEP_MERGED_DAYS + 5) });
+    const result = apply(activity(), { prs: [old] });
+    assert.deepEqual(result.prs, []);
+    assert.equal(result.days[toDay(old.mergedAt)].merges, 1);
+    // Later syncs without that PR do not lower the count.
+    assert.equal(apply(result, { prs: [] }).days[toDay(old.mergedAt)].merges, 1);
+  });
+
+  test('review events merge by max and never lower the count', () => {
+    const first = apply(activity(), {
+      events: [ev('reviews', 'a/b', '2026-06-14'), ev('reviews', 'a/b', '2026-06-14')],
+    });
+    const second = apply(first, { events: [ev('reviews', 'a/b', '2026-06-14')] });
+    assert.equal(second.days['2026-06-14'].reviews, 2);
+  });
+
+  test('keeps sync marks and tolerates an old-shaped activity', () => {
+    const old = { days: { '2026-06-01': { pushes: 3, reviews: 1 } }, lastSyncedAt: 'x' };
+    const result = apply(old, { prs: [pr()] });
+    assert.equal(result.lastSyncedAt, 'x');
+    assert.equal(result.days['2026-06-01'].reviews, 1);
+    assert.equal(result.prs.length, 1);
   });
 });
 
@@ -119,39 +230,179 @@ describe('computeStatus', () => {
     assert.equal(computeStatus({ pet: null, activity: activity() }, NOON), null);
   });
 
-  test('xp counts only days since birth', () => {
+  test('xp counts only days since birth, by the XP rules', () => {
     const days = {
-      '2026-06-10': counts({ pushes: 1 }),
-      '2026-06-14': counts({ pushes: 2 }),
-      '2026-06-15': counts({ pushes: 3 }),
+      '2026-06-10': day({ reviews: 1 }),
+      '2026-06-14': day({ reviews: 2, prs: 1, prsXp: 20 }),
+      '2026-06-15': day({ merges: 1 }),
     };
-    const status = computeStatus({ pet: pet(new Date(2026, 5, 14, 9)), activity: activity(days) }, NOON);
-    assert.equal(status.xp, 5 * WEIGHTS.pushes);
+    const s = computeStatus({ pet: pet(new Date(2026, 5, 14, 9)), activity: activity(days) }, NOON);
+    assert.equal(s.xp, 2 * WEIGHTS.reviews + 20 + WEIGHTS.merges); // the day before birth is out
   });
 
-  test('week covers only the last 7 days', () => {
+  test('week covers only the last 7 days, with counts and XP per kind', () => {
     const days = {
-      '2026-06-08': counts({ pushes: 10 }), // 7 days ago: out
-      '2026-06-09': counts({ pushes: 1 }), // 6 days ago: in
-      '2026-06-15': counts({ pushes: 2 }),
-      '2026-06-16': counts({ pushes: 50 }), // future: out
+      '2026-06-08': day({ reviews: 10 }), // 7 days ago: out
+      '2026-06-09': day({ reviews: 1, prs: 1, prsXp: 10 }), // 6 days ago: in
+      '2026-06-15': day({ merges: 2 }),
+      '2026-06-16': day({ reviews: 50 }), // future: out
     };
-    const status = computeStatus({ pet: pet(), activity: activity(days) }, NOON);
-    assert.equal(status.week.pushes, 3);
-    assert.equal(status.weekScore, 3 * WEIGHTS.pushes);
+    const { week } = status(activity(days));
+    assert.deepEqual(week, {
+      prs: 1,
+      reviews: 1,
+      merges: 2,
+      xp: { prs: 10, reviews: WEIGHTS.reviews, merges: 2 * WEIGHTS.merges },
+      total: 10 + WEIGHTS.reviews + 2 * WEIGHTS.merges,
+    });
   });
 
-  test('pet sleeps during sleep hours and not otherwise', () => {
-    const at = (hour) => computeStatus({ pet: pet(), activity: activity() }, new Date(2026, 5, 15, hour));
-    assert.equal(at(SLEEP_HOURS.from).mood, 'sleeping');
-    assert.equal(at(SLEEP_HOURS.to - 1).mood, 'sleeping');
-    assert.notEqual(at(SLEEP_HOURS.to).mood, 'sleeping');
-    assert.notEqual(at(12).mood, 'sleeping');
+  test('old-shaped days (pushes, comments) give no XP and do not crash', () => {
+    const s = status(activity({ '2026-06-15': { pushes: 9, comments: 9, issues: 9, prs: 3, merges: 0, reviews: 0 } }));
+    assert.equal(s.xp, 0);
+    assert.equal(s.week.total, 0);
   });
 
-  test('exposes name and stage progress between 0 and 1', () => {
-    const status = computeStatus({ pet: pet(), activity: activity({ '2026-06-15': counts({ pushes: 3 }) }) }, NOON);
-    assert.ok(status.progress >= 0 && status.progress <= 1);
-    assert.equal(status.name, 'Pixel');
+  test('exposes level progress, stages and the status contract', () => {
+    const s = status(activity({ '2026-06-15': day({ reviews: 3 }) }));
+    assert.equal(s.name, 'Pixel');
+    assert.equal(s.xp, 30);
+    assert.ok(s.level >= 1 && s.levelXp >= 0 && s.levelXp <= s.levelXpNeeded);
+    assert.equal(s.stage.id, 'baby');
+    assert.deepEqual(s.nextStage, { id: 'kid', name: 'Kid', index: 1, level: 5 });
+    for (const key of ['moodLabel', 'moodReason', 'prs', 'streak', 'bestStreak', 'history', 'baseline', 'species'])
+      assert.ok(key in s, key);
+  });
+
+  test('level and stage floors are never lost', () => {
+    const s = status(activity(), { pet: { stageIndex: 2, level: 12 } });
+    assert.equal(s.level, 12);
+    assert.equal(s.stage.index, 2);
+    assert.equal(status(activity(), { pet: { stageIndex: 2 } }).level, 10); // the stage's own level
+  });
+});
+
+describe('PR lists', () => {
+  const lists = (prs) => status(activity({}, { prs })).prs;
+
+  test('waiting: open, not draft, not approved, oldest first', () => {
+    const a = pr({ id: 'a', createdAt: daysAgo(1) });
+    const b = pr({ id: 'b', createdAt: daysAgo(4), reviewDecision: 'CHANGES_REQUESTED' });
+    const draft = pr({ id: 'd', isDraft: true });
+    const approved = pr({ id: 'p', reviewDecision: 'APPROVED' });
+    const { waiting, approved: ok } = lists([a, draft, b, approved]);
+    assert.deepEqual(
+      waiting.map((p) => p.id),
+      ['b', 'a'],
+    );
+    assert.deepEqual(
+      ok.map((p) => p.id),
+      ['p'],
+    );
+  });
+
+  test('mergedToday: merged since local midnight, with the merge bonus', () => {
+    const today = pr({ id: 't', state: 'MERGED', mergedAt: new Date(2026, 5, 15, 8).toISOString() });
+    const yesterday = pr({ id: 'y', state: 'MERGED', mergedAt: new Date(2026, 5, 14, 23, 59).toISOString() });
+    const { mergedToday } = lists([today, yesterday]);
+    assert.deepEqual(
+      mergedToday.map((p) => [p.id, p.xp]),
+      [['t', WEIGHTS.merges]],
+    );
+  });
+
+  test('a PR view carries repo, size, XP and age', () => {
+    const prs = [pr({ repo: 'webflow/app-web', lines: 250, createdAt: daysAgo(3) })];
+    const [view] = computeStatus({ pet: pet(), activity: activity({}, { prs }), repos: ['webflow/app-web'] }, NOON).prs
+      .waiting;
+    assert.equal(view.repo, 'app-web');
+    assert.equal(view.fullRepo, 'webflow/app-web');
+    assert.equal(view.size, 'M');
+    assert.equal(view.xp, 20);
+    assert.equal(view.ageDays, 3);
+    for (const key of ['id', 'title', 'number', 'url', 'createdAt', 'mergedAt']) assert.ok(key in view, key);
+  });
+
+  test('PRs of repos no longer selected are not shown', () => {
+    assert.deepEqual(lists([pr({ repo: 'other/x' })]).waiting, []);
+  });
+});
+
+describe('mood', () => {
+  const regular = (weekly = 100) => ({
+    [toDay(daysAgo(20))]: day({ reviews: 1 }),
+    [toDay(daysAgo(10))]: day({ reviews: weekly / 10 }),
+  });
+  const moodOf = (acts, now = NOON) => status(acts, {}, now);
+
+  test('sleeping at night wins over everything', () => {
+    const waiting = [pr({ createdAt: daysAgo(5) })];
+    const at = (hour) => moodOf(activity({}, { prs: waiting }), new Date(2026, 5, 15, hour)).mood;
+    assert.equal(at(SLEEP_HOURS.from), 'sleeping');
+    assert.equal(at(SLEEP_HOURS.to - 1), 'sleeping');
+    assert.equal(at(SLEEP_HOURS.to), 'anxious');
+  });
+
+  test('anxious when a PR has waited MOOD.anxiousAfterDays, with a reason', () => {
+    const fresh = moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(MOOD.anxiousAfterDays - 1) })] }));
+    assert.notEqual(fresh.mood, 'anxious');
+    const s = moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(3) }), pr({ createdAt: daysAgo(2) }), pr()] }));
+    assert.equal(s.mood, 'anxious');
+    assert.equal(s.moodLabel, 'Anxious');
+    assert.equal(s.moodReason, '2 PRs waiting for 3 days');
+    assert.equal(moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(2) })] })).moodReason, '1 PR waiting for 2 days');
+  });
+
+  test('approved and draft PRs do not make the pet anxious', () => {
+    const prs = [
+      pr({ createdAt: daysAgo(5), reviewDecision: 'APPROVED' }),
+      pr({ createdAt: daysAgo(5), isDraft: true }),
+    ];
+    assert.notEqual(moodOf(activity({}, { prs })).mood, 'anxious');
+  });
+
+  test('happy after a recent merge, and after a strong week', () => {
+    const merged = pr({ state: 'MERGED', mergedAt: hoursAgo(MOOD.happyMergeHours - 1), createdAt: daysAgo(1) });
+    const s = moodOf(activity(regular(), { prs: [merged] }));
+    assert.equal(s.mood, 'happy');
+    assert.equal(s.moodLabel, 'Happy');
+    assert.equal(s.moodReason, '1 PR merged recently');
+    const old = pr({ state: 'MERGED', mergedAt: hoursAgo(MOOD.happyMergeHours + 1) });
+    assert.notEqual(moodOf(activity(regular(), { prs: [old] })).moodReason, '1 PR merged recently');
+
+    const strong = { ...regular(70), [toDay(daysAgo(1))]: day({ reviews: 10 }) }; // baseline 70/wk -> week 100+
+    assert.deepEqual([moodOf(activity(strong)).mood, moodOf(activity(strong)).moodReason], ['happy', 'A strong week']);
+  });
+
+  test('anxious wins over happy', () => {
+    const merged = pr({ state: 'MERGED', mergedAt: hoursAgo(1) });
+    const waiting = pr({ createdAt: daysAgo(4) });
+    assert.equal(moodOf(activity({}, { prs: [merged, waiting] })).mood, 'anxious');
+  });
+
+  test('sad on a quiet week, but only once the pet is old enough', () => {
+    const quiet = { [toDay(daysAgo(25))]: day({ reviews: 20 }) }; // plenty of history, nothing this week
+    const s = moodOf(activity(quiet));
+    assert.equal(s.mood, 'sad');
+    assert.equal(s.moodLabel, 'Bored');
+    assert.equal(s.moodReason, 'A quiet week');
+    const newborn = computeStatus({ pet: pet(new Date(2026, 5, 14)), activity: activity(quiet), repos: [] }, NOON);
+    assert.equal(newborn.mood, 'idle');
+  });
+
+  test('idle otherwise, labelled Content, with no reason', () => {
+    const s = moodOf(activity({ ...regular(100), [toDay(daysAgo(2))]: day({ reviews: 5 }) }));
+    assert.deepEqual([s.mood, s.moodLabel, s.moodReason], ['idle', 'Content', null]);
+  });
+
+  test('light and heavy users get the same mood for the same relative effort', () => {
+    const history = (reviewsPerDay) =>
+      Object.fromEntries(
+        Array.from({ length: 28 }, (_, i) => [addDays('2026-06-15', -i), day({ reviews: reviewsPerDay })]),
+      );
+    assert.equal(moodOf(activity(history(1))).baseline, 70);
+    assert.equal(moodOf(activity(history(8))).baseline, 560);
+    assert.equal(moodOf(activity(history(1))).mood, moodOf(activity(history(8))).mood);
+    assert.ok(BASELINE.floorWeekly <= 70);
   });
 });

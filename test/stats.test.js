@@ -2,7 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { stats } = require('../src/main/game/stats');
 
-const push = (n = 1) => ({ pushes: n });
+const push = (n = 1) => ({ reviews: n });
 const run = (days, today) => stats(days, new Date(`${today}T15:00:00`));
 
 test('no history', () => {
@@ -48,7 +48,7 @@ test('streak crosses month and year boundaries', () => {
 });
 
 test('days with zero score do not count', () => {
-  const days = { '2026-03-09': { pushes: 0, prs: 0 }, '2026-03-10': push() };
+  const days = { '2026-03-09': { reviews: 0, prs: 0 }, '2026-03-10': push() };
   assert.equal(run(days, '2026-03-10').streak, 1);
 });
 

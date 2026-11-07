@@ -3,17 +3,24 @@ const { GITHUB } = require('../config');
 const { toDay } = require('../dates');
 
 /**
- * Which Events API events count as activity, and of which kind.
+ * Which Events API events count as activity: only reviews the user submits on someone else's PR.
+ * (Opened and merged PRs come from GraphQL, see `pullRequestsSince`.)
  * https://docs.github.com/rest/using-the-rest-api/github-event-types
  */
 const EVENT_KINDS = {
-  PushEvent: () => 'pushes',
-  PullRequestEvent: (p) => ({ opened: 'prs', merged: 'merges' })[p.action],
-  PullRequestReviewEvent: () => 'reviews',
-  PullRequestReviewCommentEvent: () => 'comments',
-  IssueCommentEvent: () => 'comments',
-  IssuesEvent: (p) => (p.action === 'opened' ? 'issues' : null),
+  PullRequestReviewEvent: (payload, login) =>
+    payload.pull_request?.user?.login?.toLowerCase() === login.toLowerCase() ? null : 'reviews',
 };
+
+const PR_FIELDS = `id number title url state isDraft reviewDecision additions deletions createdAt updatedAt mergedAt
+  repository { nameWithOwner }`;
+
+/** GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, lines, createdAt, updatedAt, mergedAt, repo }`. */
+const normalizePullRequest = ({ repository, additions, deletions, ...pr }) => ({
+  ...pr,
+  lines: additions + deletions,
+  repo: repository.nameWithOwner,
+});
 
 class GitHubClient {
   constructor(token) {
@@ -73,7 +80,7 @@ class GitHubClient {
   }
 
   /**
-   * User activity since `from`, normalized: [{ kind, repo, day }].
+   * Review events since `from`, normalized: [{ kind: 'reviews', repo, day }].
    * Includes private repos. GitHub returns at most the latest 300 events.
    *
    * Pass a `poll` object (`{ etag, interval }`) to use conditional requests: the first page is
@@ -92,7 +99,7 @@ class GitHubClient {
     const collect = (events) => {
       for (const ev of events) {
         if (new Date(ev.created_at) < from) return false;
-        const kind = EVENT_KINDS[ev.type]?.(ev.payload);
+        const kind = EVENT_KINDS[ev.type]?.(ev.payload, login);
         if (kind) result.push({ kind, repo: ev.repo.name, day: toDay(ev.created_at) });
       }
     };
@@ -118,11 +125,39 @@ class GitHubClient {
     return body.data;
   }
 
-  /** The viewer's 20 most recently updated open or merged PRs: [{ id, state, createdAt, mergedAt, repo }]. Costs 1 point. */
+  /** One page of the viewer's PRs, most recently updated first. Costs 1 point. */
+  async pullRequestsPage({ first, after = null, states }) {
+    const data = await this.graphql(
+      `query($first: Int!, $after: String, $states: [PullRequestState!]) { viewer {
+        pullRequests(first: $first, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}, states: $states) {
+          pageInfo { hasNextPage endCursor } nodes { ${PR_FIELDS} } } } }`,
+      { first, after, states },
+    );
+    const { nodes, pageInfo } = data.viewer.pullRequests;
+    return { prs: nodes.map(normalizePullRequest), next: pageInfo.hasNextPage ? pageInfo.endCursor : null };
+  }
+
+  /** The viewer's 30 most recently updated PRs (any state): the 10 s watcher query. */
   async recentPullRequests() {
-    const data = await this.graphql(`{ viewer { pullRequests(first: 20, orderBy: {field: UPDATED_AT, direction: DESC},
-      states: [OPEN, MERGED]) { nodes { id number title state createdAt mergedAt repository { nameWithOwner } } } } }`);
-    return data.viewer.pullRequests.nodes.map(({ repository, ...pr }) => ({ ...pr, repo: repository.nameWithOwner }));
+    return (await this.pullRequestsPage({ first: 30, states: ['OPEN', 'MERGED', 'CLOSED'] })).prs;
+  }
+
+  /**
+   * The viewer's PRs updated since `since` (a Date), newest update first, at most `maxPages` pages of 50.
+   * A backfill skips closed PRs; the incremental call includes them so a PR closed without merging leaves the list.
+   */
+  async pullRequestsSince(since, { backfill = false, maxPages = GITHUB.PR_PAGES } = {}) {
+    const states = backfill ? ['OPEN', 'MERGED'] : ['OPEN', 'MERGED', 'CLOSED'];
+    const result = [];
+    let after = null;
+    for (let page = 0; page < maxPages; page++) {
+      const { prs, next } = await this.pullRequestsPage({ first: 50, after, states });
+      const fresh = prs.filter((pr) => new Date(pr.updatedAt) >= since);
+      result.push(...fresh);
+      if (fresh.length < prs.length || !next) break;
+      after = next;
+    }
+    return result;
   }
 
   // ---------- Files in a repo (Contents API), used by the cloud save ----------
