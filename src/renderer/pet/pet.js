@@ -91,7 +91,8 @@ function renderBubble() {
   bubble.dataset.key = key;
   bubble.replaceChildren(
     h('div', { class: 'bubble-title' }, h('span', { class: `dot ${message.dot ?? ''}` }), message.title),
-    message.sub ? h('div', { class: 'bubble-sub' }, message.sub) : null,
+    // Not `null`: replaceChildren turns it into the text "null".
+    ...(message.sub ? [h('div', { class: 'bubble-sub' }, message.sub)] : []),
   );
   replayClass(bubble, 'bubble');
 }

@@ -22,6 +22,7 @@ npm run dev   # auto-reloads on changes
 - **Level and stage** come from the XP since the pet was adopted: Baby → Kid → Young → Adult. Levels scale with your own weekly baseline.
 - **Mood** has three states: anxious (a PR has waited 2+ days for review), happy (a PR merged in the last 48 h, or a strong week) and neutral (everything else).
 - **Streak:** days in a row with activity, since the pet was adopted. Weekends never break it: a Saturday or Sunday without activity is skipped, one with activity counts. Missing a weekday starts over.
+- **Achievements:** 20 of them (first PR, 10 and 50 merges, 100 reviews, a 5-day streak, a PR merged within an hour…), counted from the pet's own history like XP, so what happened before it hatched does not count. They are listed with their progress in the profile (_Achievements_ tab). Reaching one is recorded in the pet and never lost, travels with the cloud backup, and the pet celebrates it once. The list and the thresholds live in `src/main/game/catalog.js`.
 - XP syncs from the Events API every 90 s (GitHub only returns your latest 300 events, so the app keeps its own per-day history).
 - **Review queue:** the open PRs where you (or a team you are in) were asked for a review, in the repos you picked. It refreshes with every sync and when the popover or the menu opens. The pet mentions it and reacts when a new request arrives. Drafts are left out.
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds.
@@ -44,12 +45,13 @@ src/
     github/client.js        GitHub REST API
     game/catalog.js         species, stages, scoring
     game/engine.js          pure game rules (no I/O)
+    game/achievements.js    achievement progress (pure)
     services/session.js     GitHub connection via `gh`
     services/pet-service.js sync, setup and pet events
     ui/                     windows and tray
   preload/preload.js        safe API exposed to pages
   renderer/
-    shared/                 retro theme, DOM helpers, sprites
+    shared/                 retro theme, DOM helpers, sprites, pet animation (pet-animator.js is the pack's player)
     pet/                    floating pet window
     settings/               preferences window
     onboarding/             3-step onboarding (one module per step)
@@ -57,12 +59,14 @@ src/
 
 ## Sprites
 
-Eight creature lines with four stages each live in `assets/pets/` (1x PNGs plus `sprites.json` from the sprite tool: names, sizes and shadow ellipses). English copy per line is in `src/main/game/catalog.js`. `src/renderer/shared/sprite.js` draws them nearest-neighbor, aligned on the shadow so every stage stands on the same floor.
+Eight creature lines with four stages each live in `assets/pets/`: the static rest poses (`<id>_<k>.png`, plus `_happy` and `_anxious`), `sprites.json` (names, sizes and shadow ellipses), and for the animations `sheets/` (14 frames × 3 moods per stage, with the shadow as its own layer), `fx/` (hearts, sparkles, sweat drops, dust and each line's ambient particle) and `animations.json` (timings, lift per frame, facing and effect anchors). English copy per line is in `src/main/game/catalog.js`.
+
+The desktop pet is animated by `src/renderer/shared/pet-animator.js`, copied verbatim from the pack's reference player (do not edit it; update it from a newer pack). `pet/pet-view.js` draws it on a canvas at a whole-number scale with nearest-neighbor filtering and decides when it moves: an idle loop with blinks; a short stroll every 20–60 s; a cheer when a PR of yours is merged or approved; hearts and sparkles when happy, sweat and shivers when anxious. With _Do not disturb_ or macOS _Reduce motion_ the pet only idles. The popover, profile and onboarding use the static poses.
 
 ## Scripts
 
 - `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
 - `npm run format` / `npm run lint`: Prettier
-- `npm run shots [-- profile popover panel settings evolution pet] [--light] [--mine]`: renders the windows with sample data to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye
+- `npm run shots [-- profile popover panel settings evolution pet] [--light] [--mine] [--tab achievements] [--tall] [--celebrate]`: renders the windows with sample data to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye
 - `npm test`: unit tests (Node built-in runner, files in `test/`)
