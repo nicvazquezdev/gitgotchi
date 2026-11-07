@@ -127,20 +127,14 @@ function render(next = state) {
           }),
         ]
       : []),
-    linkRow(ready ? 'Settings…' : 'Set up Gitgotchi…', { onclick: () => api.action('openSettings'), end: '⌘ ,' }),
+    linkRow(ready ? 'Settings…' : 'Set up Gitgotchi…', { onclick: () => api.action('openSettings') }),
     divider(),
-    linkRow('Quit Gitgotchi', { onclick: () => api.action('quit'), end: '⌘ Q' }),
+    linkRow('Quit Gitgotchi', { onclick: () => api.action('quit') }),
     ...(status?.error ? [h('p', { class: 'notice error', role: 'alert' }, status.error)] : []),
   );
 }
 
 // ---------- Boot ----------
-
-document.addEventListener('keydown', (e) => {
-  if (!e.metaKey) return;
-  if (e.key === ',') api.action('openSettings');
-  else if (e.key === 'q') api.action('quit');
-});
 
 // The window height follows the content.
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);

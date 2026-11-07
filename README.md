@@ -27,7 +27,7 @@ npm run dev   # auto-reloads on changes
 
 **Usage:** drag the pet anywhere. Click: it talks. Right-click the pet or click the menu bar icon: a panel with the pet's level, your PRs and the everyday switches (_Show pet on desktop_, _Do not disturb_).
 
-**Settings** (_Settings…_ or ⌘,): pet size, speech bubbles, the account and repos (_Change…_ reopens the setup), _Back up pet to GitHub_ and _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
+**Settings** (_Settings…_ in the menu): pet size, speech bubbles, the account and repos (_Change…_ reopens the setup), _Back up pet to GitHub_ and _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
 
 ## Structure
 
