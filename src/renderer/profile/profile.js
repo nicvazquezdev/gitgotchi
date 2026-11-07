@@ -22,18 +22,26 @@ function portrait({ species, stage, mood }) {
   );
 }
 
-/** Why the pet feels the way it does. Only anxious and happy have a reason; neutral has nothing to explain. */
-function moodNotice({ name, mood, moodLabel, moodReason }) {
-  if (!moodReason) return null;
-  const text = h(
-    'span',
-    {},
-    h('strong', {}, `${name} is ${moodLabel.toLowerCase()}`),
-    h('span', { class: 'notice-sub' }, moodReason),
+const MOOD_VIEW = {
+  happy: { icon: 'smile', fallback: 'Things are going well' },
+  neutral: { icon: 'neutral', fallback: 'Nothing needs your attention' },
+  anxious: { icon: 'alert', fallback: 'A PR needs a review' },
+};
+
+/** How the pet feels and why: a tinted card per mood (green happy, amber anxious, quiet neutral). */
+function moodCard({ name, mood, moodLabel, moodReason }) {
+  const view = MOOD_VIEW[mood] ?? MOOD_VIEW.neutral;
+  return h(
+    'div',
+    { class: `mood ${mood}` },
+    h('div', { class: 'mood-icon' }, icon(view.icon, { size: 20, stroke: 2.2 })),
+    h(
+      'div',
+      { class: 'mood-text' },
+      h('div', { class: 'mood-title' }, `${name} is ${moodLabel.toLowerCase()}`),
+      h('div', { class: 'mood-sub' }, moodReason ?? view.fallback),
+    ),
   );
-  return mood === 'anxious'
-    ? h('div', { class: 'notice' }, icon('clock'), text)
-    : h('div', { class: 'notice calm' }, text);
 }
 
 function petCard(status) {
@@ -52,7 +60,7 @@ function petCard(status) {
       h('b', {}, `${levelXp} / ${levelXpNeeded} XP`),
       h('span', { class: 'meta' }, `${levelXpNeeded - levelXp} XP to level ${level + 1}`),
     ),
-    moodNotice(status),
+    moodCard(status),
   );
 }
 
