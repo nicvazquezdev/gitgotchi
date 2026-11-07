@@ -206,6 +206,7 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
   const birthDay = toDay(pet.bornAt);
   const days = activity.days ?? {};
 
+  const sinceBirth = Object.fromEntries(Object.entries(days).filter(([day]) => day >= birthDay));
   const xp = Object.entries(days).reduce((sum, [day, d]) => (day >= birthDay ? sum + dayXp(d) : sum), 0);
   const week = weekSummary(days, today, birthDay); // what the pet earned, like `xp`
   const weekRatioXp = weekSummary(days, today).total; // the mood compares the whole week with the baseline
@@ -239,7 +240,7 @@ function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
     prs,
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
-    ...stats(days, now),
+    ...stats(sinceBirth, now), // streaks and the 7-day chart are the pet's, like its XP
   };
 }
 

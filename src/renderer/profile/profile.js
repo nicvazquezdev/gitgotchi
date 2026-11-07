@@ -1,6 +1,7 @@
 // Profile window: pet card, evolution line, this week's activity and the XP rules.
 import { $, h } from '../shared/dom.js';
 import { icon, spriteImg, xpBar } from '../shared/ui.js';
+import { plural } from '../shared/format.js';
 import { animatePet } from '../shared/sprite.js';
 
 const api = window.gitgotchi;
@@ -44,6 +45,40 @@ function moodCard({ name, mood, moodLabel, moodReason }) {
   );
 }
 
+const weekday = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' });
+
+/** Current streak plus the XP of each of the last 7 days as bars. */
+function activityBlock({ streak, bestStreak, history }) {
+  const top = Math.max(1, ...history.map((d) => d.score));
+  const title = streak > 0 ? `${streak}-day streak` : 'No streak yet';
+  const hint =
+    streak > 0 ? `best ${bestStreak}` : bestStreak > 0 ? `best ${plural(bestStreak, 'day')}` : 'ship something today';
+  return h(
+    'div',
+    { class: 'activity' },
+    h('div', { class: 'activity-head' }, h('b', {}, title), h('span', { class: 'meta' }, hint)),
+    h(
+      'div',
+      { class: 'bars', role: 'img', 'aria-label': `XP per day, last 7 days` },
+      history.map(({ day, score }, i) =>
+        h(
+          'div',
+          { class: `bar-col${i === history.length - 1 ? ' today' : ''}`, title: `${weekday(day)}: +${score} XP` },
+          h(
+            'div',
+            { class: 'bar-track' },
+            h('div', {
+              class: `bar${score ? '' : ' empty'}`,
+              style: { height: `${score ? Math.max(8, (score / top) * 100) : 0}%` },
+            }),
+          ),
+          h('span', { class: 'bar-day' }, weekday(day)),
+        ),
+      ),
+    ),
+  );
+}
+
 function petCard(status) {
   const { name, level, levelXp, levelXpNeeded, stage, species } = status;
   const creatureName = species.stages[stage.index].name;
@@ -60,6 +95,7 @@ function petCard(status) {
       h('b', {}, `${levelXp} / ${levelXpNeeded} XP`),
       h('span', { class: 'meta' }, `${levelXpNeeded - levelXp} XP to level ${level + 1}`),
     ),
+    activityBlock(status),
     moodCard(status),
   );
 }
