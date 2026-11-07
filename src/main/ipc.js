@@ -35,14 +35,16 @@ function registerIpc(actions) {
   });
 
   // Session
-  // Returns { user } or { error, message }: Errors lose their `code` across IPC.
-  handle('auth:connect', async () => {
+  // Both return their result or { error, message }: Errors lose their `code` across IPC.
+  const attempt = async (fn) => {
     try {
-      return { user: await session.connect() };
+      return await fn();
     } catch (err) {
       return { error: err.code ?? 'UNKNOWN', message: err.message };
     }
-  });
+  };
+  handle('auth:accounts', () => attempt(session.listAccounts));
+  handle('auth:connect', (login) => attempt(async () => ({ user: await session.connect(login) })));
   handle('auth:disconnect', () => actions.disconnect());
 
   // Onboarding

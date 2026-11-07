@@ -18,6 +18,7 @@ module.exports = {
   TICK_INTERVAL_MS: 5 * 60 * 1000,
 
   GITHUB: {
+    HOST: 'github.com', // Only github.com accounts are listed (GitHub Enterprise hosts are not supported yet)
     API: 'https://api.github.com',
     USER_AGENT: 'gitgotchi-desktop',
     // Where to look for `gh`: apps launched from Finder don't inherit the shell PATH.

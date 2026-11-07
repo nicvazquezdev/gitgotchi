@@ -1,5 +1,5 @@
 // Step 1: connect to GitHub using the `gh` CLI session.
-import { $ } from '../../shared/dom.js';
+import { $, h } from '../../shared/dom.js';
 import { animatePet } from '../../shared/sprite.js';
 
 // Suggested command for each `auth:connect` error.
@@ -22,7 +22,7 @@ export function createLoginStep({ api, catalog, state, go }) {
 
   function show(view) {
     views.forEach((v) => (v.hidden = v.dataset.view !== view));
-    nextBtn.hidden = view !== 'done';
+    nextBtn.hidden = view !== 'done' && view !== 'accounts';
   }
 
   function showUser() {
@@ -31,23 +31,76 @@ export function createLoginStep({ api, catalog, state, go }) {
     show('done');
   }
 
-  async function connect() {
-    show('checking');
-    const { user, error, message } = await api.auth.connect();
-    if (user) {
-      state.user = user;
-      return showUser();
-    }
+  function showHelp({ error, message }) {
     $('#gh-error').textContent = message;
     $('#gh-command').textContent = COMMANDS[error] ?? DEFAULT_COMMAND;
     show('help');
   }
 
-  $('#btn-retry').addEventListener('click', connect);
-  nextBtn.addEventListener('click', () => go('repos'));
+  /** Connects with one gh account. Returns true on success. */
+  async function connectAs(login) {
+    show('checking');
+    const result = await api.auth.connect(login);
+    if (!result.user) return (showHelp(result), false);
+    state.user = result.user;
+    return true;
+  }
+
+  // Account picker: one card per gh login, the preselected one is highlighted.
+  let selected = null;
+
+  function select(login) {
+    selected = login;
+    document.querySelectorAll('.account').forEach((el) => el.setAttribute('aria-checked', el.dataset.login === login));
+  }
+
+  function showPicker({ accounts, selected: preselected, missing }) {
+    const note = $('#account-missing');
+    note.hidden = !missing;
+    note.textContent = missing ? `@${missing} is no longer logged in to gh. Pick another account.` : '';
+    $('#account-list').replaceChildren(
+      ...accounts.map((a) =>
+        h(
+          'li',
+          {},
+          h(
+            'button',
+            {
+              class: 'account pixel-border',
+              role: 'radio',
+              dataset: { login: a.login },
+              onclick: () => select(a.login),
+            },
+            h('img', { src: a.avatarUrl, alt: '', width: 48, height: 48 }),
+            h('span', { class: 'account-login' }, `@${a.login}`),
+            a.active && h('span', { class: 'badge muted' }, 'gh active'),
+            h('span', { class: 'account-mark' }),
+          ),
+        ),
+      ),
+    );
+    select(preselected);
+    show('accounts');
+  }
+
+  /** One account connects right away; several ask the user to pick. */
+  async function start() {
+    show('checking');
+    const result = await api.auth.accounts();
+    if (result.error) return showHelp(result);
+    if (result.accounts.length > 1) return showPicker(result);
+    if (await connectAs(result.accounts[0].login)) showUser();
+  }
+
+  $('#btn-retry').addEventListener('click', start);
+  nextBtn.addEventListener('click', async () => {
+    // From the picker: connect first, then continue.
+    if (!$('[data-view="accounts"]').hidden && !(await connectAs(selected))) return;
+    go('repos');
+  });
 
   return {
-    // Always re-check `gh`: the saved user may be stale if gh was logged out since.
-    enter: connect,
+    // Always re-check `gh`: the saved account may be gone if it was logged out since.
+    enter: start,
   };
 }

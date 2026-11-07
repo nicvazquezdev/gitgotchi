@@ -39,6 +39,12 @@
           <p class="muted">Looking for your <b>gh</b> session<span class="dots"></span></p>
         </div>
 
+        <div class="login-view" data-view="accounts" hidden>
+          <p id="account-missing" class="warning center small" hidden></p>
+          <p class="center">Several GitHub accounts are logged in with <b>gh</b>. Which one feeds your pet?</p>
+          <ul id="account-list" class="account-list" role="radiogroup" aria-label="GitHub account"></ul>
+        </div>
+
         <div class="login-view" data-view="help" hidden>
           <p id="gh-error" class="warning center"></p>
           <p class="center">Log in with the GitHub CLI in your terminal:</p>
