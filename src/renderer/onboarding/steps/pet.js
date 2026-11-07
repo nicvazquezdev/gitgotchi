@@ -1,4 +1,4 @@
-// Step 3: pick a companion (and its name), then start.
+// Step 3: pick the first companion (and its name), then start. Later ones are hatched from the collection.
 import { h } from '../../shared/dom.js';
 import { spriteImg } from '../../shared/ui.js';
 import { button, stepProgress } from './parts.js';
@@ -103,10 +103,7 @@ export function createPetStep({ api, catalog, state, go, toast }) {
         nameInput.placeholder = babyName(species);
         cards.forEach((c, i) => c.setAttribute('aria-checked', String(catalog.species[i].id === id)));
         renderDetail(species);
-        const adoptsNew = state.existingPet && state.existingPet.species !== id;
-        footerText.textContent = adoptsNew
-          ? 'Switching creatures adopts a new pet: it starts over as a baby.'
-          : 'Its evolutions stay a secret until you unlock them.';
+        footerText.textContent = 'Its evolutions stay a secret until you unlock them.';
         updateStart();
       }
 
@@ -136,7 +133,11 @@ export function createPetStep({ api, catalog, state, go, toast }) {
           'header',
           { class: 'pet-head' },
           h('div', {}, stepProgress(3), h('h1', { class: 'pixel-title small' }, 'Choose your companion')),
-          h('p', { class: 'muted' }, 'Every companion starts as a baby and evolves three times.'),
+          h(
+            'p',
+            { class: 'muted' },
+            'Every companion starts as a baby and evolves three times. You can hatch the others later.',
+          ),
         ),
         h(
           'div',

@@ -1,17 +1,20 @@
-// Building blocks shared by the three steps.
+// Building blocks shared by the steps.
 import { h } from '../../shared/dom.js';
 import { icon, spriteImg } from '../../shared/ui.js';
 
-/** "STEP n OF 3" with the segmented progress. */
-export const stepProgress = (n) =>
+/** How many steps the flow has: someone who already has pets does not pick one again (their collection is for that). */
+export const stepCount = (state) => (state.existingPet ? 2 : 3);
+
+/** "STEP n OF m" with the segmented progress. */
+export const stepProgress = (n, total = 3) =>
   h(
     'div',
     { class: 'step-progress' },
-    h('span', { class: 'eyebrow' }, `Step ${n} of 3`),
+    h('span', { class: 'eyebrow' }, `Step ${n} of ${total}`),
     h(
       'div',
       { class: 'segments', 'aria-hidden': 'true' },
-      [1, 2, 3].map((i) => h('i', { class: i <= n ? 'on' : '' })),
+      Array.from({ length: total }, (_, i) => h('i', { class: i < n ? 'on' : '' })),
     ),
   );
 

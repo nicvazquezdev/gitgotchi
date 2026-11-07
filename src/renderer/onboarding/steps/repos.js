@@ -1,7 +1,7 @@
 // Step 2: pick the repos that count for the pet.
 import { h } from '../../shared/dom.js';
 import { icon } from '../../shared/ui.js';
-import { button, illustration, stepProgress } from './parts.js';
+import { button, illustration, stepCount, stepProgress } from './parts.js';
 
 const REPO_PATTERN = /^[\w.-]+\/[\w.-]+$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -35,7 +35,13 @@ export function createReposStep({ api, catalog, state, go, toast }) {
       const list = h('div', { class: 'repo-list' });
       const count = h('span', { class: 'muted' });
       const selectAll = h('input', { type: 'checkbox', onchange: (e) => setVisible(e.target.checked) });
-      const next = button('Continue', { onclick: () => go('pet') }, { primary: true });
+      // Someone who already has pets is done here: the pets are managed in the collection (Profile > Collection).
+      const returning = Boolean(state.existingPet);
+      const next = button(
+        returning ? 'Save' : 'Continue',
+        { onclick: returning ? save : () => go('pet') },
+        { primary: true },
+      );
       const search = h('input', {
         type: 'search',
         placeholder: 'Search repos',
@@ -58,6 +64,16 @@ export function createReposStep({ api, catalog, state, go, toast }) {
       function setVisible(on) {
         visible().forEach((r) => toggle(r.fullName, on));
         render();
+      }
+
+      async function save() {
+        next.disabled = true;
+        try {
+          await api.onboarding.finish({ repos: [...state.selectedRepos] }); // main closes this window
+        } catch (err) {
+          toast(err);
+          next.disabled = state.selectedRepos.size === 0;
+        }
       }
 
       function updateSummary() {
@@ -143,7 +159,7 @@ export function createReposStep({ api, catalog, state, go, toast }) {
         h(
           'div',
           { class: 'pane' },
-          stepProgress(2),
+          stepProgress(2, stepCount(state)),
           h('h1', { class: 'pixel-title' }, 'Pick your repos'),
           h('p', { class: 'lead' }, 'Only activity in these repos earns XP. You can change this later.'),
           h('label', { class: 'field' }, icon('search'), h('span', { class: 'sr-only' }, 'Search repos'), search),

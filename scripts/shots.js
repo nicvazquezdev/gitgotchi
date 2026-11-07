@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--fresh] [--complete] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -25,6 +25,7 @@ const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an e
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
 const complete = process.argv.includes('--complete'); // a pet with every achievement
+const final = process.argv.includes('--final'); // evolution: into the last stage (the pet is fully grown)
 const click = process.argv.includes('--click') ? process.argv[process.argv.indexOf('--click') + 1] : null; // a selector to click before the capture
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
 const scroll = process.argv.includes('--scroll'); // scroll the content to the end before the capture
@@ -138,6 +139,7 @@ status.reviewQueue = reviewQueue(
 if (mine) status.reviewQueue = [];
 const fixtures = {
   freeze: freeze ? NOW.getTime() : null,
+  evolution: final ? { fromIndex: 2, toIndex: 3 } : { fromIndex: 0, toIndex: 1 },
   celebrate: celebrate
     ? [
         {
@@ -228,7 +230,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

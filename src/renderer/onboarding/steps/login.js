@@ -1,7 +1,7 @@
 // Step 1: connect to GitHub using the `gh` CLI session (and offer a cloud save, if there is one).
 import { h } from '../../shared/dom.js';
 import { icon, spriteImg } from '../../shared/ui.js';
-import { button, illustration, statusCard, stepProgress } from './parts.js';
+import { button, illustration, statusCard, stepCount, stepProgress } from './parts.js';
 
 const HELP = {
   GH_NOT_FOUND: { title: 'GitHub CLI not found', command: 'brew install gh && gh auth login' },
@@ -18,7 +18,7 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
       let accounts = null; // last answer of auth:accounts
 
       const heading = [
-        stepProgress(1),
+        stepProgress(1, stepCount(state)),
         h('h1', { class: 'pixel-title' }, 'Connect GitHub'),
         h(
           'p',
@@ -103,7 +103,7 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
       }
 
       /** A cloud save was found: restore it, or carry on with a new pet. */
-      function cloudCard({ name, speciesId, stageIndex, level }) {
+      function cloudCard({ name, speciesId, stageIndex, level, count = 1 }) {
         const stage = catalog.species.find((s) => s.id === speciesId)?.stages[stageIndex];
         const restore = button('Restore', {}, { primary: true });
         restore.addEventListener('click', async () => {
@@ -122,8 +122,14 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
           h(
             'span',
             { class: 'status-text' },
-            h('strong', {}, `We found your pet ${name} in your GitHub`),
-            h('span', {}, `Level ${level}`),
+            h(
+              'strong',
+              {},
+              count > 1
+                ? `We found your ${count} companions in your GitHub`
+                : `We found your pet ${name} in your GitHub`,
+            ),
+            h('span', {}, count > 1 ? `${name} is active · Level ${level}` : `Level ${level}`),
           ),
           restore,
           button('Start fresh', { class: 'link', onclick: () => showConnected() }),

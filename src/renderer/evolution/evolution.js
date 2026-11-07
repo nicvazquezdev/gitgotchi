@@ -40,6 +40,7 @@ function render({ status, catalog, fromIndex, toIndex }) {
   const from = species.stages[fromIndex];
   const toInfo = catalog.stages[toIndex];
   const next = catalog.stages[toIndex + 1];
+  const { hatched, total } = status.collection;
   const decor = [
     ...STARS.map(([x, y, dim]) => h('div', { class: `star ${dim ?? ''}`, style: at(x, y), ariaHidden: 'true' })),
     ...GLOWS.map(([x, y, size, color]) =>
@@ -78,13 +79,21 @@ function render({ status, catalog, fromIndex, toIndex }) {
       { class: 'hint' },
       next
         ? `Keep shipping. ${to.name}’s next form unlocks at level ${next.level}.`
-        : `${to.name} is fully grown. Keep shipping!`,
+        : hatched < total
+          ? `${to.name} is fully grown! Hatch another companion to keep collecting: ${hatched} of ${total} so far.`
+          : `${to.name} is fully grown, and your collection is complete. Keep shipping!`,
     ),
     h(
       'div',
       { class: 'actions' },
       h('button', { class: 'btn primary pixel-cut', onclick: () => api.evolution.close() }, 'Awesome!'),
-      h('button', { class: 'btn pixel-cut', onclick: () => api.evolution.viewProfile() }, 'View profile'),
+      next || hatched === total
+        ? h('button', { class: 'btn pixel-cut', onclick: () => api.evolution.viewProfile() }, 'View profile')
+        : h(
+            'button',
+            { class: 'btn pixel-cut', onclick: () => api.evolution.viewProfile('collection') },
+            'Choose the next companion',
+          ),
     ),
   );
 }
