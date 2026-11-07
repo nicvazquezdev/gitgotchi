@@ -11,7 +11,8 @@ let dragging = false; // while the slider is held, pushed states must not rebuil
 
 // ---------- Sections ----------
 
-function header({ name, stage, nextStage, xp, progress, weekScore, hearts, maxHearts, syncing }) {
+function header({ name, species, stage, nextStage, xp, progress, weekScore, hearts, maxHearts, syncing }) {
+  const creature = species.stages[stage.index].name; // e.g. Chispín
   const toNext = nextStage ? `${nextStage.minXp - xp} to ${nextStage.name}` : 'Max stage';
   return h(
     'section',
@@ -29,7 +30,7 @@ function header({ name, stage, nextStage, xp, progress, weekScore, hearts, maxHe
     h(
       'div',
       { class: 'head-sub' },
-      h('span', { class: 'badge gold' }, stage.name.toUpperCase()),
+      h('span', { class: 'badge gold' }, `${creature} · ${stage.name}`),
       syncing ? h('span', { class: 'sync-dot display' }, '↻') : null,
     ),
     h('div', { class: 'xp-bar' }, h('div', { class: 'xp-fill', style: { width: `${Math.round(progress * 100)}%` } })),
