@@ -20,20 +20,27 @@ class GitHubClient {
     this.token = token;
   }
 
-  /** GET from the API. Returns the data and the next page URL (if any). */
-  async get(url) {
+  /**
+   * GET from the API. Returns the data and the next page URL (if any).
+   * With `etag`, sends a conditional request: on 304 it returns `{ notModified: true }`.
+   * Also returns the response `etag` and `pollInterval` (seconds) when present.
+   */
+  async get(url, { etag } = {}) {
     const res = await fetch(url.startsWith('http') ? url : GITHUB.API + url, {
       headers: {
         Authorization: `Bearer ${this.token}`,
         Accept: 'application/vnd.github+json',
         'X-GitHub-Api-Version': '2022-11-28',
         'User-Agent': GITHUB.USER_AGENT,
+        ...(etag && { 'If-None-Match': etag }),
       },
     });
+    const meta = { etag: res.headers.get('etag'), pollInterval: Number(res.headers.get('x-poll-interval')) || null };
+    if (res.status === 304) return { notModified: true, ...meta };
     if (res.status === 401) throw new Error('GitHub rejected the gh token. Run `gh auth login`.');
     if (!res.ok) throw new Error(`GitHub ${res.status} at ${url}`);
     const next = /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') || '')?.[1] ?? null;
-    return { data: await res.json(), next };
+    return { data: await res.json(), next, ...meta };
   }
 
   /** Walks pages up to `maxPages` or until `onPage` returns false. */
@@ -53,16 +60,28 @@ class GitHubClient {
   /**
    * User activity since `from`, normalized: [{ kind, repo, day }].
    * Includes private repos. GitHub returns at most the latest 300 events.
+   *
+   * Pass a `poll` object (`{ etag, interval }`) to use conditional requests: the first page is
+   * requested with its last ETag, and a 304 (free, not rate-limited) returns `null`.
+   * `poll` is updated with the new ETag and GitHub's X-Poll-Interval.
    */
-  async activity(login, from = new Date(0)) {
+  async activity(login, from = new Date(0), poll = null) {
+    const first = await this.get(`/users/${encodeURIComponent(login)}/events?per_page=100`, { etag: poll?.etag });
+    if (poll) {
+      poll.interval = first.pollInterval ?? poll.interval;
+      if (first.notModified) return null;
+      poll.etag = first.etag;
+    }
+
     const result = [];
-    await this.paginate(`/users/${encodeURIComponent(login)}/events?per_page=100`, GITHUB.EVENT_PAGES, (events) => {
+    const collect = (events) => {
       for (const ev of events) {
         if (new Date(ev.created_at) < from) return false;
         const kind = EVENT_KINDS[ev.type]?.(ev.payload);
         if (kind) result.push({ kind, repo: ev.repo.name, day: toDay(ev.created_at) });
       }
-    });
+    };
+    if (collect(first.data) !== false && first.next) await this.paginate(first.next, GITHUB.EVENT_PAGES - 1, collect);
     return result;
   }
 

@@ -42,6 +42,85 @@ body {
   animation: evolve 1.8s steps(12);
 }
 
+/* ---------- Live reactions ---------- */
+.pet.hop {
+  animation: jump 0.5s steps(5);
+}
+.pet.party {
+  animation: party 1.2s steps(12);
+}
+.pet.wiggle {
+  animation: wiggle 0.8s steps(8);
+}
+@keyframes party {
+  0%,
+  50%,
+  100% {
+    transform: none;
+  }
+  12%,
+  62% {
+    transform: translateY(-22px) scale(1.06);
+  }
+  25%,
+  75% {
+    transform: translateY(0) scale(1);
+  }
+  37%,
+  87% {
+    transform: translateY(-10px) rotate(-6deg);
+  }
+}
+@keyframes wiggle {
+  0%,
+  100% {
+    transform: none;
+  }
+  12%,
+  50% {
+    transform: translateX(-4px) rotate(-4deg);
+  }
+  25%,
+  75% {
+    transform: translateX(4px) rotate(4deg);
+  }
+}
+
+/* Particles fly out from the pet's center. --x/--y are in sprite pixels, so bursts scale with the pet. */
+.fx {
+  position: absolute;
+  bottom: calc(var(--u) * 20);
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.particle {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  box-shadow: 0 0 0 2px var(--ink);
+  animation: burst 1.2s steps(8) forwards;
+}
+.particle.sparkle {
+  width: 4px;
+  height: 4px;
+  animation-duration: 0.9s;
+}
+@keyframes burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  60% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--x) * var(--u)), calc((var(--y) + 3) * var(--u)));
+  }
+}
+
 /* Pixel ground shadow */
 .shadow {
   position: absolute;

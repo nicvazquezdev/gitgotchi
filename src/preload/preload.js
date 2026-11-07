@@ -35,5 +35,6 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onSize: subscribe('pet:size'),
     onStatus: subscribe('pet:status'),
     onEvolved: subscribe('pet:evolved'),
+    onActivity: subscribe('pet:activity'), // { [kind]: count }
   },
 });

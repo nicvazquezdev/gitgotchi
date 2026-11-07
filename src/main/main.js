@@ -1,6 +1,6 @@
 // Entry point: app lifecycle and wiring between services and UI.
-const { app, screen, powerMonitor } = require('electron');
-const { IS_MAC, SYNC_INTERVAL_MS, TICK_INTERVAL_MS } = require('./config');
+const { app, screen, powerMonitor, Notification } = require('electron');
+const { IS_MAC, TICK_INTERVAL_MS } = require('./config');
 
 const session = require('./services/session');
 const petService = require('./services/pet-service');
@@ -68,7 +68,14 @@ petService.on('status', (status) => {
   petWindow.send('pet:status', status);
   refreshMenu();
 });
-petService.on('evolved', (stage) => petWindow.send('pet:evolved', stage));
+petService.on('evolved', (stage) => {
+  petWindow.send('pet:evolved', stage);
+  const { name } = petService.status();
+  if (Notification.isSupported()) {
+    new Notification({ title: 'Gitgotchi', body: `${name} evolved into a ${stage.name}!`, silent: true }).show();
+  }
+});
+petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
 
 // ---------- Lifecycle ----------
 
@@ -88,7 +95,7 @@ app.whenReady().then(() => {
     actions.openSettings();
   }
 
-  setInterval(actions.sync, SYNC_INTERVAL_MS);
+  petService.startPolling();
   setInterval(() => petService.notify(), TICK_INTERVAL_MS);
   powerMonitor.on('resume', actions.sync);
   screen.on('display-removed', petWindow.ensureOnScreen);

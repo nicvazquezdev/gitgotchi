@@ -91,6 +91,22 @@ function personalStages(baseline) {
   }));
 }
 
+/**
+ * New activity between two histories: per-kind increases only, zero kinds omitted.
+ * Never negative. Returns `{}` when nothing is new.
+ * @returns {{ [kind: string]: number }}
+ */
+function diffDays(oldDays, newDays) {
+  const delta = {};
+  for (const [day, counts] of Object.entries(newDays)) {
+    for (const [kind, n] of Object.entries(counts)) {
+      const added = n - (oldDays[day]?.[kind] || 0);
+      if (added > 0) delta[kind] = (delta[kind] || 0) + added;
+    }
+  }
+  return delta;
+}
+
 function moodFor(ratio, now) {
   const h = now.getHours();
   if (h >= SLEEP_HOURS.from && h < SLEEP_HOURS.to) return 'sleeping';
@@ -144,4 +160,4 @@ function computeStatus({ pet, activity }, now = new Date()) {
   };
 }
 
-module.exports = { buildDays, rankRepos, syncStartDay, mergeDays, computeStatus, computeBaseline };
+module.exports = { buildDays, rankRepos, syncStartDay, mergeDays, diffDays, computeStatus, computeBaseline };
