@@ -10,19 +10,21 @@ module.exports = {
   IS_MAC: process.platform === 'darwin',
 
   // Window size at the default sprite size; it grows with the sprite (see ui/pet-size.js).
-  PET_WINDOW: { width: 168, height: 340 },
-  // Sprite sizes in px: multiples of the 32 px native sprite keep the pixel art crisp.
-  // Any whole-pixel size within [min, max] is allowed. PET_SIZES are the menu presets.
-  PET_SIZE_RANGE: { min: 64, max: 320 },
+  // The pet lives in a square box (52 native sprite px: room for the adult plus its hop, see renderer/shared/sprite.js).
+  // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
+  // Window at the default size: the box plus room above it for the speech bubble.
+  PET_WINDOW: { width: 208, height: 280 },
+  // Any whole-pixel size within [min, max] (2x to 8x).
+  PET_SIZE_RANGE: { min: 104, max: 416 },
   PET_SIZES: [
-    { label: 'Small', size: 96 },
-    { label: 'Medium', size: 128 },
-    { label: 'Large', size: 192 },
-    { label: 'Huge', size: 256 },
+    { label: 'Small', size: 156 },
+    { label: 'Medium', size: 208 },
+    { label: 'Large', size: 312 },
+    { label: 'Huge', size: 416 },
   ],
-  DEFAULT_PET_SIZE: 128,
+  DEFAULT_PET_SIZE: 208,
   // Default size is also the minimum: below it the pet step doesn't fit.
-  ONBOARDING_WINDOW: { width: 640, height: 800, minWidth: 640, minHeight: 800 },
+  ONBOARDING_WINDOW: { width: 640, height: 860, minWidth: 640, minHeight: 860 },
 
   // Base poll period. Cheap: conditional requests answer 304 when nothing changed.
   // GitHub's X-Poll-Interval header can only raise it.

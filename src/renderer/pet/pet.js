@@ -1,8 +1,9 @@
 import { $, h, replayClass } from '../shared/dom.js';
-import { animatePet } from '../shared/sprite.js';
+import { animatePet, spriteRect, BOX } from '../shared/sprite.js';
 
 const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
+const root = document.documentElement.style;
 const DRAG_THRESHOLD_PX = 4;
 
 const LINES = {
@@ -18,66 +19,23 @@ let bubbleTimer = null;
 
 const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
+/** The creature for the current stage, e.g. { name: 'Chispín', size: 36, ... }. */
+const creature = () => status.species.stages[status.stage.index];
+
 // ---------- Render ----------
-
-// ----- HUD: streak + 7-day chart -----
-
-const weekdayInitial = (day) => new Date(`${day}T00:00`).toLocaleDateString('en-US', { weekday: 'narrow' });
-const BAR_MAX_PX = 40;
-
-function renderStreak({ streak, bestStreak, history }) {
-  $('#hud-flame').classList.toggle('off', streak === 0);
-  $('#hud-streak').replaceChildren(
-    streak > 0 ? `${streak}-day streak` : 'No streak',
-    bestStreak > streak ? h('small', {}, `Best ${bestStreak}`) : null,
-  );
-  const max = Math.max(...history.map((d) => d.score), 1);
-  $('#hud-chart').replaceChildren(
-    ...history.map(({ day, score }, i) =>
-      h(
-        'div',
-        { class: `chart-col${i === history.length - 1 ? ' today' : ''}`, title: `${day}: ${score} pts` },
-        h(
-          'div',
-          { class: 'chart-track' },
-          h('div', {
-            class: `chart-bar${score ? '' : ' empty'}`,
-            // Whole pixels (steps of 2) keep the bars crisp.
-            style: score ? { height: `${Math.max(4, Math.round((score / max) * (BAR_MAX_PX / 2)) * 2)}px` } : {},
-          }),
-        ),
-        h('span', { class: 'chart-day' }, weekdayInitial(day)),
-      ),
-    ),
-  );
-}
-
-function renderHud() {
-  const { name, stage, nextStage, xp, weekScore, hearts, maxHearts, progress, mood, syncing, error } = status;
-  $('#hud-name').textContent = name;
-  $('#hud-stage').textContent = `${stage.name} · ${weekScore} pts/wk`;
-  $('#hud-hearts').replaceChildren(
-    ...Array.from({ length: maxHearts }, (_, i) => h('span', { class: i < hearts ? '' : 'empty' }, '♥')),
-  );
-  $('#xp-fill').style.width = `${Math.round(progress * 100)}%`;
-  $('#hud-xp').textContent = nextStage ? `${xp}/${nextStage.minXp} XP` : `${xp} XP · MAX`;
-  renderStreak(status);
-  $('#hud-sync').hidden = !syncing;
-  $('#zzz').hidden = mood !== 'sleeping';
-  $('#alert').hidden = !error;
-}
 
 function setStatus(next) {
   if (!next) return;
   status = next;
-  renderHud();
+  // Native sprite size of the current stage: CSS places the bubble and indicators around it.
+  root.setProperty('--stage-size', creature().size);
+  $('#zzz').hidden = status.mood !== 'sleeping';
+  $('#alert').hidden = !status.error;
 }
 
-function spriteOptions() {
-  return (
-    status && { species: status.species, stageIndex: status.stage.index, mood: status.mood, progress: status.progress }
-  );
-}
+const spriteOptions = () => status && { species: status.species, stageIndex: status.stage.index, mood: status.mood };
+
+const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
 
 // ---------- Bubble ----------
 
@@ -94,7 +52,6 @@ function reactToClick() {
   if (!status) return;
   replayClass(canvas, 'jump');
   if (status.error) return say(`Oops: ${status.error}`, 5000);
-  if (status.stage.index === 0) return say(`${status.nextStage.minXp - status.xp} XP until I hatch…`);
   say(pick(LINES[status.mood] ?? LINES.idle));
 }
 
@@ -139,17 +96,31 @@ function reactToActivity(delta) {
 }
 
 // ---------- Mouse: hover, click and drag ----------
+// The canvas is a 52 px box (room for the adult); only the creature itself counts as "the pet",
+// so the transparent rest of the box lets clicks through to the windows behind.
+
+function isOverPet(e) {
+  if (!status) return false;
+  const r = canvas.getBoundingClientRect();
+  const scale = r.width / BOX; // screen px per native px
+  const { x, y, size } = spriteRect(status.species, status.stage.index);
+  const nx = (e.clientX - r.left) / scale;
+  const ny = (e.clientY - r.top) / scale;
+  return nx >= x && nx < x + size && ny >= y - 2 && ny < y + size; // -2: room for the hop
+}
 
 function setHover(active) {
+  if (document.body.classList.contains('hover') === active) return;
   document.body.classList.toggle('hover', active);
   api.setClickThrough(!active);
 }
 
-canvas.addEventListener('mouseenter', () => setHover(true));
-canvas.addEventListener('mouseleave', () => !drag && setHover(false));
+// With click-through on, Electron still forwards mouse moves, so hover keeps working.
+document.addEventListener('mousemove', (e) => !drag && setHover(isOverPet(e)));
+document.addEventListener('mouseleave', () => !drag && setHover(false));
 
 canvas.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0) return;
+  if (e.button !== 0 || !isOverPet(e)) return;
   canvas.setPointerCapture(e.pointerId);
   drag = { x: e.screenX, y: e.screenY, moved: false };
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
@@ -159,7 +130,6 @@ canvas.addEventListener('pointermove', (e) => {
   if (!drag || drag.moved) return;
   if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) > DRAG_THRESHOLD_PX) {
     drag.moved = true;
-    canvas.classList.add('dragging');
     document.body.classList.add('dragging');
   }
 });
@@ -169,35 +139,28 @@ canvas.addEventListener('pointerup', (e) => {
   api.dragEnd();
   const wasClick = !drag.moved;
   drag = null;
-  canvas.classList.remove('dragging');
   document.body.classList.remove('dragging');
   if (wasClick) reactToClick();
-  // If the cursor ended up outside the pet, clicks pass through the window again.
-  const r = canvas.getBoundingClientRect();
-  const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
-  if (!inside) setHover(false);
+  setHover(isOverPet(e));
 });
 
 canvas.addEventListener('contextmenu', (e) => {
+  if (!isOverPet(e)) return;
   e.preventDefault();
   api.openMenu();
 });
 
-const setSize = (px) => document.documentElement.style.setProperty('--pet-size', `${px}px`);
-
 // ---------- Main process events ----------
 
 api.onSize(setSize);
-
 api.onStatus(setStatus);
-api.onEvolved((stage) => {
+api.onEvolved(() => {
   replayClass(canvas, 'evolve');
-  say(`${status?.name ?? 'Your pet'} evolved into a ${stage.name}! ✨`, 6000);
+  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}! ✨`, 6000);
 });
-
 api.onActivity(reactToActivity);
 
 setSize(await api.size());
 setStatus(await api.status());
 animatePet(canvas, spriteOptions);
-if (status) say(status.stage.index === 0 ? '…' : `Hi! I'm ${status.name}`);
+if (status) say(`Hi! I'm ${status.name}`);

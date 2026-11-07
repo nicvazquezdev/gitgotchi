@@ -178,7 +178,7 @@ body {
 .step {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
   height: 100%;
   animation: step-in 220ms steps(4);
 }
@@ -424,7 +424,7 @@ b {
 .species-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px;
+  gap: 12px;
   padding: 4px;
 }
 
@@ -434,29 +434,21 @@ b {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 10px 6px 12px;
+  justify-content: flex-end;
+  gap: 4px;
+  padding: 6px 4px;
   border: 0;
   background: var(--night-2);
   color: var(--text);
   font: inherit;
-  text-align: center;
   cursor: pointer;
   transition: transform 80ms steps(2);
 }
 .species-card:hover {
   transform: translateY(-3px);
 }
-.species-card canvas {
-  width: 64px;
-  height: 64px;
-}
 .species-card .name {
   font: 400 var(--pixel-sm) var(--font-display);
-}
-.species-card .blurb {
-  font-size: var(--text-sm);
-  line-height: 1.2;
   color: var(--muted);
 }
 .species-card[aria-checked='true'] {
@@ -484,8 +476,20 @@ b {
 
 .evolution {
   --border: var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   padding: 10px 14px;
   background: var(--ink);
+}
+.species-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#species-name {
+  font-size: var(--pixel-md);
+  color: var(--gold);
 }
 .evolution-line {
   display: flex;
@@ -497,12 +501,14 @@ b {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  font: 400 var(--pixel-sm) var(--font-display);
-  color: var(--muted);
 }
-.evo-stage canvas {
-  width: 64px;
-  height: 64px;
+.evo-name {
+  font: 400 var(--pixel-sm) var(--font-display);
+  color: var(--text);
+}
+.evo-stage small {
+  font-size: 14px;
+  color: var(--muted);
 }
 .evo-arrow {
   align-self: center;

@@ -1,40 +1,44 @@
 // Game data: species, evolution stages and scoring rules.
 // The UI receives this catalog over IPC, so there is a single source of truth.
 
-// `palette` is only used by the placeholder sprites until the real ones arrive.
-const SPECIES = [
-  {
-    id: 'blob',
-    name: 'Blobby',
-    blurb: 'Calm and loyal.',
-    palette: { body: '#7bd88f', shade: '#3e9e5a', accent: '#ffffff' },
-  },
-  {
-    id: 'cat',
-    name: 'Bytecat',
-    blurb: "Naps when you don't push.",
-    palette: { body: '#f6b26b', shade: '#c27c35', accent: '#ffe7c7' },
-  },
-  {
-    id: 'dragon',
-    name: 'Mergon',
-    blurb: 'Feeds on PRs.',
-    palette: { body: '#a78bfa', shade: '#6d4fd1', accent: '#fde68a' },
-  },
-  {
-    id: 'bot',
-    name: 'Botty',
-    blurb: 'Loves code reviews.',
-    palette: { body: '#7dd3fc', shade: '#3b8fb8', accent: '#f87171' },
-  },
-];
+// Sprite metadata (files, native sizes, shadow ellipses, creature names per stage) comes from
+// assets/pets/sprites.json, exported by the sprite tool. The English copy for each line lives here.
+const SPRITES = require('../../../assets/pets/sprites.json');
+
+const SPECIES_COPY = {
+  fenix: { name: 'Phoenix', blurb: "An ember chick reborn in flames until it's crowned a phoenix." },
+  carnero: { name: 'Storm Ram', blurb: 'A cloud lamb that grows into the ram of thunder.' },
+  polilla: { name: 'Moon Moth', blurb: 'A fluffy moth that grows into the lantern queen of the night.' },
+  medusa: { name: 'Aurora', blurb: 'An aurora jellyfish whose glowing core grows into a queen of light.' },
+  geoda: { name: 'Geode', blurb: 'A crystal pebble that grows into a geode guardian.' },
+  hongo: { name: 'Mushroom', blurb: 'A forest spirit that grows from a tiny mushroom into a glowing elder.' },
+  celeste: { name: 'Celestial', blurb: 'A deer made of night sky: a moon on its brow, crystal antlers in the end.' },
+  koi: { name: 'Koi', blurb: 'The legend of the koi that climbs the waterfall and becomes a dragon.' },
+};
+
+// A faint shadow means the creature hovers (jellyfish, koi, flying moth and phoenix).
+const FLOAT_SHADOW_ALPHA = 0.6;
+
+const SPECIES = SPRITES.map(({ id, bg, stages }) => ({
+  id,
+  ...SPECIES_COPY[id],
+  color: bg,
+  stages: stages.map(({ name, file, shadow, size, shadowEllipse }) => ({
+    name, // creature name at this stage (proper noun from the sprite set)
+    file,
+    shadow,
+    size, // native px (square canvas)
+    shadowEllipse, // native px; sprites are aligned on its center so every stage stands on the same floor
+    floats: shadowEllipse.alpha <= FLOAT_SHADOW_ALPHA,
+  })),
+}));
 
 // Evolution pace, in "typical weeks" of the person's own activity.
 // Stage XP threshold = minWeeks * baseline (see BASELINE), so everyone reaches Adult
 // after about 9 weeks of their normal pace, whether they score 40 or 370 points a week.
+// One entry per sprite stage (assets/pets/<id>_<1..4>.png).
 const STAGES = [
-  { id: 'egg', name: 'Egg', minWeeks: 0 },
-  { id: 'baby', name: 'Baby', minWeeks: 0.1 },
+  { id: 'baby', name: 'Baby', minWeeks: 0 },
   { id: 'kid', name: 'Kid', minWeeks: 0.8 },
   { id: 'teen', name: 'Teen', minWeeks: 3.5 },
   { id: 'adult', name: 'Adult', minWeeks: 9 },

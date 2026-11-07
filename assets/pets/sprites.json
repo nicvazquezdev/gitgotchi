@@ -1,0 +1,522 @@
+[
+  {
+    "id": "fenix",
+    "title": "Línea fénix",
+    "description": "El polluelo de brasa que renace en llamas hasta coronarse fénix",
+    "bg": "#fbe3cf",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Brasín",
+        "file": "fenix_1.png",
+        "shadow": "fenix_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 29.8,
+          "rx": 9,
+          "ry": 1.3,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Chispín",
+        "file": "fenix_2.png",
+        "shadow": "fenix_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.3,
+          "rx": 7.5,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Alaskua",
+        "file": "fenix_3.png",
+        "shadow": "fenix_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40.4,
+          "rx": 8,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Fenixol",
+        "file": "fenix_4.png",
+        "shadow": "fenix_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46.6,
+          "rx": 7,
+          "ry": 1,
+          "alpha": 0.5
+        }
+      }
+    ]
+  },
+  {
+    "id": "carnero",
+    "title": "Línea carnero",
+    "description": "Un corderito-nube que crece hasta ser el carnero del trueno",
+    "bg": "#e3defa",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Nubín",
+        "file": "carnero_1.png",
+        "shadow": "carnero_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 30.2,
+          "rx": 8,
+          "ry": 1.2,
+          "alpha": 0.9
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Brumín",
+        "file": "carnero_2.png",
+        "shadow": "carnero_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.1,
+          "rx": 10.5,
+          "ry": 1.2,
+          "alpha": 0.9
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Truenero",
+        "file": "carnero_3.png",
+        "shadow": "carnero_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40.2,
+          "rx": 12.5,
+          "ry": 1.3,
+          "alpha": 0.85
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Tormentauro",
+        "file": "carnero_4.png",
+        "shadow": "carnero_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46,
+          "rx": 15,
+          "ry": 1.4,
+          "alpha": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "polilla",
+    "title": "Línea polilla",
+    "description": "Una polilla luna que nace como pelusa y crece hasta ser reina farol de la noche",
+    "bg": "#e6f3ee",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Pelusín",
+        "file": "polilla_1.png",
+        "shadow": "polilla_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 29.6,
+          "rx": 7,
+          "ry": 1.2,
+          "alpha": 0.7
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Plumín",
+        "file": "polilla_2.png",
+        "shadow": "polilla_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.2,
+          "rx": 6.5,
+          "ry": 1.1,
+          "alpha": 0.55
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Lunela",
+        "file": "polilla_3.png",
+        "shadow": "polilla_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40,
+          "rx": 6.6,
+          "ry": 1.1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Faroluna",
+        "file": "polilla_4.png",
+        "shadow": "polilla_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46.4,
+          "rx": 8,
+          "ry": 1.1,
+          "alpha": 0.45
+        }
+      }
+    ]
+  },
+  {
+    "id": "medusa",
+    "title": "Línea aurora",
+    "description": "Una medusa de aurora cuyo núcleo luminoso crece hasta coronar a una reina de luz",
+    "bg": "#efe6f6",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Medusín",
+        "file": "medusa_1.png",
+        "shadow": "medusa_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 30.2,
+          "rx": 5.5,
+          "ry": 1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Lumi",
+        "file": "medusa_2.png",
+        "shadow": "medusa_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.3,
+          "rx": 6.5,
+          "ry": 1.05,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Aurela",
+        "file": "medusa_3.png",
+        "shadow": "medusa_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40.3,
+          "rx": 7.5,
+          "ry": 1.1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Reinaurora",
+        "file": "medusa_4.png",
+        "shadow": "medusa_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46.4,
+          "rx": 9,
+          "ry": 1.1,
+          "alpha": 0.45
+        }
+      }
+    ]
+  },
+  {
+    "id": "geoda",
+    "title": "Línea geoda",
+    "description": "Un guijarro con cristales que crece hasta ser un guardián-geoda",
+    "bg": "#e9e1f3",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Piedrín",
+        "file": "geoda_1.png",
+        "shadow": "geoda_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 29.6,
+          "rx": 8.5,
+          "ry": 1.3,
+          "alpha": 0.9
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Cascajo",
+        "file": "geoda_2.png",
+        "shadow": "geoda_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 33.6,
+          "rx": 11.5,
+          "ry": 1.3,
+          "alpha": 0.9
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Geodillo",
+        "file": "geoda_3.png",
+        "shadow": "geoda_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 39.6,
+          "rx": 14,
+          "ry": 1.4,
+          "alpha": 0.9
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Amatitán",
+        "file": "geoda_4.png",
+        "shadow": "geoda_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46.3,
+          "rx": 17.5,
+          "ry": 1.5,
+          "alpha": 0.8
+        }
+      }
+    ]
+  },
+  {
+    "id": "hongo",
+    "title": "Línea hongo",
+    "description": "Un espíritu del bosque que crece de hongo diminuto a anciano luminoso",
+    "bg": "#e4f0d8",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Hongín",
+        "file": "hongo_1.png",
+        "shadow": "hongo_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 30.2,
+          "rx": 8,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Brotín",
+        "file": "hongo_2.png",
+        "shadow": "hongo_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.2,
+          "rx": 8.5,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Musguito",
+        "file": "hongo_3.png",
+        "shadow": "hongo_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40.2,
+          "rx": 10,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Ancestrón",
+        "file": "hongo_4.png",
+        "shadow": "hongo_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 47,
+          "rx": 13,
+          "ry": 1.2,
+          "alpha": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "celeste",
+    "title": "Línea celestial",
+    "description": "Un ciervo hecho de cielo nocturno: nace con una luna en la frente y termina con astas de cristal",
+    "bg": "#e4e2f7",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Astrín",
+        "file": "celeste_1.png",
+        "shadow": "celeste_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 29.6,
+          "rx": 8,
+          "ry": 1.4,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Brisaluz",
+        "file": "celeste_2.png",
+        "shadow": "celeste_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 33.3,
+          "rx": 11,
+          "ry": 1.5,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Lunaro",
+        "file": "celeste_3.png",
+        "shadow": "celeste_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40.2,
+          "rx": 12.5,
+          "ry": 1.6,
+          "alpha": 1
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Cosmiervo",
+        "file": "celeste_4.png",
+        "shadow": "celeste_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 26,
+          "cy": 46.6,
+          "rx": 15,
+          "ry": 1.8,
+          "alpha": 1
+        }
+      }
+    ]
+  },
+  {
+    "id": "koi",
+    "title": "Línea koi",
+    "description": "La leyenda del koi que sube la cascada y se convierte en dragón",
+    "bg": "#d8ebf3",
+    "scale": 1,
+    "stages": [
+      {
+        "stage": "bebe",
+        "name": "Koín",
+        "file": "koi_1.png",
+        "shadow": "koi_1_shadow.png",
+        "size": 32,
+        "shadowEllipse": {
+          "cx": 16,
+          "cy": 30.6,
+          "rx": 6,
+          "ry": 1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "nino",
+        "name": "Koiki",
+        "file": "koi_2.png",
+        "shadow": "koi_2_shadow.png",
+        "size": 36,
+        "shadowEllipse": {
+          "cx": 18,
+          "cy": 34.4,
+          "rx": 8,
+          "ry": 1.1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "joven",
+        "name": "Koiryn",
+        "file": "koi_3.png",
+        "shadow": "koi_3_shadow.png",
+        "size": 42,
+        "shadowEllipse": {
+          "cx": 21,
+          "cy": 40,
+          "rx": 9,
+          "ry": 1.1,
+          "alpha": 0.5
+        }
+      },
+      {
+        "stage": "adulto",
+        "name": "Ryūkoi",
+        "file": "koi_4.png",
+        "shadow": "koi_4_shadow.png",
+        "size": 48,
+        "shadowEllipse": {
+          "cx": 24,
+          "cy": 46.6,
+          "rx": 10,
+          "ry": 1.1,
+          "alpha": 0.5
+        }
+      }
+    ]
+  }
+]

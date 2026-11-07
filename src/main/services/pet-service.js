@@ -49,7 +49,7 @@ class PetService extends EventEmitter {
     const cleanName =
       String(name ?? '')
         .trim()
-        .slice(0, 16) || speciesInfo.name;
+        .slice(0, 16) || speciesInfo.stages[0].name;
 
     store.update({
       repos,

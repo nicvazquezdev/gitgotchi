@@ -138,7 +138,7 @@ function computeStatus({ pet, activity }, now = new Date()) {
   // Thresholds follow the baseline, but a stage already reached is never lost.
   const stages = personalStages(baseline);
   const earned = stages.findLastIndex((s) => xp >= s.minXp);
-  const stage = stages[Math.max(earned, pet.stageIndex ?? 0)];
+  const stage = stages[Math.min(stages.length - 1, Math.max(earned, pet.stageIndex ?? 0))];
   const nextStage = stages[stage.index + 1] ?? null;
   const progress = nextStage ? (xp - stage.minXp) / (nextStage.minXp - stage.minXp) : 1;
 

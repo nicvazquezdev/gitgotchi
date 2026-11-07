@@ -108,7 +108,10 @@
         <div id="species-grid" class="species-grid" role="radiogroup" aria-label="Pet"></div>
 
         <div class="evolution pixel-border">
-          <div class="muted small">Evolution line</div>
+          <div class="species-info">
+            <span id="species-name" class="display"></span>
+            <span id="species-blurb" class="muted small"></span>
+          </div>
           <div id="evolution-line" class="evolution-line"></div>
         </div>
 
@@ -117,12 +120,12 @@
           <input id="pet-name" class="input" maxlength="16" autocomplete="off" spellcheck="false" />
         </label>
         <p id="species-warning" class="warning small" hidden>
-          ⚠ Switching species hatches a new pet: it starts over as an egg.
+          ⚠ Switching creatures adopts a new pet: it starts over as a baby.
         </p>
 
         <footer class="step-footer">
           <button class="btn ghost" data-go="repos">◀ Back</button>
-          <button id="btn-adopt" class="btn primary big">Adopt! ★</button>
+          <button id="btn-adopt" class="btn primary">Adopt! ★</button>
         </footer>
       </section>
     </main>

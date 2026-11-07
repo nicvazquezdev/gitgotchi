@@ -3,16 +3,18 @@ const { app } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
 const { DEFAULT_PET_SIZE } = require('./config');
+const { SCHEMA, migrate } = require('./migrations');
 
 const file = () => path.join(app.getPath('userData'), 'state.json');
 
 const defaults = () => ({
+  schema: SCHEMA,
   user: null, // { login, name, avatarUrl }
   repos: [], // ['owner/name']
   pet: null, // { species, name, bornAt, stageIndex }
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
-  petSize: DEFAULT_PET_SIZE, // sprite size in px
+  petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
 });
 
@@ -21,7 +23,7 @@ let state = null;
 function get() {
   if (!state) {
     try {
-      state = { ...defaults(), ...JSON.parse(fs.readFileSync(file(), 'utf8')) };
+      state = { ...defaults(), ...migrate(JSON.parse(fs.readFileSync(file(), 'utf8'))) };
     } catch {
       state = defaults();
     }
