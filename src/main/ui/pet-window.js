@@ -10,8 +10,11 @@ let win = null;
 const isOpen = () => Boolean(win && !win.isDestroyed());
 const isVisible = () => isOpen() && win.isVisible();
 
+// Size while dragging the panel slider: applied live, saved to the store on release.
+let liveSize = null;
+
 /** Current sprite size in px. */
-const size = () => petSize.resolveSize(store.get().petSize);
+const size = () => petSize.resolveSize(liveSize ?? store.get().petSize);
 const windowSize = () => petSize.windowSize(size());
 
 function defaultPosition() {
@@ -112,15 +115,19 @@ function stopDrag() {
   saveBounds();
 }
 
-/** Resizes the sprite keeping the pet's bottom-center in place, and tells the renderer. */
-function setSize(next) {
-  store.update({ petSize: petSize.resolveSize(next) });
+/**
+ * Resizes the sprite keeping the pet's bottom-center in place, and tells the renderer.
+ * `persist: false` skips the disk write (live slider dragging); persist the final value after.
+ */
+function setSize(next, { persist = true } = {}) {
+  liveSize = persist ? null : petSize.resolveSize(next);
+  if (persist) store.update({ petSize: petSize.resolveSize(next) });
   if (!isOpen()) return;
   const bounds = win.getBounds();
   const { workArea } = screen.getDisplayMatching(bounds);
   const resized = petSize.anchoredBounds(bounds, size(), workArea);
   win.setBounds(resized);
-  store.update({ position: { x: resized.x, y: resized.y } });
+  if (persist) store.update({ position: { x: resized.x, y: resized.y } });
   send('pet:size', size());
 }
 

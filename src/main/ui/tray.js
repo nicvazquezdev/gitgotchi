@@ -1,6 +1,6 @@
-// Menu bar / tray icon and the shared menu (also shown on right-click over the pet).
-const { Menu, Tray, nativeImage } = require('electron');
-const { IS_MAC, PET_SIZES } = require('../config');
+// Menu bar / tray icon. Clicking it opens the panel (see panel-window.js).
+const { Tray, nativeImage } = require('electron');
+const { IS_MAC } = require('../config');
 
 // 16x16 pixel blob. On macOS it's a "template image" (adapts to light/dark mode).
 const ICON_ART = [
@@ -33,55 +33,10 @@ function pixelIcon(art, scale = 2) {
   return img;
 }
 
-/**
- * @param {object} ctx
- * @param {object|null} ctx.status       pet status (or null)
- * @param {boolean} ctx.configured
- * @param {boolean} ctx.connected
- * @param {boolean} ctx.petVisible
- * @param {boolean} ctx.openAtLogin
- * @param {number} ctx.petSize         current sprite size in px
- * @param {object} ctx.actions          { sync, togglePet, setPetSize, openSettings, toggleOpenAtLogin, disconnect, quit }
- */
-function buildMenu({ status, configured, connected, petVisible, openAtLogin, petSize, actions }) {
-  const header = status
-    ? [
-        { label: `${status.name} · ${status.stage.name} · ${status.xp} XP`, enabled: false },
-        { label: `This week: ${status.weekScore} pts · ${status.streak}-day streak`, enabled: false },
-        { type: 'separator' },
-      ]
-    : [];
-
-  return Menu.buildFromTemplate([
-    ...header,
-    {
-      label: status?.syncing ? 'Syncing…' : 'Sync now',
-      enabled: configured && !status?.syncing,
-      click: actions.sync,
-    },
-    { label: petVisible ? 'Hide pet' : 'Show pet', enabled: configured, click: actions.togglePet },
-    {
-      label: 'Size',
-      enabled: configured,
-      submenu: PET_SIZES.map(({ label, size }) => ({
-        label,
-        type: 'radio',
-        checked: size === petSize,
-        click: () => actions.setPetSize(size),
-      })),
-    },
-    { label: 'Repos & pet settings…', click: actions.openSettings },
-    { label: 'Open at login', type: 'checkbox', checked: openAtLogin, click: actions.toggleOpenAtLogin },
-    { type: 'separator' },
-    { label: 'Disconnect & reset', enabled: connected, click: actions.disconnect },
-    { label: 'Quit Gitgotchi', click: actions.quit },
-  ]);
-}
-
 function createTray() {
   const tray = new Tray(pixelIcon(ICON_ART));
   tray.setToolTip('Gitgotchi');
   return tray;
 }
 
-module.exports = { createTray, buildMenu };
+module.exports = { createTray };
