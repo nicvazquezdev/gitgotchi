@@ -20,6 +20,16 @@ class GitHubClient {
     this.token = token;
   }
 
+  headers(extra = {}) {
+    return {
+      Authorization: `Bearer ${this.token}`,
+      Accept: 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': GITHUB.USER_AGENT,
+      ...extra,
+    };
+  }
+
   /**
    * GET from the API. Returns the data and the next page URL (if any).
    * With `etag`, sends a conditional request: on 304 it returns `{ notModified: true }`.
@@ -27,13 +37,7 @@ class GitHubClient {
    */
   async get(url, { etag } = {}) {
     const res = await fetch(url.startsWith('http') ? url : GITHUB.API + url, {
-      headers: {
-        Authorization: `Bearer ${this.token}`,
-        Accept: 'application/vnd.github+json',
-        'X-GitHub-Api-Version': '2022-11-28',
-        'User-Agent': GITHUB.USER_AGENT,
-        ...(etag && { 'If-None-Match': etag }),
-      },
+      headers: this.headers(etag && { 'If-None-Match': etag }),
     });
     const meta = { etag: res.headers.get('etag'), pollInterval: Number(res.headers.get('x-poll-interval')) || null };
     if (res.status === 304) return { notModified: true, ...meta };
@@ -41,6 +45,17 @@ class GitHubClient {
     if (!res.ok) throw new Error(`GitHub ${res.status} at ${url}`);
     const next = /<([^>]+)>;\s*rel="next"/.exec(res.headers.get('link') || '')?.[1] ?? null;
     return { data: await res.json(), next, ...meta };
+  }
+
+  /** POST/PUT/PATCH with a JSON body. Errors carry `status` (e.g. 404, 409). */
+  async send(method, url, body) {
+    const res = await fetch(GITHUB.API + url, {
+      method,
+      headers: this.headers({ 'Content-Type': 'application/json' }),
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw Object.assign(new Error(`GitHub ${res.status} at ${url}`), { status: res.status });
+    return res.json();
   }
 
   /** Walks pages up to `maxPages` or until `onPage` returns false. */
@@ -108,6 +123,41 @@ class GitHubClient {
     const data = await this.graphql(`{ viewer { pullRequests(first: 20, orderBy: {field: UPDATED_AT, direction: DESC},
       states: [OPEN, MERGED]) { nodes { id number title state createdAt mergedAt repository { nameWithOwner } } } } }`);
     return data.viewer.pullRequests.nodes.map(({ repository, ...pr }) => ({ ...pr, repo: repository.nameWithOwner }));
+  }
+
+  // ---------- Files in a repo (Contents API), used by the cloud save ----------
+
+  /** A JSON file from a repo: `{ json, sha }`, or null when the repo or the file doesn't exist. */
+  async readJsonFile(owner, repo, path) {
+    try {
+      const { data } = await this.get(`/repos/${owner}/${repo}/contents/${path}`);
+      return { json: JSON.parse(Buffer.from(data.content, 'base64').toString('utf8')), sha: data.sha };
+    } catch (err) {
+      if (/GitHub 404/.test(err.message)) return null;
+      throw err;
+    }
+  }
+
+  /** Creates or replaces a JSON file (pass the current `sha` to replace). Returns the new sha. */
+  async writeJsonFile(owner, repo, path, { json, sha, message, identity }) {
+    const content = Buffer.from(`${JSON.stringify(json, null, 2)}\n`).toString('base64');
+    const body = { message, content, ...(sha && { sha }), ...(identity && { author: identity, committer: identity }) };
+    const { content: file } = await this.send('PUT', `/repos/${owner}/${repo}/contents/${path}`, body);
+    return file.sha;
+  }
+
+  async repoExists(owner, repo) {
+    try {
+      await this.get(`/repos/${owner}/${repo}`);
+      return true;
+    } catch (err) {
+      if (/GitHub 404/.test(err.message)) return false;
+      throw err;
+    }
+  }
+
+  createPrivateRepo(name, description) {
+    return this.send('POST', '/user/repos', { name, description, private: true, has_issues: false, has_wiki: false });
   }
 
   /** Repos the user can access, sorted by last push. */
