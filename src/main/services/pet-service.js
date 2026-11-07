@@ -1,5 +1,7 @@
 // Orchestrates the pet: setup, GitHub sync and derived status.
-// Events: 'status' (status), 'evolved' (stage), 'activity' (new activity per kind, e.g. { merges: 1 }),
+// XP comes from the user's PRs (GraphQL) and reviews (Events API) in the selected repos, see game/catalog.js.
+// Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level; also fires on the level that evolves),
+// 'activity' (new activity per kind, e.g. { merges: 1 }; pushes are animation only),
 // 'configured' (setup saved: repos may have changed).
 const { EventEmitter } = require('node:events');
 const store = require('../store');
@@ -62,7 +64,7 @@ class PetService extends EventEmitter {
         ? { species, name: cleanName, bornAt: new Date().toISOString(), stageIndex: null }
         : { ...prev, name: cleanName },
       // New repos or a new pet: history is rebuilt from scratch.
-      ...((isNewPet || reposChanged) && { activity: { days: {}, lastSyncedAt: null } }),
+      ...((isNewPet || reposChanged) && { activity: engine.emptyActivity() }),
     });
     if (isNewPet || reposChanged) this.#resetBaseline();
     this.notify();
@@ -108,24 +110,17 @@ class PetService extends EventEmitter {
     const from = fromDay(engine.syncStartDay(state));
     try {
       const gh = await session.client();
-      const events = await gh.activity(state.user.login, from, this.#poll);
+      const { since, backfill } = engine.prSyncStart(state);
+      const [events, prs] = await Promise.all([
+        gh.activity(state.user.login, from, this.#poll), // reviews; null = 304, nothing new
+        gh.pullRequestsSince(since, { backfill }),
+      ]);
       this.#error = null;
-      if (!events) return; // 304: nothing new
-      const before = store.get().activity.days;
-      const days = engine.mergeDays(before, engine.buildDays({ events, repos: state.repos }));
-      store.update({ activity: { days, lastSyncedAt: new Date().toISOString() } });
-
-      // Activity a live source already celebrated must not trigger a second reaction.
-      const { delta, credits } = subtractCredits(
-        this.#credits,
-        engine.diffDays(before, days),
-        Date.now(),
-        LIVE.CREDIT_TTL_MS,
-      );
-      this.#credits = credits;
+      const at = new Date().toISOString();
+      const { delta } = this.#absorb({ events: events ?? [], prs }, { lastSyncedAt: at, prsSyncedAt: at });
       if (this.#baselined && Object.keys(delta).length > 0) this.emit('activity', delta);
       this.#baselined = true;
-      this.#checkEvolution();
+      this.#checkProgress();
     } catch (err) {
       console.error('[sync]', err);
       this.#poll.etag = null; // a failed sync must not hide events behind a 304
@@ -133,13 +128,45 @@ class PetService extends EventEmitter {
     }
   }
 
-  #checkEvolution() {
-    const { stage } = this.status();
+  /** Fresh PR list from the live PR watcher (~10 s): keeps PR data and XP current between syncs. */
+  applyPullRequests(prs) {
+    // Only after the first sync: the backfill and the reaction baseline come from there.
+    if (!this.isConfigured() || !this.#baselined || !store.get().activity.prsSyncedAt) return;
+    const { delta, changed } = this.#absorb({ prs });
+    if (!changed) return;
+    if (Object.keys(delta).length > 0) this.emit('activity', delta);
+    this.#checkProgress();
+    this.notify();
+  }
+
+  /**
+   * Stores fresh data in the ledger. Returns the activity it added that no live source celebrated
+   * yet (`delta`, see live/credits.js) and whether the stored activity changed.
+   */
+  #absorb({ events, prs }, marks = {}) {
+    const { activity: before, repos } = store.get();
+    const activity = { ...engine.applyActivity(before, { events, prs, repos }), ...marks };
+    const changed = JSON.stringify(activity) !== JSON.stringify(before);
+    if (changed) store.update({ activity });
+    const { delta, credits } = subtractCredits(
+      this.#credits,
+      engine.diffDays(before.days, activity.days),
+      Date.now(),
+      LIVE.CREDIT_TTL_MS,
+    );
+    this.#credits = credits;
+    return { delta, changed };
+  }
+
+  /** Stores the level and stage reached (they never go down) and announces growth. */
+  #checkProgress() {
+    const { stage, level } = this.status();
     const { pet } = store.get();
-    if (pet.stageIndex === stage.index) return;
-    // First time we only record the stage, no celebration.
+    if (pet.stageIndex === stage.index && pet.level === level) return;
+    store.update((s) => ({ pet: { ...s.pet, stageIndex: stage.index, level } }));
+    // First time we only record where the pet is, no celebration.
+    if (pet.level != null && level > pet.level) this.emit('levelUp', level);
     if (pet.stageIndex != null && stage.index > pet.stageIndex) this.emit('evolved', stage);
-    store.update((s) => ({ pet: { ...s.pet, stageIndex: stage.index } }));
   }
 }
 

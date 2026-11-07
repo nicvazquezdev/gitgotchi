@@ -12,9 +12,10 @@ function startLive({ petService, powerMonitor }) {
     fetchPrs: async () => (await session.client()).recentPullRequests(),
     getRepos: () => store.get().repos,
     onActivity: (delta) => petService.react(delta),
+    onPullRequests: (prs) => petService.applyPullRequests(prs),
   });
   const gitWatcher = new GitWatcher(() => {
-    petService.react({ pushes: 1 });
+    petService.react({ pushes: 1 }); // animation only: pushes give no XP
     prWatcher.check(); // a push often means a PR was opened or merged
   });
 

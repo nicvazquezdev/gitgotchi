@@ -1,5 +1,5 @@
 // Upgrades a saved state.json to the current schema (pure, no I/O).
-const SCHEMA = 3;
+const SCHEMA = 4;
 
 // v1 placeholder species → closest v2 sprite line.
 const V1_SPECIES = { blob: 'hongo', cat: 'carnero', dragon: 'fenix', bot: 'geoda' };
@@ -29,9 +29,24 @@ function toV3(state) {
   return { ...state, pet: { ...state.pet, species: V2_SPECIES[state.pet.species] ?? state.pet.species } };
 }
 
+/**
+ * v3 → v4: XP only from PRs and reviews. The day ledger keeps its reviews (GitHub only returns the latest 300
+ * events, so they cannot be fetched again); everything else is dropped. PRs are backfilled from GraphQL on the
+ * next sync (`prsSyncedAt: null`). The stored stage stays as the floor; the level floor is recorded on that sync.
+ */
+function toV4(state) {
+  const days = Object.fromEntries(
+    Object.entries(state.activity?.days ?? {})
+      .filter(([, d]) => d.reviews > 0)
+      .map(([day, d]) => [day, { prs: 0, prsXp: 0, reviews: d.reviews, merges: 0 }]),
+  );
+  return { ...state, activity: { days, prs: [], lastSyncedAt: null, prsSyncedAt: null } };
+}
+
 const STEPS = [
   [2, toV2],
   [3, toV3],
+  [4, toV4],
 ];
 
 /** @returns the state upgraded to SCHEMA (unknown fields are kept). */

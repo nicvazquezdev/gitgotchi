@@ -32,6 +32,35 @@ test('v2 renames the sprite lines', () => {
   assert.equal(state.petSize, 208);
 });
 
+test('v3 keeps reviews, drops other kinds and queues a PR backfill; stage floor is kept', () => {
+  const state = migrate({
+    schema: 3,
+    pet: { species: 'koi', stageIndex: 2 },
+    repos: ['a/b'],
+    activity: {
+      days: {
+        '2026-06-01': { pushes: 5, prs: 2, merges: 1, reviews: 3, comments: 4, issues: 1 },
+        '2026-06-02': { pushes: 9, prs: 1, merges: 0, reviews: 0, comments: 0, issues: 0 },
+      },
+      lastSyncedAt: '2026-06-02T10:00:00Z',
+    },
+  });
+  assert.equal(state.schema, SCHEMA);
+  assert.deepEqual(state.activity, {
+    days: { '2026-06-01': { prs: 0, prsXp: 0, reviews: 3, merges: 0 } },
+    prs: [],
+    lastSyncedAt: null,
+    prsSyncedAt: null,
+  });
+  assert.equal(state.pet.stageIndex, 2);
+  assert.deepEqual(state.repos, ['a/b']);
+});
+
+test('v3 without activity gets an empty ledger', () => {
+  const state = migrate({ schema: 3, pet: null });
+  assert.deepEqual(state.activity, { days: {}, prs: [], lastSyncedAt: null, prsSyncedAt: null });
+});
+
 test('current schema is left untouched', () => {
   const current = { schema: SCHEMA, pet: { species: 'koi', stageIndex: 2 }, petSize: 300 };
   assert.deepEqual(migrate(current), current);

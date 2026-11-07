@@ -1,20 +1,30 @@
 // Pure game rules: no I/O, easy to test.
-const { SPECIES, STAGES, WEIGHTS, BASELINE, MOOD_RATIOS, MAX_HEARTS, SLEEP_HOURS } = require('./catalog');
+const { SPECIES, STAGES, KINDS, BASELINE, MOOD, SLEEP_HOURS } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
-const { stats, dayScore } = require('./stats');
+const { stats, dayXp, dayXpByKind } = require('./stats');
+const { xpForLevel, levelAt, stageIndexFor } = require('./levels');
+const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
 
-const emptyDay = () => Object.fromEntries(Object.keys(WEIGHTS).map((k) => [k, 0]));
+const DAY_MS = 86400000;
+const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
+
+/** One ledger day. Old kinds (pushes, comments, issues) from earlier versions are never read or kept. */
+const emptyDay = () => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0 });
+const LEDGER_FIELDS = Object.keys(emptyDay());
+
+/** Fresh activity state: day ledger, the user's PRs and the two sync marks. */
+const emptyActivity = () => ({ days: {}, prs: [], lastSyncedAt: null, prsSyncedAt: null });
 
 /**
- * Counts activity per day and kind, only for the selected repos.
+ * Counts review events per day, only for the selected repos. Other event kinds give no XP and are ignored.
  * @param {{ events: { kind, repo, day }[], repos: string[] }} input
- * @returns {{ [day: string]: { [kind: string]: number } }}
+ * @returns {{ [day: string]: object }}
  */
 function buildDays({ events, repos }) {
   const selected = new Set(repos.map((r) => r.toLowerCase()));
   const days = {};
   for (const { kind, repo, day } of events) {
-    if (!selected.has(repo.toLowerCase())) continue;
+    if (kind !== 'reviews' || !selected.has(repo.toLowerCase())) continue;
     days[day] ??= emptyDay();
     days[day][kind] += 1;
   }
@@ -41,7 +51,7 @@ function rankRepos(events, accessible) {
   );
 }
 
-/** Day to fetch activity from: last week or last sync, whichever is earlier. */
+/** Day to fetch review events from: last week or last sync, whichever is earlier. */
 function syncStartDay({ activity }, now = new Date()) {
   const weekAgo = addDays(toDay(now), -6);
   const lastSynced = activity.lastSyncedAt ? addDays(toDay(activity.lastSyncedAt), -1) : weekAgo;
@@ -49,20 +59,47 @@ function syncStartDay({ activity }, now = new Date()) {
 }
 
 /**
+ * What to fetch from GraphQL: PRs updated since this moment. `backfill` is true until the first PR sync:
+ * then it reaches back to the pet's birth minus the baseline window, so the baseline has real history.
+ * Afterwards it is the last PR sync minus a small overlap.
+ */
+function prSyncStart({ pet, activity }) {
+  if (!activity.prsSyncedAt) {
+    return { backfill: true, since: fromDay(addDays(toDay(pet.bornAt), -BASELINE.windowDays)) };
+  }
+  return { backfill: false, since: new Date(new Date(activity.prsSyncedAt).getTime() - PR_SYNC_OVERLAP_MS) };
+}
+
+/**
  * Merges history with fresh data, keeping the max per day and kind.
  * A day that already fell out of GitHub's 300-event window keeps what was counted.
+ * Only current ledger fields are kept (old kinds are dropped).
  */
 function mergeDays(oldDays, newDays) {
   const merged = { ...oldDays };
   for (const [day, counts] of Object.entries(newDays)) {
-    merged[day] = { ...emptyDay(), ...merged[day] };
-    for (const [kind, n] of Object.entries(counts)) merged[day][kind] = Math.max(merged[day][kind] || 0, n);
+    const prev = merged[day] ?? {};
+    merged[day] = Object.fromEntries(
+      LEDGER_FIELDS.map((field) => [field, Math.max(prev[field] || 0, counts[field] || 0)]),
+    );
   }
   return merged;
 }
 
 /**
- * Typical weekly score of the person, from their own history (rules in `BASELINE`).
+ * Applies fresh data to the activity (pure). `events`: normalized review events; `prs`: normalized PRs
+ * (client.pullRequests). Both optional. Day counts only ever grow, so partial data never lowers them.
+ * @returns the new activity (other fields are kept)
+ */
+function applyActivity(activity, { events = [], prs = [], repos, now = new Date() }) {
+  const all = mergePullRequests(activity.prs ?? [], prs, repos);
+  // Days come from the unpruned list: a PR merged long ago is dropped from the stored list but still counts.
+  const days = mergeDays(mergeDays(activity.days ?? {}, buildDays({ events, repos })), pullRequestDays(all));
+  return { ...activity, days, prs: prunePullRequests(all, now) };
+}
+
+/**
+ * Typical weekly XP of the person, from their own history (rules in `BASELINE`).
  * @param {{ [day: string]: object }} days
  * @param {string} today 'YYYY-MM-DD'
  * @returns {number}
@@ -75,89 +112,126 @@ function computeBaseline(days, today) {
 
   const firstDay = recorded.reduce((a, b) => (a < b ? a : b));
   const start = firstDay > windowStart ? firstDay : windowStart;
-  const spanDays = Math.round((fromDay(today) - fromDay(start)) / 86400000) + 1;
+  const spanDays = Math.round((fromDay(today) - fromDay(start)) / DAY_MS) + 1;
   if (spanDays < minHistoryDays) return defaultWeekly;
 
-  const total = recorded.filter((day) => day >= start).reduce((sum, day) => sum + dayScore(days[day]), 0);
+  const total = recorded.filter((day) => day >= start).reduce((sum, day) => sum + dayXp(days[day]), 0);
   return Math.max(floorWeekly, Math.round((total / spanDays) * 7));
 }
 
-/** Stages with XP thresholds scaled to the person's baseline. */
-function personalStages(baseline) {
-  return STAGES.map((s, index) => ({
-    ...s,
-    index,
-    minXp: s.minWeeks ? Math.max(1, Math.round(s.minWeeks * baseline)) : 0,
-  }));
-}
-
 /**
- * New activity between two histories: per-kind increases only, zero kinds omitted.
+ * New activity between two histories: per-kind count increases only, zero kinds omitted.
  * Never negative. Returns `{}` when nothing is new.
  * @returns {{ [kind: string]: number }}
  */
 function diffDays(oldDays, newDays) {
   const delta = {};
   for (const [day, counts] of Object.entries(newDays)) {
-    for (const [kind, n] of Object.entries(counts)) {
-      const added = n - (oldDays[day]?.[kind] || 0);
+    for (const kind of KINDS) {
+      const added = (counts[kind] || 0) - (oldDays[day]?.[kind] || 0);
       if (added > 0) delta[kind] = (delta[kind] || 0) + added;
     }
   }
   return delta;
 }
 
-function moodFor(ratio, now) {
-  const h = now.getHours();
-  if (h >= SLEEP_HOURS.from && h < SLEEP_HOURS.to) return 'sleeping';
-  if (ratio >= MOOD_RATIOS.happy) return 'happy';
-  if (ratio >= MOOD_RATIOS.ok) return 'idle';
-  return 'sad';
+const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
+const MOOD_LABELS = { happy: 'Happy', idle: 'Content', anxious: 'Anxious', sad: 'Bored', sleeping: 'Sleeping' };
+
+/**
+ * Mood and why. Order: sleeping (night), anxious (PRs waiting for review), happy (merged recently or a strong
+ * week), sad (quiet week, once the pet is old enough to judge), else idle.
+ * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number, petAgeDays: number }} input
+ * @returns {{ mood: string, moodLabel: string, moodReason: string | null }}
+ */
+function moodFor({ waiting, mergedRecently, ratio, petAgeDays }, now) {
+  const result = (mood, reason = null) => ({ mood, moodLabel: MOOD_LABELS[mood], moodReason: reason });
+  const hour = now.getHours();
+  if (hour >= SLEEP_HOURS.from && hour < SLEEP_HOURS.to) return result('sleeping');
+
+  const stale = waiting.filter((pr) => pr.ageDays >= MOOD.anxiousAfterDays);
+  if (stale.length > 0) {
+    const days = Math.max(...stale.map((pr) => pr.ageDays));
+    return result('anxious', `${plural(stale.length, 'PR')} waiting for ${days} days`);
+  }
+  if (mergedRecently > 0) return result('happy', `${plural(mergedRecently, 'PR')} merged recently`);
+  if (ratio >= MOOD.strongWeekRatio) return result('happy', 'A strong week');
+  if (ratio < MOOD.quietWeekRatio && petAgeDays >= BASELINE.minHistoryDays) return result('sad', 'A quiet week');
+  return result('idle');
 }
 
-/** Derived pet status consumed by the UI. */
-function computeStatus({ pet, activity }, now = new Date()) {
+/** XP and counts per kind for the last 7 days. */
+function weekSummary(days, today) {
+  const weekStart = addDays(today, -6);
+  const week = { prs: 0, reviews: 0, merges: 0, xp: { prs: 0, reviews: 0, merges: 0 }, total: 0 };
+  for (const [day, d] of Object.entries(days)) {
+    if (day < weekStart || day > today) continue;
+    const xp = dayXpByKind(d);
+    for (const kind of KINDS) {
+      week[kind] += d[kind] || 0;
+      week.xp[kind] += xp[kind];
+    }
+    week.total += dayXp(d);
+  }
+  return week;
+}
+
+/** Derived pet status consumed by the UI. `repos`: the selected repos (the PR list is filtered by them). */
+function computeStatus({ pet, activity, repos = [] }, now = new Date()) {
   if (!pet) return null;
 
   const today = toDay(now);
   const birthDay = toDay(pet.bornAt);
-  const weekStart = addDays(today, -6);
+  const days = activity.days ?? {};
 
-  // XP: activity since birth (growth). Week: last 7 days (mood).
-  let xp = 0;
-  const week = emptyDay();
-  for (const [day, d] of Object.entries(activity.days)) {
-    if (day >= birthDay) xp += dayScore(d);
-    if (day >= weekStart && day <= today) for (const k of Object.keys(week)) week[k] += d[k] || 0;
-  }
-  const weekScore = dayScore(week);
+  const xp = Object.entries(days).reduce((sum, [day, d]) => (day >= birthDay ? sum + dayXp(d) : sum), 0);
+  const week = weekSummary(days, today);
+  const baseline = computeBaseline(days, today);
 
-  const baseline = computeBaseline(activity.days, today);
-  const ratio = weekScore / baseline;
+  // Level and stage follow the baseline, but what was reached is never lost.
+  const stageFloor = pet.stageIndex ?? 0;
+  const level = Math.max(levelAt(xp, baseline), pet.level ?? 1, STAGES[stageFloor].level);
+  const stageIndex = Math.max(stageIndexFor(level), stageFloor);
+  const levelStart = xpForLevel(level, baseline);
+  const levelXpNeeded = xpForLevel(level + 1, baseline) - levelStart;
+  const stageView = (i) => ({ id: STAGES[i].id, name: STAGES[i].name, index: i, level: STAGES[i].level });
 
-  // Thresholds follow the baseline, but a stage already reached is never lost.
-  const stages = personalStages(baseline);
-  const earned = stages.findLastIndex((s) => xp >= s.minXp);
-  const stage = stages[Math.min(stages.length - 1, Math.max(earned, pet.stageIndex ?? 0))];
-  const nextStage = stages[stage.index + 1] ?? null;
-  const progress = nextStage ? (xp - stage.minXp) / (nextStage.minXp - stage.minXp) : 1;
+  const selected = new Set(repos.map((r) => r.toLowerCase()));
+  const mine = (activity.prs ?? []).filter((pr) => selected.has(pr.repo.toLowerCase()));
+  const prs = classify(mine, now);
+  const recentSince = now.getTime() - MOOD.happyMergeHours * 3600000;
+  const mergedRecently = mine.filter((pr) => pr.state === 'MERGED' && new Date(pr.mergedAt) >= recentSince).length;
+  const petAgeDays = (now.getTime() - new Date(pet.bornAt).getTime()) / DAY_MS;
 
   return {
     name: pet.name,
     species: SPECIES.find((s) => s.id === pet.species) ?? SPECIES[0],
+    stage: stageView(stageIndex),
+    nextStage: stageIndex + 1 < STAGES.length ? stageView(stageIndex + 1) : null,
+    level,
     xp,
-    stage,
-    nextStage,
-    progress: Math.min(1, Math.max(0, progress)),
-    baseline,
+    levelXp: Math.min(levelXpNeeded, Math.max(0, xp - levelStart)),
+    levelXpNeeded,
+    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: week.total / baseline, petAgeDays }, now),
     week,
-    weekScore,
-    mood: moodFor(ratio, now),
-    hearts: Math.min(MAX_HEARTS, Math.ceil((ratio / MOOD_RATIOS.happy) * MAX_HEARTS)),
-    maxHearts: MAX_HEARTS,
+    prs,
+    baseline,
     lastSyncedAt: activity.lastSyncedAt,
-    ...stats(activity.days, now),
+    ...stats(days, now),
   };
 }
 
-module.exports = { buildDays, rankRepos, syncStartDay, mergeDays, diffDays, computeStatus, computeBaseline };
+module.exports = {
+  buildDays,
+  rankRepos,
+  syncStartDay,
+  prSyncStart,
+  mergeDays,
+  diffDays,
+  applyActivity,
+  emptyActivity,
+  computeStatus,
+  computeBaseline,
+  moodFor,
+};

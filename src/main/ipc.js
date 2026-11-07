@@ -64,7 +64,7 @@ function registerIpc(actions) {
       user,
       repos,
       pet,
-      catalog: { species: catalog.SPECIES, stages: catalog.STAGES, weights: catalog.WEIGHTS },
+      catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES },
       status: petService.status(),
     };
   });
