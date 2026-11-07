@@ -2,7 +2,8 @@
 const { screen } = require('electron');
 const store = require('../store');
 const { createWindow } = require('./create-window');
-const { PET_WINDOW, IS_MAC } = require('../config');
+const { IS_MAC } = require('../config');
+const petSize = require('./pet-size');
 
 let win = null;
 let dragTimer = null;
@@ -10,16 +11,22 @@ let dragTimer = null;
 const isOpen = () => Boolean(win && !win.isDestroyed());
 const isVisible = () => isOpen() && win.isVisible();
 
+/** Current sprite size in px. */
+const size = () => petSize.resolveSize(store.get().petSize);
+const windowSize = () => petSize.windowSize(size());
+
 function defaultPosition() {
   const { workArea: a } = screen.getPrimaryDisplay();
-  return { x: a.x + a.width - PET_WINDOW.width - 24, y: a.y + a.height - PET_WINDOW.height };
+  const { width, height } = windowSize();
+  return { x: a.x + a.width - width - 24, y: a.y + a.height - height };
 }
 
 /** Saved position, if it still falls inside a connected display. */
 function initialPosition() {
   const pos = store.get().position;
   if (!pos) return defaultPosition();
-  const center = { x: pos.x + PET_WINDOW.width / 2, y: pos.y + PET_WINDOW.height / 2 };
+  const { width, height } = windowSize();
+  const center = { x: pos.x + width / 2, y: pos.y + height / 2 };
   const onScreen = screen
     .getAllDisplays()
     .some(
@@ -31,7 +38,7 @@ function initialPosition() {
 
 function create() {
   win = createWindow('pet', {
-    ...PET_WINDOW,
+    ...windowSize(),
     ...initialPosition(),
     // On macOS, 'panel' floats over fullscreen apps without stealing focus.
     type: IS_MAC ? 'panel' : 'toolbar',
@@ -94,6 +101,18 @@ function stopDrag() {
   store.update({ position: { x, y } });
 }
 
+/** Resizes the sprite keeping the pet's bottom-center in place, and tells the renderer. */
+function setSize(next) {
+  store.update({ petSize: petSize.resolveSize(next) });
+  if (!isOpen()) return;
+  const bounds = win.getBounds();
+  const { workArea } = screen.getDisplayMatching(bounds);
+  const resized = petSize.anchoredBounds(bounds, size(), workArea);
+  win.setBounds(resized);
+  store.update({ position: { x: resized.x, y: resized.y } });
+  send('pet:size', size());
+}
+
 function ensureOnScreen() {
   if (!isOpen()) return;
   const { x, y } = initialPosition();
@@ -110,6 +129,8 @@ module.exports = {
   startDrag,
   stopDrag,
   ensureOnScreen,
+  size,
+  setSize,
   get window() {
     return win;
   },

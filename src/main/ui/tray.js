@@ -1,6 +1,6 @@
 // Menu bar / tray icon and the shared menu (also shown on right-click over the pet).
 const { Menu, Tray, nativeImage } = require('electron');
-const { IS_MAC } = require('../config');
+const { IS_MAC, PET_SIZES } = require('../config');
 
 // 16x16 pixel blob. On macOS it's a "template image" (adapts to light/dark mode).
 const ICON_ART = [
@@ -39,9 +39,10 @@ function pixelIcon(art, scale = 2) {
  * @param {boolean} ctx.configured
  * @param {boolean} ctx.connected
  * @param {boolean} ctx.petVisible
- * @param {object} ctx.actions          { sync, togglePet, openSettings, disconnect, quit }
+ * @param {number} ctx.petSize         current sprite size in px
+ * @param {object} ctx.actions          { sync, togglePet, setPetSize, openSettings, disconnect, quit }
  */
-function buildMenu({ status, configured, connected, petVisible, actions }) {
+function buildMenu({ status, configured, connected, petVisible, petSize, actions }) {
   const header = status
     ? [
         { label: `${status.name} · ${status.stage.name} · ${status.xp} XP`, enabled: false },
@@ -58,6 +59,16 @@ function buildMenu({ status, configured, connected, petVisible, actions }) {
       click: actions.sync,
     },
     { label: petVisible ? 'Hide pet' : 'Show pet', enabled: configured, click: actions.togglePet },
+    {
+      label: 'Size',
+      enabled: configured,
+      submenu: PET_SIZES.map(({ label, size }) => ({
+        label,
+        type: 'radio',
+        checked: size === petSize,
+        click: () => actions.setPetSize(size),
+      })),
+    },
     { label: 'Repos & pet settings…', click: actions.openSettings },
     { type: 'separator' },
     { label: 'Disconnect & reset', enabled: connected, click: actions.disconnect },

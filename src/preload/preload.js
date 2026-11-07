@@ -29,6 +29,9 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     dragStart: send('pet:drag-start'), // { offsetX, offsetY }
     dragEnd: send('pet:drag-end'),
     openMenu: send('pet:menu'),
+    size: invoke('pet:size'), // sprite size in px
+    stepSize: send('pet:size-step'), // -1 (smaller) or 1 (bigger)
+    onSize: subscribe('pet:size'),
     onStatus: subscribe('pet:status'),
     onEvolved: subscribe('pet:evolved'),
   },

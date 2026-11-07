@@ -2,6 +2,7 @@
 const { app } = require('electron');
 const fs = require('node:fs');
 const path = require('node:path');
+const { DEFAULT_PET_SIZE } = require('./config');
 
 const file = () => path.join(app.getPath('userData'), 'state.json');
 
@@ -11,6 +12,7 @@ const defaults = () => ({
   pet: null, // { species, name, bornAt, stageIndex }
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
+  petSize: DEFAULT_PET_SIZE, // sprite size in px
 });
 
 let state = null;
@@ -36,9 +38,10 @@ function update(patch) {
   return state;
 }
 
-/** Clears everything except the pet's screen position. */
+/** Clears everything except the pet's screen position and size. */
 function reset() {
-  update({ ...defaults(), position: get().position });
+  const { position, petSize } = get();
+  update({ ...defaults(), position, petSize });
 }
 
 module.exports = { get, update, reset };
