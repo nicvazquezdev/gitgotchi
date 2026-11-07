@@ -13,7 +13,8 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   bootstrap: invoke('app:bootstrap'),
 
   auth: {
-    connect: invoke('auth:connect'),
+    accounts: invoke('auth:accounts'), // -> { accounts: [{ login, active, avatarUrl }], selected, missing }
+    connect: invoke('auth:connect'), // login -> { user }
     disconnect: invoke('auth:disconnect'),
   },
 
