@@ -1,5 +1,5 @@
 // Pure helpers for the pet size: allowed sizes, window dimensions and anchored resizing.
-const { PET_WINDOW, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../config');
+const { PET_WINDOW, PET_CANVAS, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../config');
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
@@ -10,10 +10,18 @@ function resolveSize(size) {
   return clamp(Math.round(size / step) * step, min, max);
 }
 
-/** The window grows with the sprite; it never gets narrower than the speech bubble and HUD need. */
+/**
+ * The window grows with the sprite; it never gets narrower than the speech bubble and HUD need, and it is always
+ * tall enough for the whole canvas (at the biggest sizes that is more than the room the bubble needs).
+ */
 function windowSize(size) {
-  const growth = resolveSize(size) - DEFAULT_PET_SIZE;
-  return { width: Math.max(PET_WINDOW.width, PET_WINDOW.width + growth), height: PET_WINDOW.height + growth };
+  const resolved = resolveSize(size);
+  const growth = resolved - DEFAULT_PET_SIZE;
+  const scale = resolved / PET_SIZE_RANGE.step;
+  return {
+    width: Math.max(PET_WINDOW.width, PET_WINDOW.width + growth),
+    height: Math.max(PET_WINDOW.height + growth, PET_CANVAS.rows * scale),
+  };
 }
 
 /**

@@ -1,6 +1,8 @@
-/* Defaults; pet.js overrides them inline on <html>. */
+/* Defaults; pet.js overrides them inline on <html>. --stage-w/--stage-h: the canvas (whole native pixels). */
 :root {
   --pet-size: 208px;
+  --stage-w: 288px;
+  --stage-h: 292px;
   --stage-size: 32;
   --fx-red: #e5484d;
 }
@@ -15,7 +17,7 @@ body {
 
 body {
   font-family: var(--font-ui);
-  /* Set by pet.js: --pet-size = the pet box in px (52 native px, see sprite.js);
+  /* Set by pet.js: --pet-size = 52 px per whole scale step (see PET_SIZE_RANGE);
      --stage-size = native size of the current creature. --u is one native pixel. */
   --u: calc(var(--pet-size) / 52);
   /* Width of the speech bubble: fixed, so its text wraps the same at every pet size. */
@@ -27,19 +29,19 @@ body {
   position: absolute;
   bottom: 0;
   left: 50%;
-  width: var(--pet-size);
-  height: var(--pet-size);
-  margin-left: calc(var(--pet-size) / -2);
+  width: var(--stage-w);
+  height: var(--stage-h);
+  margin-left: calc(var(--stage-w) / -2);
 }
 
+/* The canvas is sized by pet-view.js in whole device pixels per native pixel. */
 .pet {
   position: absolute;
-  inset: 0;
-  width: var(--pet-size);
-  height: var(--pet-size);
-  image-rendering: pixelated; /* nearest-neighbor: keeps the pixel art sharp when scaled up */
+  left: 0;
+  bottom: 0;
+  image-rendering: pixelated; /* nearest-neighbor: keeps the pixel art sharp */
 }
-/* Only the creature itself is grabbable (pet.js hit-tests it); the rest of the box is click-through. */
+/* Only the creature itself is grabbable (pet.js hit-tests it); the rest of the canvas is click-through. */
 body.hover .pet {
   cursor: grab;
 }
@@ -58,30 +60,8 @@ body.dragging .pet {
 .pet.hop {
   animation: jump 0.5s steps(5);
 }
-.pet.party {
-  animation: party 1.2s steps(12);
-}
 .pet.wiggle {
   animation: wiggle 0.8s steps(8);
-}
-@keyframes party {
-  0%,
-  50%,
-  100% {
-    transform: none;
-  }
-  12%,
-  62% {
-    transform: translateY(-22px) scale(1.06);
-  }
-  25%,
-  75% {
-    transform: translateY(0) scale(1);
-  }
-  37%,
-  87% {
-    transform: translateY(-10px) rotate(-6deg);
-  }
 }
 @keyframes wiggle {
   0%,
@@ -229,5 +209,19 @@ body.dragging .pet {
 @keyframes bob {
   50% {
     transform: translateY(-2px);
+  }
+}
+
+/* Reduce Motion (macOS accessibility): no CSS animations or particles either; pet.js keeps the pet idle. */
+@media (prefers-reduced-motion: reduce) {
+  .pet.jump,
+  .pet.hop,
+  .pet.wiggle,
+  .pet.evolve,
+  .alert {
+    animation: none;
+  }
+  .particle {
+    display: none;
   }
 }

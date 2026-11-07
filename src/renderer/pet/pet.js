@@ -1,11 +1,25 @@
 import { $, h, replayClass } from '../shared/dom.js';
 import { plural, oldestDays } from '../shared/format.js';
-import { animatePet, spriteRect, BOX } from '../shared/sprite.js';
+import { PetView, PX_PER_SCALE } from './pet-view.js';
 
 const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
 const root = document.documentElement.style;
 const DRAG_THRESHOLD_PX = 4;
+
+// The canvas sets its own size in whole native pixels; the stage (and the CSS that places the bubble) follows it.
+const view = new PetView(canvas, {
+  getWidth: () => document.documentElement.clientWidth,
+  onLayout: ({ width, height }) => {
+    root.setProperty('--stage-w', `${width}px`);
+    root.setProperty('--stage-h', `${height}px`);
+  },
+});
+// Reduce Motion (macOS accessibility) and Do not disturb: the pet only idles (no walks, cheers or particles).
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const calm = () => reducedMotion.matches || prefs.doNotDisturb;
+const syncCalm = () => view.setCalm(calm());
+reducedMotion.addEventListener('change', syncCalm);
 
 const LINES = {
   happy: ['What a week! 🔥', 'Yum, fresh pushes!', 'I feel huge today', 'Keep it up!'],
@@ -33,7 +47,11 @@ const creature = () => status.species.stages[status.stage.index];
 function setStatus(next) {
   if (!next) return;
   const moodChanged = status && status.mood !== next.mood;
+  const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
   status = next;
+  // The animator takes the mood from the status. A cheer that makes the pet happy lasts until the mood changes.
+  if (moodChanged || creatureChanged) view.setMood(status.mood);
+  if (creatureChanged) view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
   const count = status.prs?.waiting?.length ?? 0;
   const reviews = status.reviewQueue?.length ?? 0;
   if (count !== waitingCount || reviews !== reviewCount) {
@@ -49,9 +67,10 @@ function setStatus(next) {
   else renderBubble();
 }
 
-const spriteOptions = () => status && { species: status.species, stageIndex: status.stage.index, mood: status.mood };
-
-const setSize = (px) => root.setProperty('--pet-size', `${px}px`);
+function setSize(px) {
+  root.setProperty('--pet-size', `${px}px`);
+  view.setScale(Math.round(px / PX_PER_SCALE));
+}
 
 // ---------- Bubble ----------
 // A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
@@ -121,25 +140,23 @@ function say(title, { sub, dot, ms = 3500 } = {}) {
 
 /** Opens the PR popover above the creature (a second click closes it). */
 function openPopover() {
-  const r = canvas.getBoundingClientRect();
-  const scale = r.width / BOX;
-  const { x, y, size } = spriteRect(status.species, status.stage.index);
-  api.openPopover({ x: r.left + x * scale, y: r.top + y * scale, width: size * scale, height: size * scale });
+  const bounds = view.bounds();
+  if (bounds) api.openPopover(bounds);
 }
 
 function reactToClick() {
   if (!status) return;
-  replayClass(canvas, 'jump');
+  if (!calm()) replayClass(canvas, 'jump');
   openPopover();
 }
 
 // ---------- Live reactions (new GitHub activity) ----------
 
-// Most exciting first. `anim` is a CSS class on the pet, `fx` the particle style.
+// Most exciting first. `cheer`: the pet's cheer animation; otherwise `anim` is a CSS class on the pet, `fx` the particle style.
 const REACTIONS = [
-  { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉', dot: 'approved' },
-  { kind: 'approvals', anim: 'party', fx: 'confetti', text: 'Your PR got approved! 🎉', dot: 'approved' },
-  { kind: 'achievements', anim: 'party', fx: 'confetti', text: 'Achievement unlocked! 🏆', dot: 'approved' },
+  { kind: 'merges', cheer: true, text: 'PR merged! 🎉', dot: 'approved' },
+  { kind: 'approvals', cheer: true, text: 'Your PR got approved! 🎉', dot: 'approved' },
+  { kind: 'achievements', cheer: true, text: 'Achievement unlocked! 🏆', dot: 'approved' },
   { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
   { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
@@ -152,7 +169,7 @@ const FX_COLORS = ['var(--accent)', 'var(--dot-waiting)', 'var(--dot-approved)',
 let fxTimer = null;
 
 function burst(style) {
-  const count = style === 'confetti' ? 14 : 6;
+  const count = 6;
   const particles = Array.from({ length: count }, (_, i) => {
     const angle = (i / count) * Math.PI + Math.PI; // upper half-circle
     const dist = 11 + (i % 3) * 4; // sprite pixels
@@ -172,8 +189,13 @@ function reactToActivity(delta) {
   const reaction = REACTIONS.find((r) => delta[r.kind] > 0);
   if (!reaction) return;
   const count = delta[reaction.kind];
-  replayClass(canvas, reaction.anim);
-  if (reaction.fx) burst(reaction.fx);
+  if (!calm()) {
+    if (reaction.cheer) view.celebrate();
+    else {
+      replayClass(canvas, reaction.anim);
+      if (reaction.fx) burst(reaction.fx);
+    }
+  }
   say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { dot: reaction.dot, ms: 4000 });
 }
 
@@ -190,18 +212,10 @@ function celebrateAchievements(list) {
 }
 
 // ---------- Mouse: hover, click and drag ----------
-// The canvas is a 52 px box (room for the adult); only the creature itself counts as "the pet",
-// so the transparent rest of the box lets clicks through to the windows behind.
+// Only the creature itself counts as "the pet" (wherever it walks to), so the transparent rest of the canvas
+// lets clicks through to the windows behind. While the pointer is on it or it is held, it does not walk away.
 
-function isOverPet(e) {
-  if (!status) return false;
-  const r = canvas.getBoundingClientRect();
-  const scale = r.width / BOX; // screen px per native px
-  const { x, y, size } = spriteRect(status.species, status.stage.index);
-  const nx = (e.clientX - r.left) / scale;
-  const ny = (e.clientY - r.top) / scale;
-  return nx >= x && nx < x + size && ny >= y - 2 && ny < y + size; // -2: room for the hop
-}
+const isOverPet = (e) => view.contains(e.clientX, e.clientY);
 
 const isOverBubble = (e) => {
   const bubble = $('#bubble');
@@ -210,10 +224,14 @@ const isOverBubble = (e) => {
   return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
 };
 
+// The pet stands still while the pointer is on it or it is being dragged.
+const syncStill = () => view.setStill(document.body.classList.contains('hover') || Boolean(drag));
+
 function setHover(active) {
   if (document.body.classList.contains('hover') === active) return;
   document.body.classList.toggle('hover', active);
   api.setClickThrough(!active);
+  syncStill();
 }
 
 // With click-through on, Electron still forwards mouse moves, so hover keeps working.
@@ -224,6 +242,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !isOverPet(e)) return;
   canvas.setPointerCapture(e.pointerId);
   drag = { x: e.screenX, y: e.screenY, moved: false };
+  syncStill();
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
 });
 
@@ -243,6 +262,7 @@ canvas.addEventListener('pointerup', (e) => {
   document.body.classList.remove('dragging');
   if (wasClick) reactToClick();
   setHover(isOverPet(e) || isOverBubble(e));
+  syncStill();
 });
 
 $('#bubble').addEventListener('click', () => status && openPopover());
@@ -265,12 +285,13 @@ api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
 api.onPrefs((next) => {
   prefs = next;
+  syncCalm();
   renderBubble();
 });
 api.onPopoverRequest(() => status && openPopover());
 
 setSize(await api.size());
 prefs = await api.prefs();
+syncCalm();
 setStatus(await api.status());
-animatePet(canvas, spriteOptions);
 if (status && !waitingMessage()) say(`Hi! I'm ${status.name}`);

@@ -13,9 +13,12 @@ module.exports = {
   IS_MAC: process.platform === 'darwin',
 
   // Window size at the default sprite size; it grows with the sprite (see ui/pet-size.js).
-  // The pet lives in a square box (52 native sprite px: room for the adult plus its hop, see renderer/shared/sprite.js).
-  // Pet size = that box in screen px; 208 = 4x, the scale the sprites are designed for.
-  // Window at the default size: the box plus room around it for the speech bubble card (268 px wide).
+  // The pet is drawn on a canvas of whole native sprite pixels: `rows` tall = `headroom` (hearts and particles float
+  // above the creature) + 55 (the lowest floor line of any stage, in animations.json) + `below` (under the floor).
+  // renderer/pet/pet-view.js builds the same canvas; test/pet-size.test.js checks that the two agree.
+  // Pet size = 52 screen px per whole scale step; 208 = 4x, the scale the sprites are designed for.
+  // Window at the default size: the canvas plus room around it for the speech bubble card (268 px wide).
+  PET_CANVAS: { headroom: 16, below: 2, rows: 73 },
   PET_WINDOW: { width: 288, height: 320 },
   // Sizes are whole multiples of the box (2x to 8x, `step` = one native box of 52 px), so every sprite pixel
   // is drawn at the same whole size and stays sharp. Set with the slider in the Settings window.

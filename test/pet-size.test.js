@@ -1,7 +1,10 @@
 const test = require('node:test');
+const fs = require('node:fs');
+const path = require('node:path');
 const assert = require('node:assert/strict');
 const { resolveSize, windowSize, anchoredBounds } = require('../src/main/ui/pet-size');
-const { PET_WINDOW, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../src/main/config');
+const { PET_WINDOW, PET_CANVAS, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../src/main/config');
+const animations = require('../assets/pets/animations.json');
 
 const { min, max, step } = PET_SIZE_RANGE;
 const D = DEFAULT_PET_SIZE;
@@ -19,10 +22,32 @@ test('resolveSize snaps to the nearest step inside the range, default for junk',
 
 test('windowSize equals PET_WINDOW at the default size and grows with the pet', () => {
   assert.deepEqual(windowSize(D), PET_WINDOW);
-  assert.deepEqual(windowSize(D + 2 * step), {
-    width: PET_WINDOW.width + 2 * step,
-    height: PET_WINDOW.height + 2 * step,
+  assert.deepEqual(windowSize(D + step), {
+    width: PET_WINDOW.width + step,
+    height: PET_WINDOW.height + step,
   });
+});
+
+test('windowSize is always tall enough for the whole canvas, even at the biggest sizes', () => {
+  for (let size = min; size <= max; size += step) {
+    assert.ok(windowSize(size).height >= PET_CANVAS.rows * (size / step), `size ${size}`);
+  }
+  assert.equal(windowSize(max).height, PET_CANVAS.rows * (max / step));
+});
+
+test('the renderer builds the same canvas as the window expects', () => {
+  const view = fs.readFileSync(path.join(__dirname, '../src/renderer/pet/pet-view.js'), 'utf8');
+  const constant = (name) => Number(new RegExp(`const ${name} = (\\d+);`).exec(view)?.[1]);
+  assert.equal(constant('HEADROOM'), PET_CANVAS.headroom);
+  assert.equal(constant('BELOW'), PET_CANVAS.below);
+  assert.equal(constant('PX_PER_SCALE'), PET_SIZE_RANGE.step);
+});
+
+test('the canvas rows are the headroom, the lowest floor line of any stage and the margin under it', () => {
+  const lowestFloor = Math.max(
+    ...animations.lines.flatMap((line) => line.stages.map(({ shadowEllipse: e }) => Math.ceil(e.cy + e.ry))),
+  );
+  assert.equal(PET_CANVAS.rows, PET_CANVAS.headroom + lowestFloor + PET_CANVAS.below);
 });
 
 test('windowSize never gets narrower than the default width', () => {

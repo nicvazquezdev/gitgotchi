@@ -1,12 +1,8 @@
-// Draws the pet sprites from assets/pets (see src/main/game/catalog.js for the metadata).
-// Rules from the sprite set: nearest-neighbor scaling, the shadow is a separate layer that stays on the floor,
-// and every stage is aligned on its shadow center so all stages stand on the same line.
+// Draws a creature's static sprite with a small hop, for thumbnails (the profile portrait): the rest pose from
+// assets/pets (see src/main/game/catalog.js for the metadata) over its shadow, which is a separate layer that stays
+// on the floor. The desktop pet uses the real animations instead (pet/pet-view.js).
 
 const ASSETS = new URL('../../../assets/pets/', import.meta.url);
-
-/** Native size of the pet box: fits the adult (48 px) plus room for the jump. CSS scales it. */
-export const BOX = 52;
-const GROUND = 50; // y of the floor inside the box, in native px
 
 // Reference hop from the sprite set: 0, -1, -2, -1 px; the shadow shrinks and fades at the top.
 const LIFT = [0, -1, -2, -1];
@@ -44,24 +40,13 @@ const stageOf = (species, stageIndex) =>
 const motionFor = (stage, mood) => (stage.floats ? FLOAT : (MOTIONS[mood] ?? MOTIONS.neutral));
 
 /**
- * Where the sprite sits inside the box, in native px. Used for hit-testing (clicks only count on the pet).
- * @returns {{ x: number, y: number, size: number }}
- */
-export function spriteRect(species, stageIndex) {
-  const { size, shadowEllipse: e } = stageOf(species, stageIndex);
-  return { x: Math.round(BOX / 2 - e.cx), y: Math.round(GROUND - e.cy), size };
-}
-
-/**
- * Draws one frame.
+ * Draws one frame; the canvas is just the sprite.
  * @param {HTMLCanvasElement} canvas
  * @param {{ species, stageIndex, mood, frame }} opts
- * @param {{ fit?: 'box' | 'sprite' }} [layout]  'box': aligned on the floor of the shared 52 px box (the pet window);
- *   'sprite': the canvas is just the sprite (thumbnails).
  */
-export function drawPet(canvas, { species, stageIndex, mood, frame = 0 }, { fit = 'box' } = {}) {
+export function drawPet(canvas, { species, stageIndex, mood, frame = 0 }) {
   const stage = stageOf(species, stageIndex);
-  const side = fit === 'box' ? BOX : stage.size;
+  const side = stage.size;
   if (canvas.width !== side) canvas.width = canvas.height = side;
 
   const ctx = canvas.getContext('2d');
@@ -74,30 +59,29 @@ export function drawPet(canvas, { species, stageIndex, mood, frame = 0 }, { fit 
 
   const { steps } = motionFor(stage, mood);
   const step = steps[frame % steps.length];
-  const { x, y } = fit === 'box' ? spriteRect(species, stageIndex) : { x: 0, y: 0 };
   const e = stage.shadowEllipse;
 
   // Shadow: stays on the floor, shrinks and fades around its center while the pet is up.
   ctx.save();
   ctx.globalAlpha = SHADOW[step].alpha;
-  ctx.translate(x + e.cx, y + e.cy);
+  ctx.translate(e.cx, e.cy);
   ctx.scale(SHADOW[step].scale, SHADOW[step].scale);
   ctx.drawImage(shadow, -e.cx, -e.cy);
   ctx.restore();
 
-  ctx.drawImage(sprite, x, y + LIFT[step]);
+  ctx.drawImage(sprite, 0, LIFT[step]);
 }
 
 /**
  * Animates a canvas. `getOptions()` is read on every frame, so state can change live.
  * @returns {() => void} stops the animation
  */
-export function animatePet(canvas, getOptions, layout) {
+export function animatePet(canvas, getOptions) {
   let frame = 0;
   let timer = null;
   const tick = () => {
     const opts = getOptions();
-    if (opts) drawPet(canvas, { ...opts, frame: frame++ }, layout);
+    if (opts) drawPet(canvas, { ...opts, frame: frame++ });
     const ms = opts ? motionFor(stageOf(opts.species, opts.stageIndex), opts.mood).ms : 500;
     timer = setTimeout(tick, ms);
   };
