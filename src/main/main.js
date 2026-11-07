@@ -1,5 +1,5 @@
 // Entry point: app lifecycle and wiring between services and UI.
-const { app, screen, powerMonitor } = require('electron');
+const { app, screen, powerMonitor, systemPreferences } = require('electron');
 const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD, LIVE } = require('./config');
 
 const session = require('./services/session');
@@ -22,6 +22,15 @@ const { startLive } = require('./live');
 const cloud = require('./cloud/cloud-sync');
 
 let tray = null;
+
+// macOS reopens the windows of an app that was killed or quit while it was starting, and asks "The last time you
+// opened … it unexpectedly quit while reopening windows". This app builds its own windows and restarts a lot in
+// development (the old process is killed), so it never wants that: it asks macOS not to restore anything.
+// Both are read from the app's own preferences, so they take effect from the next launch on.
+if (IS_MAC) {
+  systemPreferences.setUserDefault('ApplePersistenceIgnoreState', 'boolean', true);
+  systemPreferences.setUserDefault('NSQuitAlwaysKeepsWindows', 'boolean', false);
+}
 
 // ---------- App actions ----------
 
