@@ -3,6 +3,7 @@ const { ipcMain } = require('electron');
 const store = require('./store');
 const session = require('./services/session');
 const petService = require('./services/pet-service');
+const cloud = require('./cloud/cloud-sync');
 const petWindow = require('./ui/pet-window');
 const panelWindow = require('./ui/panel-window');
 const catalog = require('./game/catalog');
@@ -22,7 +23,15 @@ function on(channel, fn) {
 }
 
 // Panel buttons. Actions in KEEP_OPEN update the panel in place; the rest close it first.
-const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleOpenAtLogin', 'openSettings', 'disconnect', 'quit'];
+const PANEL_ACTIONS = [
+  'sync',
+  'togglePet',
+  'toggleOpenAtLogin',
+  'toggleCloudSync',
+  'openSettings',
+  'disconnect',
+  'quit',
+];
 const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleOpenAtLogin']);
 
 /**
@@ -57,9 +66,18 @@ function registerIpc(actions) {
 
   // Onboarding
   handle('repos:list', () => petService.listRepos());
-  handle('onboarding:finish', async (choice) => {
+  handle('onboarding:finish', async ({ cloudSync, ...choice }) => {
     await petService.configure(choice);
     actions.finishOnboarding();
+    if (cloudSync) cloud.enable();
+  });
+
+  // Cloud save (optional): find / restore a pet saved in the user's GitHub account.
+  handle('cloud:find', () => attempt(() => cloud.find()));
+  handle('cloud:restore', async () => {
+    await cloud.restore();
+    actions.finishOnboarding();
+    petService.sync();
   });
 
   // Pet

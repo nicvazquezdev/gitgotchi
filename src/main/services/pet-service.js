@@ -56,6 +56,7 @@ class PetService extends EventEmitter {
         .slice(0, 16) || speciesInfo.stages[0].name;
 
     store.update({
+      profileUpdatedAt: new Date().toISOString(),
       repos,
       pet: isNewPet
         ? { species, name: cleanName, bornAt: new Date().toISOString(), stageIndex: null }

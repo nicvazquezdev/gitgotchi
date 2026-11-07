@@ -4,6 +4,9 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '../..');
 
 module.exports = {
+  // Optional cloud save in the user's own GitHub account (see cloud/cloud-sync.js).
+  CLOUD: { PUSH_INTERVAL_MS: 60 * 60 * 1000, PULL_INTERVAL_MS: 30 * 60 * 1000, QUIT_FLUSH_TIMEOUT_MS: 4000 },
+
   ROOT,
   RENDERER_DIR: path.join(ROOT, 'src/renderer'),
   PRELOAD: path.join(ROOT, 'src/preload/preload.js'),
