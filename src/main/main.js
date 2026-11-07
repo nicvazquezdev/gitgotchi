@@ -1,5 +1,5 @@
 // Entry point: app lifecycle and wiring between services and UI.
-const { app, screen, powerMonitor, Notification } = require('electron');
+const { app, screen, powerMonitor } = require('electron');
 const { IS_MAC, PET_SIZE_RANGE, TICK_INTERVAL_MS } = require('./config');
 
 const session = require('./services/session');
@@ -7,6 +7,8 @@ const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
 const onboardingWindow = require('./ui/onboarding-window');
 const panelWindow = require('./ui/panel-window');
+const profileWindow = require('./ui/profile-window');
+const evolutionWindow = require('./ui/evolution-window');
 const { createTray } = require('./ui/tray');
 const { registerIpc } = require('./ipc');
 const loginItem = require('./login-item');
@@ -16,7 +18,23 @@ let tray = null;
 
 // ---------- App actions ----------
 
+// --- Profile & evolution windows ---
+// An evolution that happens in Do Not Disturb waits here ({ fromIndex, toIndex }, merged if several pile up)
+// and is shown by `flushEvolution`: on the next status update after DnD turns off, or when the menu opens.
+let pendingEvolution = null;
+
 const actions = {
+  openProfile: () => profileWindow.open(),
+  celebrateEvolution: ({ index }) => {
+    pendingEvolution = { fromIndex: pendingEvolution?.fromIndex ?? index - 1, toIndex: index };
+    actions.flushEvolution();
+  },
+  flushEvolution: () => {
+    if (!pendingEvolution || actions.panelState().doNotDisturb) return;
+    evolutionWindow.open(pendingEvolution);
+    pendingEvolution = null;
+  },
+  // --- end Profile & evolution windows ---
   sync: () => petService.sync(),
   togglePet: () => {
     if (petWindow.isVisible()) petWindow.hide();
@@ -44,6 +62,7 @@ const actions = {
   // Live while dragging the panel slider (`persist` false); saved on release.
   setPetSize: (size, persist = true) => petWindow.setSize(size, { persist }),
   showMenu: () => {
+    actions.flushEvolution();
     const { x, y } = screen.getCursorScreenPoint();
     panelWindow.show({ x, y, width: 0, height: 0 });
   },
@@ -63,14 +82,13 @@ const actions = {
 
 petService.on('status', (status) => {
   petWindow.send('pet:status', status);
+  profileWindow.send('profile:status', status);
   panelWindow.send();
+  actions.flushEvolution();
 });
 petService.on('evolved', (stage) => {
   petWindow.send('pet:evolved', stage);
-  const { name } = petService.status();
-  if (Notification.isSupported()) {
-    new Notification({ title: 'Gitgotchi', body: `${name} evolved into a ${stage.name}!`, silent: true }).show();
-  }
+  actions.celebrateEvolution(stage);
 });
 petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
 
@@ -85,8 +103,12 @@ app.whenReady().then(() => {
   loginItem.applyDefault();
   panelWindow.init(actions.panelState);
   tray = createTray();
-  tray.on('click', () => panelWindow.toggle(tray.getBounds()));
-  tray.on('right-click', () => panelWindow.toggle(tray.getBounds()));
+  const toggleMenu = () => {
+    actions.flushEvolution();
+    panelWindow.toggle(tray.getBounds());
+  };
+  tray.on('click', toggleMenu);
+  tray.on('right-click', toggleMenu);
 
   if (petService.isConfigured()) {
     petWindow.show();

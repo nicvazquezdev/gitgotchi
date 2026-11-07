@@ -19,6 +19,9 @@ module.exports = {
   DEFAULT_PET_SIZE: 208,
   // Menu-bar panel: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 300, height: 360 },
+  // Profile and evolution windows; the native traffic lights overlay the 40 px page title bar.
+  PROFILE_WINDOW: { width: 960, height: 500 },
+  EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the pet step doesn't fit.
   ONBOARDING_WINDOW: { width: 640, height: 860, minWidth: 640, minHeight: 860 },
 

@@ -1,0 +1,132 @@
+/* Celebration screen: always dark, whatever the system setting. Palette from the design. */
+body {
+  background: #1b1630;
+  color: #ffffff;
+  overflow: hidden;
+}
+.titlebar-drag {
+  position: fixed;
+  inset: 0 0 auto;
+  height: 40px;
+  -webkit-app-region: drag;
+}
+.scene {
+  --glow-1: #241d42;
+  --glow-2: #2e2555;
+  --glow-3: #3a2f6b;
+  position: relative;
+  width: 960px;
+  height: 640px;
+  overflow: hidden;
+}
+.scene > * {
+  position: absolute;
+}
+
+/* Pixel sparkles (stars) and 4-point glints */
+.star {
+  width: 4px;
+  height: 4px;
+  background: #8f84c9;
+}
+.star.dim {
+  background: #5f5590;
+}
+.glint {
+  width: var(--s);
+  height: var(--s);
+}
+.glint::before,
+.glint::after {
+  content: '';
+  position: absolute;
+  background: var(--c);
+}
+.glint::before {
+  inset: calc(var(--s) / 2 - 2px) 0;
+}
+.glint::after {
+  inset: 0 calc(var(--s) / 2 - 2px);
+}
+.circle {
+  border-radius: 50%;
+}
+
+.head {
+  inset: 48px 0 auto;
+  text-align: center;
+}
+.head .eyebrow {
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: #ffd36a;
+}
+.head h1 {
+  margin: 8px 0 0;
+  font: 600 38px/44px var(--font-pixel);
+}
+.floor-shadow {
+  left: 432px;
+  top: 384px;
+  width: 96px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+}
+.hero {
+  left: 50%;
+  top: 398px;
+  transform: translate(-50%, -100%);
+}
+
+.pills {
+  inset: 432px 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+.pills svg {
+  color: #8f84c9;
+}
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 4px;
+  border-radius: 999px;
+  background: #2a2348;
+  color: #c9c0ec;
+}
+.pill.to {
+  background: #4a3a8c;
+  color: #ffffff;
+  font-weight: 600;
+}
+.pill img {
+  width: 24px;
+  height: 24px;
+}
+.hint {
+  inset: 474px 0 auto;
+  margin: 0;
+  text-align: center;
+  font-size: 15px;
+  color: #c9c0ec;
+}
+.actions {
+  --accent: #6a4ff0;
+  --accent-edge: #3d2899;
+  --btn-2: #322a58;
+  --btn-2-edge: #241d42;
+  --btn-2-text: #ffffff;
+  inset: 530px 0 auto;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+.actions .btn {
+  height: 44px;
+  font-size: 15px;
+}

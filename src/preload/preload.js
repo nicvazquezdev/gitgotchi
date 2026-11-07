@@ -37,6 +37,19 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onActivity: subscribe('pet:activity'), // { [kind]: count }
   },
 
+  // --- Profile & evolution windows ---
+  profile: {
+    status: invoke('profile:status'),
+    onStatus: subscribe('profile:status'),
+  },
+
+  evolution: {
+    data: invoke('evolution:data'), // -> { fromIndex, toIndex }
+    close: send('evolution:close'),
+    viewProfile: send('evolution:view-profile'),
+  },
+  // --- end Profile & evolution windows ---
+
   panel: {
     state: invoke('panel:state'), // -> { status, configured, connected, petVisible, openAtLogin, petSize, sizeRange }
     onState: subscribe('panel:state'),

@@ -1,0 +1,223 @@
+body {
+  background: var(--bg-subtle);
+  overflow: hidden;
+}
+.window {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 20px;
+  padding: 24px;
+}
+.card {
+  padding: 16px 18px;
+  border-radius: var(--radius-xl);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+.card h2 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+/* ---------- Left: pet card ---------- */
+.pet-card {
+  width: 300px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+}
+.pet-card .portrait {
+  height: 196px;
+}
+.pet-card .portrait .inner {
+  position: relative;
+  padding-bottom: 14px;
+  background: var(--tint);
+}
+.floor {
+  position: absolute;
+  inset: auto 0 0;
+  height: 30px;
+  background: rgba(42, 24, 64, 0.08);
+}
+.pet-card canvas {
+  position: relative;
+}
+.pet-name {
+  margin-top: 14px;
+  font-size: 28px;
+  line-height: 32px;
+}
+.pet-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.pet-card .xp-bar {
+  margin-top: 16px;
+}
+.xp-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+}
+.xp-row b {
+  font-weight: 600;
+}
+.pet-card .notice {
+  margin-top: auto;
+}
+.notice.calm {
+  background: var(--surface);
+  color: var(--text-2);
+}
+
+/* ---------- Right column ---------- */
+.right {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.stages {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 14px;
+}
+.stages > svg {
+  flex: none;
+  margin-top: 49px;
+  color: var(--text-4);
+  opacity: 0.7;
+}
+.stage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+.stage-art {
+  width: 100%;
+  height: 112px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 8px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+.stage.now .stage-art {
+  background: var(--tint);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+.stage.done .stage-art {
+  background: var(--tint);
+}
+.stage.locked img {
+  opacity: 0.16;
+}
+.stage .pixel-name {
+  font-size: 16px;
+}
+.stage.locked .pixel-name {
+  color: var(--text-4);
+}
+.stage-label {
+  font-size: 12px;
+  color: var(--text-3);
+}
+.stage.now .stage-label {
+  color: var(--accent-text);
+  font-weight: 600;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  flex: 1;
+  min-height: 0;
+}
+.week {
+  flex: 1.5;
+}
+.rules {
+  flex: 1;
+}
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 14px;
+}
+.tile {
+  padding: 12px;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  font-size: 12px;
+}
+.tile .count {
+  font: 600 30px/34px var(--font-pixel);
+}
+.tile .xp-text {
+  display: block;
+  margin-top: 4px;
+}
+.week .card-head .xp-text {
+  font-size: 13px;
+}
+.rule-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+  font-size: 13px;
+  line-height: 1.25;
+}
+.rule {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+.rule span:first-child {
+  color: var(--text-2);
+}
+.rule span:last-child {
+  font-weight: 600;
+  white-space: nowrap;
+}
+.sizes .size-badge {
+  min-width: 0;
+  height: auto;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+.sizes {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+.rule-list hr {
+  width: 100%;
+  height: 1px;
+  margin: 0;
+  border: 0;
+  background: var(--divider);
+}

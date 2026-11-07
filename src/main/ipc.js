@@ -6,6 +6,7 @@ const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
 const panelWindow = require('./ui/panel-window');
 const catalog = require('./game/catalog');
+const evolutionWindow = require('./ui/evolution-window');
 
 // Only accept messages from our own local pages.
 const isTrusted = (event) => event.senderFrame?.url.startsWith('file://');
@@ -26,7 +27,7 @@ const PANEL_ACTIONS = ['sync', 'togglePet', 'toggleOpenAtLogin', 'openSettings',
 const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleOpenAtLogin']);
 
 /**
- * @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
+ * @param {{ openProfile: () => void, finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
  *           setPetSize: (size: number, persist?: boolean) => void }} actions
  */
 function registerIpc(actions) {
@@ -72,6 +73,16 @@ function registerIpc(actions) {
   on('pet:drag-end', () => petWindow.stopDrag());
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());
+
+  // --- Profile & evolution windows ---
+  handle('profile:status', () => petService.status());
+  handle('evolution:data', () => evolutionWindow.current());
+  on('evolution:close', () => evolutionWindow.close());
+  on('evolution:view-profile', () => {
+    evolutionWindow.close();
+    actions.openProfile();
+  });
+  // --- end Profile & evolution windows ---
 
   // Panel
   handle('panel:state', () => actions.panelState());
