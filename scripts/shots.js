@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 const { app, BrowserWindow, nativeTheme } = require('electron');
 const fs = require('node:fs');
@@ -11,11 +11,14 @@ const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
-const args = process.argv.slice(2).filter((a) => !a.startsWith('--'));
+const flagValues = new Set(['--out', '--tab'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
+const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const light = process.argv.includes('--light');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
+const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
+const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
 const PAGES = {
   profile: { size: config.PROFILE_WINDOW },
   evolution: { size: config.EVOLUTION_WINDOW },
@@ -121,7 +124,8 @@ process.env.SHOTS_FIXTURES = JSON.stringify(fixtures);
 // ---------- Render ----------
 
 async function shot(name) {
-  const { size, fit } = PAGES[name];
+  const { fit } = PAGES[name];
+  const size = tall ? { ...PAGES[name].size, height: 1500 } : PAGES[name].size;
   const win = new BrowserWindow({
     show: false,
     ...size,
@@ -129,7 +133,7 @@ async function shot(name) {
     backgroundColor: light ? '#e8e5ef' : '#0f0d14',
     webPreferences: { preload: path.join(__dirname, 'shots-preload.js'), contextIsolation: true, sandbox: false },
   });
-  await win.loadFile(path.join(ROOT, 'src/renderer', name, 'index.html'));
+  await win.loadFile(path.join(ROOT, 'src/renderer', name, 'index.html'), tab ? { hash: tab } : {});
   await new Promise((resolve) => setTimeout(resolve, 1000)); // fonts, images and the first render
   const rect = fit
     ? await win.webContents.executeJavaScript(
@@ -140,7 +144,10 @@ async function shot(name) {
   const overflowing = await win.webContents.executeJavaScript(
     `[...document.querySelectorAll('.card')].filter((c) => c.scrollHeight > c.clientHeight + 1 || c.scrollWidth > c.clientWidth + 1).map((c) => c.className)`,
   );
-  const file = path.join(outDir, `${name}${mine ? '-mine' : ''}${light ? '-light' : ''}.png`);
+  const file = path.join(
+    outDir,
+    `${name}${tab ? `-${tab}` : ''}${mine ? '-mine' : ''}${tall ? '-tall' : ''}${light ? '-light' : ''}.png`,
+  );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };
 }

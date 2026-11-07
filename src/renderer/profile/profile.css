@@ -14,6 +14,162 @@ body {
   gap: 20px;
   padding: 24px;
 }
+/* ---------- Title bar: switch between the views ---------- */
+.seg {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.seg-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 26px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-2);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+.seg-btn:hover:not([aria-selected='true']) {
+  color: var(--text);
+}
+.seg-btn[aria-selected='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.seg-btn[aria-selected='true'] .count-chip {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* ---------- Achievements ---------- */
+.content.achievements {
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.ach-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+.ach-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+.ach-head h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.ach-total {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.ach-total b {
+  color: var(--text);
+}
+.ach-total .xp-bar {
+  width: 220px;
+  margin-left: 8px;
+}
+.ach-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.ach-group-head h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.ach-group-count {
+  margin-left: auto;
+}
+.ach-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+.ach {
+  display: flex;
+  gap: 12px;
+  padding: 14px;
+  border-radius: var(--radius-lg);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px var(--card-border);
+}
+.ach-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text-4);
+}
+.ach-body {
+  min-width: 0;
+  flex: 1;
+}
+.ach-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+.ach-desc {
+  margin-top: 2px;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--text-3);
+}
+.ach.done {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.ach.done .ach-icon {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.ach.done .ach-name {
+  color: var(--text);
+}
+.ach-date {
+  margin-top: 6px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent-text);
+}
+.ach-progress {
+  margin-top: 8px;
+}
+.ach-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.ach-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+.ach-count {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--text-3);
+}
+
 .card {
   padding: 16px 18px;
 }
