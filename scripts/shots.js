@@ -70,39 +70,39 @@ const days = {
   [dayKey(5)]: { prs: 3, prsXp: 40, reviews: 1, merges: 1, commits: 6, issues: 2 },
 };
 const prs = [
-  pr(1, 'EXT-3303: Offer to match a new component with its design system token', 'webflow/webflow', 240, {
+  pr(1, 'Offer to match a pasted component with a design token', 'acme/web-app', 240, {
     createdAt: ago(60 * H),
     ci: 'FAILURE',
   }),
-  pr(2, '[EXT-2655] Add library.variables to the export API', 'webflow/webflow-cli', 18, { ci: 'PENDING' }),
-  pr(3, 'Skip the See logs footer when there are none', 'webflow/webflow-cli', 6, {
+  pr(2, 'Add variables to the library export', 'acme/cli', 18, { ci: 'PENDING' }),
+  pr(3, 'Skip the footer when there are no logs', 'acme/cli', 6, {
     reviewDecision: 'CHANGES_REQUESTED',
   }),
-  pr(4, 'Strip exported library metadata', 'webflow/webflow-cli', 410, { reviewDecision: 'APPROVED' }),
-  pr(5, 'Make library variables optional', 'webflow/webflow', 90, {
+  pr(4, 'Strip extra metadata from the export', 'acme/cli', 410, { reviewDecision: 'APPROVED' }),
+  pr(5, 'Make the new export option optional', 'acme/web-app', 90, {
     state: 'MERGED',
     mergedAt: ago(2 * H),
     createdAt: ago(40 * H),
   }),
 ];
-const repos = ['webflow/webflow', 'webflow/webflow-cli'];
+const repos = ['acme/web-app', 'acme/cli'];
 const pet = { name: 'Mergon', species: 'phoenix', bornAt: ago(20 * 24 * H), stageIndex: 1, level: 6 };
 const history = fresh ? { days: {}, prs: [], commits: [] } : { days, prs, commits: [] };
 if (complete) pet.achievements = Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)]));
 const status = computeStatus({ pet, activity: history, repos }, NOW);
 status.reviewQueue = reviewQueue(
   [
-    { ...pr(11, 'Fix flaky editor selection test', 'webflow/webflow', 35), author: 'ana-dev', requestedAt: ago(5 * H) },
+    { ...pr(11, 'Fix flaky editor selection test', 'acme/web-app', 35), author: 'ana-dev', requestedAt: ago(5 * H) },
     {
-      ...pr(12, 'Bump design tokens to 4.2', 'webflow/webflow-cli', 520),
+      ...pr(12, 'Bump design tokens to 4.2', 'acme/cli', 520),
       author: 'lee-ui',
       createdAt: ago(80 * H),
       requestedAt: ago(70 * H),
-      via: 'webflow/code',
+      via: 'acme/code',
     },
     // The date of the request could not be proved: the row says how old the PR is and does not flag it as late.
     {
-      ...pr(13, 'Add keyboard shortcuts to the navigator', 'webflow/webflow', 140),
+      ...pr(13, 'Add keyboard shortcuts to the navigator', 'acme/web-app', 140),
       author: 'sam',
       createdAt: ago(9 * 24 * H),
     },
