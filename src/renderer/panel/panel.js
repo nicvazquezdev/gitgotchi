@@ -1,4 +1,5 @@
-// Menu bar dropdown: the pet, its PR summary, toggles and app actions, from the state pushed by main.
+// Menu bar dropdown: the pet, its PR summary, everyday toggles and app actions, from the state pushed by main.
+// Preferences that are set once live in the Settings window.
 import { $, h } from '../shared/dom.js';
 import { plural, totalXp, oldestDays, timeAgo } from '../shared/format.js';
 import { xpBar, portraitImg } from '../shared/ui.js';
@@ -8,7 +9,6 @@ const app = $('#app');
 
 const REFRESH_LABEL_MS = 30 * 1000; // "Synced N min ago" stays fresh while the dropdown is open
 let state = null;
-let dragging = false; // while the slider is held, pushed states must not rebuild it
 
 // ---------- Parts ----------
 
@@ -81,45 +81,6 @@ function toggleRow(label, name, checked) {
   );
 }
 
-function sizeRow({ petSize, sizeRange }) {
-  const value = h('span', { class: 'meta size-value' }, `${petSize} px`);
-  const slider = h('input', {
-    class: 'slider',
-    type: 'range',
-    min: sizeRange.min,
-    max: sizeRange.max,
-    step: 1,
-    value: petSize,
-    'aria-label': 'Pet size',
-  });
-  const paint = () => {
-    slider.style.setProperty('--fill', `${((slider.value - sizeRange.min) / (sizeRange.max - sizeRange.min)) * 100}%`);
-    value.textContent = `${slider.value} px`;
-  };
-
-  // Live resize: at most one message per frame; the final value is saved on release.
-  let frame = 0;
-  slider.addEventListener('input', () => {
-    paint();
-    dragging = true;
-    if (!frame) {
-      frame = requestAnimationFrame(() => {
-        frame = 0;
-        api.setSize({ size: Number(slider.value), commit: false });
-      });
-    }
-  });
-  slider.addEventListener('change', () => {
-    cancelAnimationFrame(frame);
-    frame = 0;
-    dragging = false;
-    api.setSize({ size: Number(slider.value), commit: true });
-  });
-  paint();
-
-  return h('div', { class: 'row size' }, h('span', {}, 'Pet size'), slider, value);
-}
-
 /** A plain text row; `end` is the secondary text on the right. */
 const linkRow = (label, { onclick, end, disabled } = {}) =>
   h(
@@ -138,8 +99,8 @@ function syncedLabel(status) {
 
 function render(next = state) {
   state = next;
-  if (dragging || !state) return; // the slider owns the screen until released
-  const { status, configured, petVisible, speechBubbles, doNotDisturb, openAtLogin, cloudSync } = state;
+  if (!state) return;
+  const { status, configured, petVisible, doNotDisturb } = state;
   const ready = configured && status;
   app.replaceChildren(
     ...(ready
@@ -148,18 +109,10 @@ function render(next = state) {
           divider(),
           ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }),
           divider(),
-        ]
-      : [h('p', { class: 'welcome' }, 'No pet yet. Pick your repos to hatch one.'), divider()]),
-    ...(ready
-      ? [
           toggleRow('Show pet on desktop', 'togglePet', petVisible),
-          toggleRow('Speech bubbles', 'toggleSpeechBubbles', speechBubbles),
           toggleRow('Do not disturb', 'toggleDoNotDisturb', doNotDisturb),
-          toggleRow('Sync to GitHub', 'toggleCloudSync', cloudSync),
-          sizeRow(state),
         ]
-      : []),
-    toggleRow('Open at login', 'toggleOpenAtLogin', openAtLogin),
+      : [h('p', { class: 'welcome' }, 'No pet yet. Pick your repos to hatch one.')]),
     divider(),
     ...(ready
       ? [
@@ -171,7 +124,7 @@ function render(next = state) {
           }),
         ]
       : []),
-    linkRow('Settings…', { onclick: () => api.action('openSettings'), end: '⌘ ,' }),
+    linkRow(ready ? 'Settings…' : 'Set up Gitgotchi…', { onclick: () => api.action('openSettings'), end: '⌘ ,' }),
     divider(),
     linkRow('Quit Gitgotchi', { onclick: () => api.action('quit'), end: '⌘ Q' }),
     ...(status?.error ? [h('p', { class: 'notice error', role: 'alert' }, status.error)] : []),
