@@ -134,7 +134,7 @@ function weekCard({ week }) {
 }
 
 const sizeLimit = (sizes, i) =>
-  sizes[i].maxLines === null ? `More than ${sizes[i - 1].maxLines} lines` : `Up to ${sizes[i].maxLines} lines`;
+  sizes[i].maxLines === null ? `Over ${sizes[i - 1].maxLines} lines` : `Up to ${sizes[i].maxLines} lines`;
 
 function rulesCard({ sizes, review, merged }) {
   const row = (label, xp, lead) =>
@@ -146,7 +146,7 @@ function rulesCard({ sizes, review, merged }) {
     h(
       'div',
       { class: 'rule-list' },
-      h('div', { class: 'rule-group' }, 'Open a PR (by its size)'),
+      h('div', { class: 'rule-group' }, 'Open a PR, by size'),
       sizes.map(({ id, xp }, i) => row(sizeLimit(sizes, i), xp, h('span', { class: 'size-badge' }, id))),
       h('hr'),
       row('Review a PR', review),
