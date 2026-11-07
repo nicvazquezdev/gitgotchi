@@ -138,6 +138,7 @@ function reactToClick() {
 const REACTIONS = [
   { kind: 'merges', anim: 'party', fx: 'confetti', text: 'PR merged! 🎉', dot: 'approved' },
   { kind: 'approvals', anim: 'party', fx: 'confetti', text: 'Your PR got approved! 🎉', dot: 'approved' },
+  { kind: 'achievements', anim: 'party', fx: 'confetti', text: 'Achievement unlocked! 🏆', dot: 'approved' },
   { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
   { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
@@ -173,6 +174,18 @@ function reactToActivity(delta) {
   replayClass(canvas, reaction.anim);
   if (reaction.fx) burst(reaction.fx);
   say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { dot: reaction.dot, ms: 4000 });
+}
+
+/** New achievements: the usual cheer, then the name of the first one in the bubble (the rest are in the profile). */
+function celebrateAchievements(list) {
+  if (!list?.length) return;
+  reactToActivity({ achievements: list.length });
+  const [first] = list;
+  say(`Achievement: ${first.name} 🏆`, {
+    sub: list.length > 1 ? `And ${list.length - 1} more in your profile` : first.description,
+    dot: 'approved',
+    ms: 5000,
+  });
 }
 
 // ---------- Mouse: hover, click and drag ----------
@@ -248,6 +261,7 @@ api.onEvolved(() => {
   say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}! ✨`, { ms: 6000 });
 });
 api.onActivity(reactToActivity);
+api.onAchievements(celebrateAchievements);
 api.onPrefs((next) => {
   prefs = next;
   renderBubble();

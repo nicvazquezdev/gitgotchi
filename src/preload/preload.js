@@ -46,6 +46,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onStatus: subscribe('pet:status'),
     onEvolved: subscribe('pet:evolved'),
     onActivity: subscribe('pet:activity'), // { [kind]: count }
+    onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
   },
 
   // --- Profile & evolution windows ---

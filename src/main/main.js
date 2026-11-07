@@ -164,6 +164,7 @@ petService.on('evolved', (stage) => {
   actions.celebrateEvolution(stage);
 });
 petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
+petService.on('achievements', (list) => petWindow.send('pet:achievements', list));
 
 // --- cloud save (optional) ---
 petService.on('status', () => cloud.schedulePush());
