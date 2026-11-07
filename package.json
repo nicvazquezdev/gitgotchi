@@ -5,11 +5,13 @@
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
+    "dev": "electronmon .",
     "format": "prettier --write .",
     "lint": "prettier --check ."
   },
   "devDependencies": {
     "electron": "^45.2.3",
+    "electronmon": "^2.0.4",
     "prettier": "^3.9.10"
   },
   "private": true,

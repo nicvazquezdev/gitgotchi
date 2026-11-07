@@ -8,7 +8,7 @@ Requires the [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). T
 
 ```sh
 npm install
-npm start
+npm run dev   # auto-reloads on changes
 ```
 
 ## How it works
@@ -51,5 +51,6 @@ The current sprites are code-generated placeholders (`src/renderer/shared/sprite
 
 ## Scripts
 
+- `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
 - `npm run format` / `npm run lint`: Prettier
