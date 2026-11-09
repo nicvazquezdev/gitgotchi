@@ -1,0 +1,55 @@
+name: Bug report
+description: Something does not work as it should
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for the report. Never paste a token, a key or the contents of a `.env` file.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what you saw instead. A screenshot helps.
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Gitgotchi version
+      description: In the app, Settings shows it. Or write "from source" and the commit.
+    validations:
+      required: true
+  - type: dropdown
+    id: system
+    attributes:
+      label: System
+      options:
+        - macOS
+        - Windows
+        - Linux
+    validations:
+      required: true
+  - type: input
+    id: system-version
+    attributes:
+      label: System version
+      description: For example macOS 15.1, Windows 11, Ubuntu 24.04 (GNOME, Wayland or X11).
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Download from the releases page
+        - From source (npm run dev)
+  - type: input
+    id: gh
+    attributes:
+      label: GitHub CLI version
+      description: The output of `gh --version`, first line.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs
+      description: If you run it from source, the terminal output. Remove anything private.
+      render: shell

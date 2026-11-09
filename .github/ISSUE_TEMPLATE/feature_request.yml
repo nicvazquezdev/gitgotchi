@@ -1,0 +1,20 @@
+name: Idea
+description: A new pet, a trophy, a setting, or anything else you would like
+labels: [enhancement]
+body:
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like?
+      description: Tell us what problem it solves, or what it would feel like to use.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Other ways to do it
+      description: Anything you tried or thought about.
+  - type: markdown
+    attributes:
+      value: |
+        Gitgotchi is calm on purpose: no notifications, no nagging, and a pet never goes down a level. Ideas that fit that are the easiest to say yes to.
