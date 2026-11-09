@@ -36,8 +36,8 @@ if (IS_MAC) {
 // ---------- App actions ----------
 
 // --- Profile & evolution windows ---
-// An evolution that happens in Do Not Disturb waits here ({ fromIndex, toIndex }, merged if several pile up)
-// and is shown by `flushEvolution`: on the next status update after DnD turns off, or when the menu opens.
+// An evolution that happens during a pause waits here ({ fromIndex, toIndex }, merged if several pile up)
+// and is shown by `flushEvolution`: on the next status update after the pause ends, or when the menu opens.
 let pendingEvolution = null;
 
 const actions = {
@@ -48,7 +48,7 @@ const actions = {
     actions.flushEvolution();
   },
   flushEvolution: () => {
-    if (!pendingEvolution || prefs.doNotDisturb()) return;
+    if (!pendingEvolution || petService.isPaused()) return;
     evolutionWindow.open(pendingEvolution);
     pendingEvolution = null;
   },
@@ -76,15 +76,17 @@ const actions = {
     petWindow.close();
     actions.openSetup();
   },
-  toggleTimeOff: () => {
-    if (petService.isOnTimeOff()) petService.endTimeOff();
-    else petService.startTimeOff();
-    settingsWindow.send();
+  // --- pause (see game/pause.js): the menu and Settings share these; the status that follows updates every window ---
+  pauseHour: () => petService.startPause('hour'),
+  pauseTomorrow: () => petService.startPause('tomorrow'),
+  // A vacation starts with no set return; Settings is where the person picks the day they are back.
+  pauseVacation: () => {
+    petService.startPause('vacation');
+    actions.openSettings();
   },
-  setTimeOffReturn: (day) => {
-    petService.setTimeOffReturn(day);
-    settingsWindow.send();
-  },
+  resume: () => petService.resume(),
+  setPauseReturn: (day) => petService.setTimeOffReturn(day),
+  // --- end pause ---
   toggleOpenAtLogin: () => {
     loginItem.setEnabled(!loginItem.isEnabled());
     settingsWindow.send();
@@ -113,7 +115,6 @@ const actions = {
   },
   // --- everyday UI: menu bar dropdown, PR popover, pet bubble ---
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
-  toggleDoNotDisturb: () => togglePref('doNotDisturb'),
   toggleNotifications: () => togglePref('notifications'),
   // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
   openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
@@ -135,7 +136,6 @@ const actions = {
     configured: petService.isConfigured(),
     connected: session.isConnected(),
     petVisible: petWindow.isVisible(),
-    doNotDisturb: prefs.doNotDisturb(),
   }),
   settingsState: () => {
     const { user, repos } = store.get();
@@ -143,9 +143,8 @@ const actions = {
       login: user?.login ?? null,
       repoCount: repos.length,
       speechBubbles: prefs.speechBubbles(),
-      doNotDisturb: prefs.doNotDisturb(),
       notifications: prefs.notifications(),
-      timeOff: petService.timeOff(),
+      pause: petService.pause(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
       petSize: petWindow.size(),
@@ -178,10 +177,9 @@ function togglePref(key) {
   petWindow.send('pet:prefs', prefs.petPrefs());
 }
 
-// System notifications for the moments worth interrupting for (see notify-plan.js). Do not disturb and time off
-// silence them.
+// System notifications for the moments worth interrupting for (see notify-plan.js). A pause silences them.
 const notifier = createNotifier({
-  isEnabled: () => prefs.notifications() && !prefs.doNotDisturb() && !petService.isOnTimeOff(),
+  isEnabled: () => prefs.notifications() && !petService.isPaused(),
   openPullRequest: (url) => openGithub(url),
   openPopover: showPopoverAtTray,
 });

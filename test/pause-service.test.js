@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 const { emptyActivity } = require('../src/main/game/engine');
 const { toDay, addDays } = require('../src/main/dates');
+const { HOUR_MS } = require('../src/main/game/pause');
 
 // Like the other service tests: the service talks to the store and to GitHub, so both are replaced.
 const src = (file) => path.join(__dirname, '../src/main', file);
@@ -44,7 +45,7 @@ test('starting time off is saved from today, tells everyone, and the status says
   assert.deepEqual(state.timeOff, [{ from: TODAY, to: null }]);
   assert.equal(petService.isOnTimeOff(), true);
   assert.equal(statuses.length, 1);
-  assert.deepEqual(statuses[0].timeOff, { active: true, since: TODAY, backOn: null });
+  assert.deepEqual(statuses[0].pause, { active: true, until: null, since: TODAY, backOn: null });
 });
 
 test('starting it again, or ending what is not on, changes nothing and tells nobody', () => {
@@ -78,4 +79,53 @@ test('ending it means the person is back today: it lasted until yesterday, or ne
   petService.endTimeOff();
   assert.deepEqual(state.timeOff, [{ from: addDays(TODAY, -3), to: addDays(TODAY, -1) }]);
   assert.equal(petService.isOnTimeOff(), false);
+});
+
+test('pausing for an hour is a moment, not a day: it quiets the app and touches no streak', () => {
+  const before = Date.now();
+  petService.startPause('hour');
+  assert.ok(state.pausedUntil >= before + HOUR_MS && state.pausedUntil <= Date.now() + HOUR_MS);
+  assert.deepEqual(state.timeOff ?? [], [], 'no day of time off');
+  assert.equal(petService.isPaused(), true);
+  assert.equal(statuses.length, 1);
+  assert.deepEqual(statuses[0].pause, { active: true, until: state.pausedUntil, backOn: null, since: null });
+  petService.resume();
+  assert.equal(state.pausedUntil, null);
+  assert.equal(petService.isPaused(), false);
+});
+
+test('pausing until tomorrow is a day of time off with the return set to tomorrow', () => {
+  petService.startPause('tomorrow');
+  assert.deepEqual(state.timeOff, [{ from: TODAY, to: TODAY }]);
+  assert.equal(state.pausedUntil ?? null, null);
+  assert.deepEqual(petService.pause(), { active: true, until: null, since: TODAY, backOn: addDays(TODAY, 1) });
+});
+
+test('a vacation is time off with no set return, and the day back can be set later', () => {
+  petService.startPause('vacation');
+  assert.deepEqual(state.timeOff, [{ from: TODAY, to: null }]);
+  petService.setTimeOffReturn(addDays(TODAY, 7));
+  assert.equal(petService.pause().backOn, addDays(TODAY, 7));
+});
+
+test('a new pause replaces the one that was on, and resuming ends whichever is on', () => {
+  petService.startPause('vacation');
+  petService.startPause('hour');
+  assert.deepEqual(state.timeOff, [], 'the vacation is over');
+  assert.equal(petService.pause().until, state.pausedUntil);
+  petService.startPause('tomorrow');
+  assert.equal(state.pausedUntil, null, 'the hour is over');
+  assert.equal(petService.pause().backOn, addDays(TODAY, 1));
+  petService.resume();
+  assert.equal(petService.isPaused(), false);
+  assert.deepEqual(state.timeOff, []);
+});
+
+test('an unknown kind, pausing twice the same way, or resuming what is not paused tell nobody', () => {
+  petService.startPause('forever');
+  petService.resume();
+  assert.equal(statuses.length, 0);
+  petService.startPause('vacation');
+  petService.startPause('vacation');
+  assert.equal(statuses.length, 1);
 });

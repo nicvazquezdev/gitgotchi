@@ -7,7 +7,8 @@ const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = requ
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
-const { isOffDay, timeOffView } = require('./time-off');
+const { isOffDay } = require('./time-off');
+const { pauseView } = require('./pause');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
@@ -211,7 +212,10 @@ function weekSummary(days, today, since = '') {
  * to the person and not to one pet: mood, PRs, the week, streaks and achievements (all counted from the day the first
  * pet hatched), plus the whole `collection`. `repos`: the selected repos (the PR list is filtered by them).
  */
-function computeStatus({ pets = {}, activePet, achievements, activity, repos = [], timeOff = [] }, now = new Date()) {
+function computeStatus(
+  { pets = {}, activePet, achievements, activity, repos = [], timeOff = [], pausedUntil = null },
+  now = new Date(),
+) {
   const pet = pets[activePet];
   if (!pet) return null;
 
@@ -245,7 +249,7 @@ function computeStatus({ pets = {}, activePet, achievements, activity, repos = [
     levelXp: progress.levelXp,
     levelXpNeeded: progress.levelXpNeeded,
     ...moodFor({ mergedRecently, ratio: weekRatioXp / baseline }),
-    timeOff: timeOffView(timeOff, today),
+    pause: pauseView({ pausedUntil, timeOff, today, now: now.getTime() }),
     todayXp: dayXp(sinceStart[today]),
     week,
     prs,

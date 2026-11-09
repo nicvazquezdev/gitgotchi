@@ -3,6 +3,7 @@
 import { $, h } from '../shared/dom.js';
 import { plural, totalXp, oldestDays, oldestWaitingDays, timeAgo } from '../shared/format.js';
 import { icon, xpBar, portraitImg } from '../shared/ui.js';
+import { pauseUntilText } from '../shared/pause-text.js';
 
 const api = window.gitgotchi.panel;
 const { catalog } = await window.gitgotchi.bootstrap(); // the art of every species (the status only has the active one)
@@ -162,6 +163,12 @@ const linkRow = (label, { onclick, end, disabled } = {}) =>
     end ? h('span', { class: 'meta' }, end) : null,
   );
 
+/** Pause for an hour, or resume when something is paused. */
+const pauseRow = (pause) =>
+  pause.active
+    ? linkRow('Resume', { onclick: () => api.action('resume'), end: `Paused ${pauseUntilText(pause)}` })
+    : linkRow('Pause for an hour', { onclick: () => api.action('pauseHour') });
+
 function syncedLabel(status) {
   if (status?.syncing) return 'Syncing…';
   return status?.lastSyncedAt ? `Synced ${timeAgo(status.lastSyncedAt)}` : 'Not synced yet';
@@ -172,7 +179,7 @@ function syncedLabel(status) {
 function render(next = state) {
   state = next;
   if (!state) return;
-  const { status, configured, petVisible, doNotDisturb } = state;
+  const { status, configured, petVisible } = state;
   const ready = configured && status;
   app.replaceChildren(
     ...(ready
@@ -183,7 +190,7 @@ function render(next = state) {
           ...prSummary(status.prs ?? { waiting: [], approved: [], mergedToday: [] }, status.reviewQueue),
           divider(),
           toggleRow('Show pet on desktop', 'togglePet', petVisible),
-          toggleRow('Do not disturb', 'toggleDoNotDisturb', doNotDisturb),
+          pauseRow(status.pause),
         ]
       : [h('p', { class: 'welcome' }, 'No pet yet. Pick your repos to hatch one.')]),
     divider(),

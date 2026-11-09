@@ -13,7 +13,6 @@ const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { earnedSince, NAME_MAX } = require(path.join(ROOT, 'src/main/game/collection.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
-const { timeOffView } = require(path.join(ROOT, 'src/main/game/time-off.js'));
 
 const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
@@ -175,7 +174,6 @@ const fixtures = {
     connected: true,
     petVisible: true,
     speechBubbles: true,
-    doNotDisturb: false,
     openAtLogin: false,
     cloudSync: { enabled: false },
     petSize: config.DEFAULT_PET_SIZE,
@@ -185,9 +183,8 @@ const fixtures = {
     login: 'sample-user',
     repoCount: repos.length,
     speechBubbles: true,
-    doNotDisturb: false,
     notifications: true,
-    timeOff: timeOffView(timeOff, dayKey(0)),
+    pause: status.pause,
     openAtLogin: false,
     cloud: { enabled: false, repo: null, saved: false, phase: null, error: null, lastPushAt: null },
     petSize: config.DEFAULT_PET_SIZE,

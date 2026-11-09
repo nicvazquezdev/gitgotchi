@@ -43,7 +43,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     dragEnd: send('pet:drag-end'),
     openMenu: send('pet:menu'),
     // ---- everyday UI ----
-    prefs: invoke('pet:prefs'), // -> { speechBubbles, doNotDisturb }
+    prefs: invoke('pet:prefs'), // -> { speechBubbles }
     onPrefs: subscribe('pet:prefs'),
     openPopover: send('pet:popover'), // creature rect in window coords { x, y, width, height }: toggles the PR popover
     onPopoverRequest: subscribe('pet:popover-request'), // the menu asks for the rect to anchor on
@@ -76,10 +76,10 @@ contextBridge.exposeInMainWorld('gitgotchi', {
 
   // ---- everyday UI ----
   panel: {
-    state: invoke('panel:state'), // -> { status, configured, connected, petVisible, doNotDisturb }
+    state: invoke('panel:state'), // -> { status, configured, connected, petVisible }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'toggleDoNotDisturb' | 'openPopover' | 'openProfile' | 'openCollection' | 'openSettings'
-    // | 'quit'
+    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openPopover' | 'openProfile'
+    // | 'openCollection' | 'openSettings' | 'quit'
     action: send('panel:action'),
     setHeight: send('panel:height'), // content height in px
   },
@@ -94,17 +94,18 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, doNotDisturb, notifications, timeOff, openAtLogin,
-    //      timeOff: { active, since, backOn },
+    // -> { login, repoCount, speechBubbles, notifications, openAtLogin,
+    //      pause: { active, until, backOn, since },
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'toggleTimeOff' | 'toggleOpenAtLogin'
+    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume'
+    // | 'toggleOpenAtLogin'
     // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'
     action: send('settings:action'),
     setSize: send('settings:size'), // { size, commit }: live while dragging, commit on release
-    setTimeOffReturn: send('settings:time-off-return'), // 'YYYY-MM-DD' (the first day that counts again), or null
+    setPauseReturn: send('settings:pause-return'), // 'YYYY-MM-DD' (the first day that counts again), or null
   },
 });

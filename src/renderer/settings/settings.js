@@ -1,7 +1,9 @@
 // Settings window: preferences that are set once. The page is built once; every state pushed by main
 // updates it in place, so keyboard focus and a slider being dragged are never lost.
 import { $, h } from '../shared/dom.js';
-import { plural, timeAgo, dayLabel } from '../shared/format.js';
+import { plural, timeAgo } from '../shared/format.js';
+import { icon } from '../shared/ui.js';
+import { pauseKind, pauseUntilText, tomorrowOf } from '../shared/pause-text.js';
 
 const api = window.gitgotchi.settings;
 const REFRESH_LABEL_MS = 30 * 1000; // keeps "Last saved N min ago" current
@@ -101,17 +103,36 @@ function sizeRow() {
   };
 }
 
-/** 'YYYY-MM-DD' of tomorrow in the person's day: the first day that can be the return from time off. */
-function tomorrow() {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  return [date.getFullYear(), date.getMonth() + 1, date.getDate()].map((n) => String(n).padStart(2, '0')).join('-');
+/** How long the pet is quiet: off, an hour, until tomorrow or a vacation (the same lengths as the menu). */
+function pauseRow() {
+  const ACTIONS = { off: 'resume', hour: 'pauseHour', tomorrow: 'pauseTomorrow', vacation: 'pauseVacation' };
+  const LABELS = { off: 'Off', hour: 'For 1 hour', tomorrow: 'Until tomorrow', vacation: 'Vacation' };
+  const select = h(
+    'select',
+    { id: 'pause-length', 'aria-describedby': 'pause-hint', onchange: () => api.action(ACTIONS[select.value]) },
+    Object.entries(LABELS).map(([value, label]) => h('option', { value }, label)),
+  );
+  const hint = h('p', { class: 'hint', id: 'pause-hint' });
+  return {
+    el: h(
+      'div',
+      { class: 'setting' },
+      h('div', { class: 'setting-text' }, h('label', { htmlFor: select.id }, 'Pause'), hint),
+      h('span', { class: 'select' }, select, icon('down', { size: 14, stroke: 2.5 })),
+    ),
+    update({ pause }) {
+      select.value = pauseKind(pause);
+      hint.textContent = pause.active
+        ? `Paused ${pauseUntilText(pause)}. Your streak is safe.`
+        : 'Quiet the pet and keep your streak safe.';
+    },
+  };
 }
 
-/** The day the person is back from time off; only shown while time off is on. Empty: it stays on until turned off. */
+/** The day the person is back from a vacation; only shown during one. Empty: it lasts until they resume. */
 function returnRow() {
-  const input = h('input', { id: 'time-off-return', class: 'date', type: 'date' });
-  input.addEventListener('change', () => api.setTimeOffReturn(input.value || null));
+  const input = h('input', { id: 'pause-return', class: 'date', type: 'date' });
+  input.addEventListener('change', () => api.setPauseReturn(input.value || null));
   const el = h(
     'div',
     { class: 'setting' },
@@ -119,16 +140,16 @@ function returnRow() {
       'div',
       { class: 'setting-text' },
       h('label', { htmlFor: input.id }, 'Back on'),
-      h('p', { class: 'hint' }, 'The first day that counts again. Without a date, it stays on until you turn it off.'),
+      h('p', { class: 'hint' }, 'The first day that counts again. Without a date, the pause lasts until you resume.'),
     ),
     input,
   );
   return {
     el,
-    update({ timeOff }) {
-      el.hidden = !timeOff.active;
-      input.min = tomorrow();
-      if (document.activeElement !== input) input.value = timeOff.backOn ?? ''; // do not move it under the person's hands
+    update({ pause }) {
+      el.hidden = pauseKind(pause) !== 'vacation';
+      input.min = tomorrowOf();
+      if (document.activeElement !== input) input.value = pause.backOn ?? ''; // do not move it under the person's hands
     },
   };
 }
@@ -195,25 +216,20 @@ const section = (title, ...rows) =>
 
 const rows = {
   size: sizeRow(),
-  bubbles: switchRow('Speech bubbles', 'toggleSpeechBubbles', ({ speechBubbles, doNotDisturb }) => ({
+  bubbles: switchRow('Speech bubbles', 'toggleSpeechBubbles', ({ speechBubbles, pause }) => ({
     checked: speechBubbles,
-    hint: doNotDisturb
-      ? 'Hidden for now: Do not disturb is on.'
-      : 'Short messages above the pet: PRs waiting for review, live reactions and mood changes.',
+    hint: pause.active
+      ? 'Hidden for now: the pet is paused.'
+      : 'Short messages above the pet: PRs waiting for review and live reactions.',
   })),
-  notifications: switchRow('System notifications', 'toggleNotifications', ({ notifications, doNotDisturb }) => ({
+  notifications: switchRow('System notifications', 'toggleNotifications', ({ notifications, pause }) => ({
     checked: notifications,
-    hint: doNotDisturb
-      ? 'Off for now: Do not disturb is on.'
+    hint: pause.active
+      ? 'Off for now: the pet is paused.'
       : 'When someone asks for your review, or one of your PRs gets changes requested, fails its checks or is approved.',
   })),
-  timeOff: switchRow('Time off', 'toggleTimeOff', ({ timeOff }) => ({
-    checked: timeOff.active,
-    hint: timeOff.active
-      ? `On since ${dayLabel(timeOff.since)}. Your streak is safe, and reminders and notifications are paused.`
-      : 'Away for a while? Turn it on: your streak is safe, the pet stays calm, and reminders and notifications pause.',
-  })),
-  timeOffReturn: returnRow(),
+  pause: pauseRow(),
+  pauseReturn: returnRow(),
   account: accountRow(),
   backup: switchRow('Back up pet to GitHub', 'toggleCloudSync', backupHint),
   openAtLogin: switchRow('Open at login', 'toggleOpenAtLogin', ({ openAtLogin }) => ({
@@ -227,7 +243,7 @@ app.hidden = true; // until the first state arrives
 app.append(
   section('Pet', rows.size, rows.bubbles),
   section('Reviews', rows.notifications),
-  section('Away', rows.timeOff, rows.timeOffReturn),
+  section('Pause', rows.pause, rows.pauseReturn),
   section('GitHub', rows.account, rows.backup),
   section('General', rows.openAtLogin),
 );

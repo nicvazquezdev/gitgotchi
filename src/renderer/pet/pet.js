@@ -16,9 +16,10 @@ const view = new PetView(canvas, {
     root.setProperty('--stage-h', `${height}px`);
   },
 });
-// Reduce Motion (macOS accessibility) and Do not disturb: the pet only idles (no walks, cheers or particles).
+// Reduce Motion (macOS accessibility) and a pause: the pet only idles (no walks, cheers or particles).
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const calm = () => reducedMotion.matches || prefs.doNotDisturb;
+const paused = () => Boolean(status?.pause?.active);
+const calm = () => reducedMotion.matches || paused();
 const syncCalm = () => view.setCalm(calm());
 reducedMotion.addEventListener('change', syncCalm);
 
@@ -28,7 +29,7 @@ const LINES = {
 };
 
 let status = null;
-let prefs = { speechBubbles: true, doNotDisturb: false };
+let prefs = { speechBubbles: true };
 let drag = null;
 let spoken = null; // the line being said right now: { title, sub, dot }
 let bubbleTimer = null;
@@ -50,6 +51,7 @@ function setStatus(next) {
   const moodChanged = status && status.mood !== next.mood;
   const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
   status = next;
+  syncCalm(); // a pause starts or ends
   // The pet on the desktop is always in its normal state: the mood (and why) is shown in the popover.
   if (creatureChanged) {
     loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
@@ -77,13 +79,13 @@ function setSize(px) {
 // ---------- Bubble ----------
 // A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
 // and the PR reminder (when the number of PRs that wait for the user's review, or of their own, changes; click to see them).
-// Off with Speech bubbles or Do not disturb.
+// Off with Speech bubbles or during a pause.
 
-const quiet = () => !prefs.speechBubbles || prefs.doNotDisturb;
+const quiet = () => !prefs.speechBubbles || paused();
 
 /** The standing message: PRs waiting for the user's review first (they can act on those), else their own PRs. */
 function waitingMessage() {
-  if (status?.timeOff?.active) return null; // on time off nothing is waiting for the person
+  if (paused()) return null; // while paused nothing is waiting for the person
   const queue = status?.reviewQueue ?? [];
   if (queue.length) {
     const days = oldestWaitingDays(queue); // since the user was asked; null when no request has a known date

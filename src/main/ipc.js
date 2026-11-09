@@ -34,14 +34,17 @@ function on(channel, fn) {
 const PANEL_ACTIONS = [
   'sync',
   'togglePet',
-  'toggleDoNotDisturb',
+  'pauseHour',
+  'pauseTomorrow',
+  'pauseVacation',
+  'resume',
   'openPopover',
   'openProfile',
   'openCollection',
   'openSettings',
   'quit',
 ];
-const KEEP_OPEN = new Set(['sync', 'togglePet', 'toggleDoNotDisturb']);
+const KEEP_OPEN = new Set(['sync', 'togglePet']);
 // Popover buttons and header: they close the popover first.
 const POPOVER_ACTIONS = ['openProfile', 'openCollection', 'openSettings'];
 // ---- end everyday UI ----
@@ -50,7 +53,10 @@ const POPOVER_ACTIONS = ['openProfile', 'openCollection', 'openSettings'];
 const SETTINGS_ACTIONS = [
   'toggleSpeechBubbles',
   'toggleNotifications',
-  'toggleTimeOff',
+  'pauseHour',
+  'pauseTomorrow',
+  'pauseVacation',
+  'resume',
   'toggleOpenAtLogin',
   'toggleCloudSync',
   'openSaveRepo',
@@ -174,8 +180,8 @@ function registerIpc(actions) {
   handle('settings:state', () => settingsWindow.state());
   on('settings:action', (name) => SETTINGS_ACTIONS.includes(name) && actions[name]());
   on('settings:size', ({ size, commit } = {}) => actions.setPetSize(Number(size), Boolean(commit)));
-  // The day the person is back from time off ('YYYY-MM-DD'), or null for none; the service checks it is a real day.
-  on('settings:time-off-return', (day) => actions.setTimeOffReturn(typeof day === 'string' ? day : null));
+  // The day the person is back from a vacation ('YYYY-MM-DD'), or null for none; the service checks it is a real day.
+  on('settings:pause-return', (day) => actions.setPauseReturn(typeof day === 'string' ? day : null));
 }
 
 module.exports = { registerIpc };

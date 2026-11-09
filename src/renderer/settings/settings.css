@@ -128,3 +128,29 @@ body {
   outline: 2px solid var(--select);
   outline-offset: 1px;
 }
+
+/* A select with the app's look: the native control (its menu is the system's) under a pixel-cut skin. */
+.select {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+}
+.select select {
+  appearance: none;
+  height: 34px;
+  padding: 0 32px 0 12px;
+  border: 0;
+  background: var(--btn-2);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+  clip-path: var(--cut-3);
+  color: var(--text);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
+}
+.select svg {
+  position: absolute;
+  right: 11px;
+  color: var(--text-2);
+  pointer-events: none;
+}

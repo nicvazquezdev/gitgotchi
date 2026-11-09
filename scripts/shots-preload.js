@@ -37,7 +37,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     dragStart: ignore,
     dragEnd: ignore,
     openMenu: ignore,
-    prefs: value({ speechBubbles: true, doNotDisturb: false }),
+    prefs: value({ speechBubbles: true }),
     onPrefs: never,
     openPopover: ignore,
     onPopoverRequest: never,
