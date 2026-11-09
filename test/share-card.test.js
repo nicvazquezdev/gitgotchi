@@ -39,12 +39,12 @@ const status = (days = {}) =>
   );
 const day = (counts) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, fastReviews: 0, ...counts });
 
-test('the card shows three figures: companions, achievements and the streak', async () => {
+test('the card shows three figures: pets, achievements and the streak', async () => {
   const { cardStats } = await card();
   const fresh = cardStats(status());
   assert.deepEqual(
     fresh.map((s) => s.label),
-    ['Companions', 'Achievements', 'Day streak'],
+    ['Pets', 'Achievements', 'Day streak'],
   );
   assert.deepEqual(
     fresh.map((s) => s.value),

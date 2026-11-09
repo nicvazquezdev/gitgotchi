@@ -12,7 +12,7 @@ export const digitScale = (value) => (value.length <= 4 ? 4 : value.length === 5
 /** The three figures of the card: what the person has built, as text for the bitmap font. */
 export function cardStats({ collection, achievements, streak }) {
   return [
-    { label: 'Companions', value: `${collection.hatched}/${collection.total}` },
+    { label: 'Pets', value: `${collection.hatched}/${collection.total}` },
     { label: 'Achievements', value: `${achievements.unlocked}/${achievements.total}` },
     { label: 'Day streak', value: String(streak) },
   ];

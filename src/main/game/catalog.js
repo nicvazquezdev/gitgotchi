@@ -221,9 +221,9 @@ const ACHIEVEMENT_FAMILIES = [
     icon: 'paw',
     metric: 'species',
     steps: [
-      ['duo', 2, 'Dynamic duo', 'Hatch 2 companions'],
-      ['squad', 4, 'Squad goals', 'Hatch 4 companions'],
-      ['full-house', SPECIES.length, 'Full house', `Hatch all ${SPECIES.length} companions`],
+      ['duo', 2, 'Dynamic duo', 'Hatch 2 pets'],
+      ['squad', 4, 'Squad goals', 'Hatch 4 pets'],
+      ['full-house', SPECIES.length, 'Full house', `Hatch all ${SPECIES.length} pets`],
     ],
   },
   {
@@ -231,9 +231,9 @@ const ACHIEVEMENT_FAMILIES = [
     icon: 'crown',
     metric: 'adults',
     steps: [
-      ['first-adult', 1, 'Fully grown', 'Raise a companion to its final form'],
-      ['adults-4', 4, 'Seasoned keeper', 'Raise 4 companions to their final form'],
-      ['adults-all', SPECIES.length, 'Hall of fame', `Raise all ${SPECIES.length} companions to their final form`],
+      ['first-adult', 1, 'Fully grown', 'Raise a pet to its final form'],
+      ['adults-4', 4, 'Seasoned keeper', 'Raise 4 pets to their final form'],
+      ['adults-all', SPECIES.length, 'Hall of fame', `Raise all ${SPECIES.length} pets to their final form`],
     ],
   },
   {

@@ -165,7 +165,7 @@ class PetService extends EventEmitter {
     const info = species == null ? null : speciesOf(species);
     if (species != null && !info) throw new Error('Unknown pet species');
     const { pets, activePet, repos: prevRepos } = store.get();
-    if (!info && !pets[activePet]) throw new Error('Pick a companion');
+    if (!info && !pets[activePet]) throw new Error('Pick a pet');
 
     const reposChanged = [...repos].sort().join() !== [...prevRepos].sort().join();
     let next = pets;

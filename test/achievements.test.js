@@ -195,7 +195,7 @@ test('the collection counts the pets hatched and the ones fully grown, on the da
   ];
   const p = progress({ days: {}, pets });
   assert.equal(p.duo.unlockedAt, '2026-03-05'); // the second to hatch, whichever way they are listed
-  assert.deepEqual([p.squad.unlockedAt, p.squad.value, p.squad.unit], [null, 3, 'companions']);
+  assert.deepEqual([p.squad.unlockedAt, p.squad.value, p.squad.unit], [null, 3, 'pets']);
   assert.equal(p['first-adult'].unlockedAt, '2026-03-18');
   assert.deepEqual([p['adults-4'].value, p['adults-4'].unit], [2, 'fully grown']);
   assert.equal(p['full-house'].unlockedAt, null);

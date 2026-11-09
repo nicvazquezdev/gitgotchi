@@ -139,9 +139,9 @@ test('renaming trims, cuts the name and falls back to the baby’s name; an unch
   assert.throws(() => petService.rename({ species: 'ram', name: 'x' }), /not in your collection/);
 });
 
-test('the setup flow: the first setup needs a companion; later it only changes the repos unless one is picked', async () => {
+test('the setup flow: the first setup needs a pet; later it only changes the repos unless one is picked', async () => {
   state = { ...state, pets: {}, activePet: null, repos: [] };
-  await assert.rejects(() => petService.configure({ repos: ['a/b'] }), /Pick a companion/);
+  await assert.rejects(() => petService.configure({ repos: ['a/b'] }), /Pick a pet/);
   await assert.rejects(() => petService.configure({ repos: [], species: 'koi' }), /at least one repo/);
   await assert.rejects(() => petService.configure({ repos: ['a/b'], species: 'dodo' }), /Unknown pet species/);
 

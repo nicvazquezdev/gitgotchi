@@ -12,7 +12,7 @@ const UNITS = {
   commits: 'commits',
   issues: 'issues',
   streak: 'days',
-  species: 'companions',
+  species: 'pets',
   adults: 'fully grown',
 };
 
