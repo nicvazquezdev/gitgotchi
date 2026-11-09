@@ -230,7 +230,7 @@ function reactToActivity(delta) {
 }
 
 /**
- * New achievements: the usual cheer, then a toast with the medal of the first one, its points and what it was for
+ * New achievements: the usual cheer, then a toast with the medal of the first one and what it was for
  * (the rest are in the profile).
  */
 function celebrateAchievements(list) {
@@ -243,7 +243,6 @@ function celebrateAchievements(list) {
     toast: {
       icon: first.icon,
       tier: first.tier ?? 'bronze',
-      side: `+${list.reduce((sum, a) => sum + (a.points ?? 0), 0)} pts`,
       kicker: several ? `${list.length} achievements unlocked` : 'Achievement unlocked',
     },
     ms: 6000,

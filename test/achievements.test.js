@@ -218,23 +218,13 @@ test('tiers climb with each family: four steps reach diamond, a lone step is spe
   assert.deepEqual(['quick-merge', 'full-cycle'].map(tierOf), ['special', 'special']);
 });
 
-test('every achievement is worth the points of its tier; the view adds up the score and counts the tiers', () => {
+test('the view counts the tiers and has no points: a tier is only the color of a medal', () => {
   const view = groupAchievements(
     achievementProgress({ days: { '2026-03-02': day({ prs: 1, reviews: 10, merges: 1 }) } }),
   );
-  // first-pr (bronze 10), first-merge (bronze 10), first-review (bronze 10), review-10 (silver 25), full-cycle (special 50)
-  assert.deepEqual(
-    unlockedOf(view)
-      .map((a) => a.points)
-      .sort((a, b) => a - b),
-    [10, 10, 10, 25, 50],
-  );
-  assert.equal(view.points, 105);
-  const all = ACHIEVEMENT_TIERS.reduce(
-    (sum, tier) => sum + tier.points * ACHIEVEMENTS.filter((a) => a.tier === tier.id).length,
-    0,
-  );
-  assert.equal(view.totalPoints, all);
+  // first-pr, first-merge, first-review (bronze), review-10 (silver), full-cycle (special)
+  assert.ok(!('points' in view) && !('totalPoints' in view));
+  assert.ok(unlockedOf(view).every((a) => !('points' in a)));
   assert.deepEqual(
     view.tiers.map((tier) => [tier.id, tier.unlocked]),
     [

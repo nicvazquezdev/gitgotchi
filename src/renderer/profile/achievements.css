@@ -45,7 +45,7 @@
   background: var(--t-main, var(--accent));
 }
 
-/* ---------- Banner: score and the trophy of each tier ---------- */
+/* ---------- Banner: the count and the trophy of each tier ---------- */
 .ach-banner {
   --px: 4px;
   padding: 2px;
@@ -91,15 +91,11 @@
   color: var(--text);
   line-height: 0;
 }
-.ab-points {
-  color: var(--accent-text);
-}
 .ab-count .segs {
   width: 230px;
   margin-top: 12px;
 }
-.ab-count .meta,
-.ab-score .meta {
+.ab-count .meta {
   margin-top: 8px;
 }
 .ab-tiers {
@@ -258,14 +254,6 @@
 }
 .ach.done .ach-tier {
   color: color-mix(in srgb, var(--t-main) 75%, var(--text));
-}
-.ach-pts {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-3);
-}
-.ach.done .ach-pts {
-  color: var(--text-2);
 }
 .ach-medal {
   position: relative;

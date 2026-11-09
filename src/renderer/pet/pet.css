@@ -226,7 +226,7 @@ body.dragging .pet {
   font-size: 13px;
   color: var(--text-2);
 }
-/* Achievement toast, like a console's: the medal, what it is with its points, the name and what it was for. */
+/* Achievement toast, like a console's: the medal, what it is, the name and what it was for. */
 .bubble-text {
   min-width: 0;
   flex: 1;

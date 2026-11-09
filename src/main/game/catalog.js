@@ -128,14 +128,15 @@ const ACHIEVEMENT_GROUPS = [
   { id: 'special', name: 'Special' },
 ];
 
-// Like console trophies: every achievement has a tier, and each tier is worth points (the "score" of the case).
+// Like console trophies, every achievement has a tier. A tier is only the color of its medal: there are no points
+// and no score.
 // A family climbs the ladder for its length: bronze to diamond for four steps; a lone step is `special`.
 const ACHIEVEMENT_TIERS = [
-  { id: 'bronze', name: 'Bronze', points: 10 },
-  { id: 'silver', name: 'Silver', points: 25 },
-  { id: 'gold', name: 'Gold', points: 50 },
-  { id: 'diamond', name: 'Diamond', points: 100 },
-  { id: 'special', name: 'Special', points: 50 },
+  { id: 'bronze', name: 'Bronze' },
+  { id: 'silver', name: 'Silver' },
+  { id: 'gold', name: 'Gold' },
+  { id: 'diamond', name: 'Diamond' },
+  { id: 'special', name: 'Special' },
 ];
 const TIER_LADDERS = {
   1: ['special'],

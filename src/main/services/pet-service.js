@@ -3,7 +3,7 @@
 // found with one lookup each) in the selected repos, see game/catalog.js.
 // Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level, and `{ name, toNext }`: the XP still needed for
 // the next one; also fires on the level that evolves),
-// 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier, points }]`),
+// 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier }]`),
 // 'activity' (new activity per kind, e.g. { merges: 1 }; the live `pushes`, `approvals`, `changesRequested`,
 // `checksFailed`, `mergeConflicts` and `readyToMerge` reactions are animation only;
 // `reviewRequests` is not XP: someone asked the user for a review),
@@ -414,7 +414,7 @@ class PetService extends EventEmitter {
     if (known)
       this.emit(
         'achievements',
-        fresh.map(({ id, name, description, icon, tier, points }) => ({ id, name, description, icon, tier, points })),
+        fresh.map(({ id, name, description, icon, tier }) => ({ id, name, description, icon, tier })),
       );
   }
 }

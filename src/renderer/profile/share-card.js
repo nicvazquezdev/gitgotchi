@@ -1,4 +1,4 @@
-// Profile > Share: a card with the pet, its level, the score and the trophies, to copy as an image and show off.
+// Profile > Share: a card with the pet, its level and the trophies, to copy as an image and show off.
 // It has nothing else on it: no repos, no PR titles, no username.
 import { h } from '../shared/dom.js';
 import { spriteImg, xpBar } from '../shared/ui.js';
@@ -9,12 +9,11 @@ const PORTRAIT_PX = 108; // the biggest the sprite gets on the card (a whole mul
 /** How big to draw a figure so it fits its box: the longer the text, the smaller the pixels. */
 export const digitScale = (value) => (value.length <= 4 ? 4 : value.length === 5 ? 3 : 2);
 
-/** The four figures of the card: what the person has built, as text for the bitmap font. */
+/** The three figures of the card: what the person has built, as text for the bitmap font. */
 export function cardStats({ collection, achievements, streak }) {
   return [
     { label: 'Companions', value: `${collection.hatched}/${collection.total}` },
     { label: 'Achievements', value: `${achievements.unlocked}/${achievements.total}` },
-    { label: 'Score', value: String(achievements.points) },
     { label: 'Day streak', value: String(streak) },
   ];
 }
@@ -101,7 +100,7 @@ export function shareDialog({ status, copy, close }) {
   const note = h(
     'p',
     { class: 'share-note', role: 'status' },
-    'The card is an image with your pet, level, score and trophies. Nothing else.',
+    'The card is an image with your pet, level and trophies. Nothing else.',
   );
   const button = h(
     'button',

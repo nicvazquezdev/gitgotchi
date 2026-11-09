@@ -1,4 +1,4 @@
-// Profile > Achievements: a console-style trophy case. A banner with the score and the trophies of each tier, what
+// Profile > Achievements: a console-style trophy case. A banner with the count and the trophies of each tier, what
 // is closest to unlock, a filter, and every achievement as a collectible tile (pixel medals by tier).
 import { h } from '../shared/dom.js';
 import { medal, cup, lock, digits } from '../shared/pixel-art.js';
@@ -88,7 +88,7 @@ function medalOf(a, scale) {
 }
 
 function banner({ name, achievements: view }) {
-  const { unlocked, total, points, totalPoints, tiers } = view;
+  const { unlocked, total, tiers } = view;
   const complete = unlocked === total;
   return h(
     'section',
@@ -112,17 +112,6 @@ function banner({ name, achievements: view }) {
           { class: 'meta' },
           complete ? 'Collection complete!' : `${total - unlocked} to go · counted since ${name} hatched`,
         ),
-      ),
-      h(
-        'div',
-        { class: 'ab-score' },
-        h('div', { class: 'ab-label' }, 'Score'),
-        h(
-          'div',
-          { class: 'ab-digits ab-points', role: 'img', ariaLabel: `${points} points` },
-          digits(String(points), 5),
-        ),
-        h('div', { class: 'meta' }, `of ${totalPoints} points`),
       ),
       h(
         'div',
@@ -161,7 +150,7 @@ function nextUpCard(a, tierNames) {
         segments(a.value, a.target, 12),
         h('div', { class: 'ach-next-foot' }, h('span', {}, text ?? 'Not started'), h('b', {}, toGo(a))),
       ),
-      h('span', { class: 'ach-pts' }, `${tierNames[a.tier]} · ${a.points} pts`),
+      h('span', { class: 'ach-pts' }, tierNames[a.tier]),
     ),
   );
 }
@@ -225,12 +214,7 @@ function tile(a, index, tierNames, now) {
       h(
         'div',
         { class: 'ach-in pixel-cut' },
-        h(
-          'div',
-          { class: 'ach-top' },
-          h('span', { class: 'ach-tier' }, tierNames[a.tier]),
-          h('span', { class: 'ach-pts' }, `${a.points} pts`),
-        ),
+        h('div', { class: 'ach-top' }, h('span', { class: 'ach-tier' }, tierNames[a.tier])),
         medalOf(a, 3),
         fresh ? h('span', { class: 'ach-new' }, 'NEW') : null,
         h('div', { class: 'ach-name' }, a.name),

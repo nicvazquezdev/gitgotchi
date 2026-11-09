@@ -69,7 +69,6 @@ test('with nothing yet it records an empty set, so the next ones are announced',
         description: "Review someone else's pull request",
         icon: 'eye',
         tier: 'bronze',
-        points: 10,
       },
     ],
   ]);

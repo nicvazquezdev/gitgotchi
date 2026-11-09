@@ -39,21 +39,20 @@ const status = (days = {}) =>
   );
 const day = (counts) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, fastReviews: 0, ...counts });
 
-test('the card shows four figures: companions, achievements, score and the streak', async () => {
+test('the card shows three figures: companions, achievements and the streak', async () => {
   const { cardStats } = await card();
   const fresh = cardStats(status());
   assert.deepEqual(
     fresh.map((s) => s.label),
-    ['Companions', 'Achievements', 'Score', 'Day streak'],
+    ['Companions', 'Achievements', 'Day streak'],
   );
   assert.deepEqual(
     fresh.map((s) => s.value),
-    ['1/8', '0/28', '0', '0'],
+    ['1/8', '0/28', '0'],
   );
   const some = cardStats(status({ '2026-06-15': day({ prs: 1, prsXp: 10, reviews: 1, merges: 1 }) }));
   const byLabel = Object.fromEntries(some.map((s) => [s.label, s.value]));
   assert.equal(byLabel['Day streak'], '1');
-  assert.ok(Number(byLabel.Score) > 0);
   assert.match(byLabel.Achievements, /^\d+\/28$/);
 });
 

@@ -16,8 +16,6 @@ const UNITS = {
   adults: 'fully grown',
 };
 
-const POINTS = Object.fromEntries(ACHIEVEMENT_TIERS.map((tier) => [tier.id, tier.points]));
-
 const byDay = (a, b) => a[0].localeCompare(b[0]);
 
 /** A PR merged within `quickMergeMinutes` of being opened. */
@@ -86,7 +84,7 @@ function measure({ metric, target }, { series, lengths, collection }) {
  *   whatever the ledger says now (it can be rebuilt), and their day is the one recorded.
  * @param {(day: string) => boolean} [input.isOff]  whether a day was time off (it does not break a streak)
  * @param {{ bornDay: string, matureDay: string | null }[]} [input.pets]  when each pet hatched and grew up
- * @returns {{ id, group, metric, tier, points, icon, name, description, unit, target, value, unlockedAt }[]}
+ * @returns {{ id, group, metric, tier, icon, name, description, unit, target, value, unlockedAt }[]}
  *   `unlockedAt`: the day reached ('YYYY-MM-DD') or null; `value` never goes past `target`
  */
 function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [], isOff }) {
@@ -107,7 +105,6 @@ function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [
       group,
       metric,
       tier,
-      points: POINTS[tier],
       icon,
       name,
       description,
@@ -120,19 +117,16 @@ function achievementProgress({ days, prs = [], since = '', stored = {}, pets = [
 }
 
 /**
- * The list grouped for the UI, in the catalog's order. `points`: the score of what is unlocked (of `totalPoints`).
- * `tiers`: how many of each tier are unlocked, in the catalog's order.
- * @returns {{ unlocked, total, points, totalPoints, tiers: { id, name, unlocked, total }[],
+ * The list grouped for the UI, in the catalog's order. `tiers`: how many of each tier are unlocked, in the catalog's
+ * order.
+ * @returns {{ unlocked, total, tiers: { id, name, unlocked, total }[],
  *   groups: { id, name, note, items }[] }}
  */
 function groupAchievements(list) {
   const done = list.filter((a) => a.unlockedAt);
-  const sum = (items) => items.reduce((total, a) => total + a.points, 0);
   return {
     unlocked: done.length,
     total: list.length,
-    points: sum(done),
-    totalPoints: sum(list),
     tiers: ACHIEVEMENT_TIERS.map(({ id, name }) => ({
       id,
       name,
