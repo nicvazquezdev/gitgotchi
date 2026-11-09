@@ -460,7 +460,7 @@ canvas.sprite {
   gap: 8px;
   padding: 9px 12px;
   background: var(--warning-bg);
-  box-shadow: inset 0 0 0 1px var(--warning-ring);
+  box-shadow: inset 0 0 0 1px var(--notice-ring, var(--warning-ring));
   color: var(--warning-text);
   font-size: 13px;
 }
@@ -472,6 +472,8 @@ canvas.sprite {
   font-weight: 600;
 }
 .notice.happy {
+  --notice-ring: color-mix(in srgb, var(--success) 40%, transparent);
+  --notice-edge: var(--success);
   background: var(--success-bg);
   color: var(--success);
 }
