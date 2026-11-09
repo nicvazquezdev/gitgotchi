@@ -9,6 +9,7 @@ const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review
 const { achievementProgress, groupAchievements } = require('./achievements');
 const { isOffDay } = require('./time-off');
 const { pauseView } = require('./pause');
+const { xpLog } = require('./xp-log');
 
 const DAY_MS = 86400000;
 const PR_SYNC_OVERLAP_MS = 60 * 60 * 1000;
@@ -252,6 +253,7 @@ function computeStatus(
     pause: pauseView({ pausedUntil, timeOff, today, now: now.getTime() }),
     todayXp: dayXp(sinceStart[today]),
     week,
+    xpLog: xpLog(sinceStart, now),
     prs,
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
