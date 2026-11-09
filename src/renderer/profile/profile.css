@@ -40,7 +40,7 @@ body {
   --sun-top: 22%;
   --floor-h: 28%;
   position: relative;
-  height: 188px;
+  height: 228px; /* the 44px bar sits over the top, under it the biggest sprite (170px) and its 14px of floor */
   display: flex;
   align-items: flex-end;
   justify-content: center;
