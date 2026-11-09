@@ -11,11 +11,11 @@ const popup = createPopup({
   boundsFor: popoverBounds,
 });
 
-/** The page also gets where the tail goes: `{ placement: 'above' | 'below', tailX }`. */
+/** The page also gets where the tail goes and how tall it may be: `{ placement: 'above' | 'below', tailX, room }`. */
 function init(stateProvider) {
   popup.init(() => {
-    const { placement, tailX } = popup.placement() ?? {};
-    return { ...stateProvider(), placement, tailX };
+    const { placement, tailX, room } = popup.placement() ?? {};
+    return { ...stateProvider(), placement, tailX, room };
   });
 }
 

@@ -69,7 +69,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   evolution: { data: value(fx.evolution), close: ignore, viewProfile: ignore },
   panel: { state: value(fx.panel), onState: never, action: ignore, setHeight: ignore },
   popover: {
-    state: value({ ...fx.panel, placement: 'above', tailX: 180 }),
+    state: value({ ...fx.panel, placement: 'above', tailX: 180, room: 760 }), // room: a laptop screen
     onState: never,
     action: ignore,
     openPullRequest: ignore,

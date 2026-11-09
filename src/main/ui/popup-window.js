@@ -7,7 +7,7 @@ const { IS_MAC } = require('../config');
 // Clicking the anchor blurs (hides) the window first; ignore the click that follows right after.
 const REOPEN_GUARD_MS = 250;
 const MIN_HEIGHT = 80;
-const MAX_HEIGHT = 800;
+const MAX_HEIGHT = 900; // the popover with its shell is taller than a plain card
 
 /**
  * @param {{ page: string, channel: string, size: {width:number,height:number}, level: string,

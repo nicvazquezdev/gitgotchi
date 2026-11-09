@@ -36,6 +36,12 @@ test('popoverBounds is clamped vertically when it fits neither above nor below',
   assert.ok(b.y >= workArea.y && b.y + b.height <= workArea.y + workArea.height);
 });
 
+test('popoverBounds reports the room: the larger of the spaces above and below the pet', () => {
+  assert.equal(popoverBounds({ anchor: pet, size, workArea }).room, 700 - 2 - (25 + 8)); // above is larger
+  const top = { ...pet, y: 100 };
+  assert.equal(popoverBounds({ anchor: top, size, workArea }).room, 25 + 875 - 8 - (100 + 128 + 2)); // below is
+});
+
 test('toScreenRect offsets a window-relative rect by the window origin', () => {
   const window = { x: 100, y: 50, width: 288, height: 320 };
   assert.deepEqual(toScreenRect(window, { x: 10, y: 20, width: 64, height: 64 }), {

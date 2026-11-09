@@ -417,12 +417,31 @@ const shell = () =>
     layer('belly-c'),
   );
 
+// ---------- Fit ----------
+
+const LIST_MIN = 110; // px: the list never gets shorter than two rows and a bit
+
+/**
+ * The shell makes the popover tall. When the screen has less `room` than the card needs, the list gives way (it
+ * scrolls anyway): everything else keeps its size.
+ */
+function fitList(room) {
+  const list = $('.list');
+  if (!list) return;
+  list.style.maxHeight = ''; // back to the natural cap of the stylesheet
+  if (room == null) return;
+  const other = app.getBoundingClientRect().height - list.getBoundingClientRect().height;
+  const natural = Number.parseFloat(getComputedStyle(list).maxHeight);
+  const fits = Math.floor(room - other);
+  if (fits < natural) list.style.maxHeight = `${Math.max(LIST_MIN, fits)}px`;
+}
+
 // ---------- Render ----------
 
 /** `resetScroll`: start at the top of the list (another tab, or the popover reopened); a sync keeps the scroll. */
 function render(state = latest, { resetScroll = false } = {}) {
   latest = state;
-  const { status, placement = 'above', tailX = 180 } = state;
+  const { status, placement = 'above', tailX = 180, room } = state;
   const tab = currentTab(state);
   if (status) syncPortrait(status);
 
@@ -452,6 +471,7 @@ function render(state = latest, { resetScroll = false } = {}) {
   const scroll = resetScroll ? 0 : ($('.list')?.scrollTop ?? 0);
   app.className = `wrap ${placement}`;
   app.replaceChildren(h('div', { class: 'rig' }, shell(), card), tail);
+  fitList(room);
   const list = $('.list');
   if (list) list.scrollTop = scroll;
 }
