@@ -28,7 +28,7 @@ canvas.sprite {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--select);
   outline-offset: 2px;
 }
 
@@ -56,14 +56,26 @@ canvas.sprite {
   color: var(--text-3);
 }
 .xp-text {
-  font-size: 12px;
-  font-weight: 600;
+  font: 400 18px/1 var(--font-num);
   color: var(--accent-text);
   white-space: nowrap;
 }
+/* Figures (XP, counts, stats) are set in the terminal font */
+.num {
+  font-family: var(--font-num);
+  font-weight: 400;
+}
 
-/* ---------- Pixel-cut corners (buttons, portrait frames) ---------- */
-.pixel-cut {
+/* ---------- Pixel-cut corners (buttons, cards, portrait frames) ---------- */
+.card {
+  --px: 4px;
+}
+.pixel-cut,
+.card,
+.notice,
+.field,
+.switch,
+.count-chip {
   clip-path: polygon(
     0 var(--px),
     var(--px) var(--px),
@@ -92,6 +104,7 @@ canvas.sprite {
   border: 0;
   border-bottom: 3px solid var(--btn-2-edge);
   background: var(--btn-2);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--btn-2-text);
   font: 600 14px var(--font-ui);
   text-decoration: none;
@@ -101,7 +114,9 @@ canvas.sprite {
 .btn.primary {
   border-bottom-color: var(--accent-edge);
   background: var(--accent);
+  box-shadow: none;
   color: var(--on-accent);
+  font-weight: 700;
 }
 .btn:hover:not(:disabled) {
   filter: brightness(1.06);
@@ -129,7 +144,7 @@ canvas.sprite {
   border: 0;
   background: none;
   padding: 0;
-  color: var(--accent);
+  color: var(--link);
   font: 500 13px var(--font-ui);
   cursor: pointer;
   text-decoration: none;
@@ -154,39 +169,36 @@ canvas.sprite {
   background: var(--overlay-hover);
 }
 
-/* ---------- Switch (macOS style) ---------- */
+/* ---------- Switch: a pixel slider with a square knob ---------- */
 .switch {
   position: relative;
   flex: none;
-  width: 32px;
+  width: 34px;
   height: 18px;
-  padding: 2px;
+  padding: 3px;
   border: 0;
-  border-radius: 999px;
   background: var(--switch-off);
   cursor: pointer;
-  transition: background 120ms;
 }
 .switch::after {
   content: '';
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: transform 120ms;
+  top: 3px;
+  left: 3px;
+  width: 12px;
+  height: 12px;
+  background: var(--switch-knob-off);
+  transition: transform 120ms steps(2);
 }
 .switch[aria-checked='true'] {
   background: var(--accent);
 }
 .switch[aria-checked='true']::after {
-  transform: translateX(14px);
+  background: var(--on-accent);
+  transform: translateX(16px);
 }
 
-/* ---------- Segmented XP bar: 20 pixel blocks ---------- */
+/* ---------- Segmented XP bar: 20 pixel blocks, banded like the sun as it fills ---------- */
 .xp-bar {
   display: flex;
   gap: 2px;
@@ -197,7 +209,16 @@ canvas.sprite {
   background: var(--track);
 }
 .xp-bar > i.on {
-  background: var(--accent);
+  background: var(--neon-gold);
+}
+.xp-bar > i.on:nth-child(n + 6) {
+  background: #ffa63a;
+}
+.xp-bar > i.on:nth-child(n + 11) {
+  background: #ff6a5c;
+}
+.xp-bar > i.on:nth-child(n + 16) {
+  background: var(--neon-pink);
 }
 .xp-bar.sm {
   height: 6px;
@@ -206,7 +227,106 @@ canvas.sprite {
   height: 10px;
 }
 
-/* ---------- Creature portrait: 2px dark frame with pixel-cut corners ---------- */
+/* ---------- Synthwave scenery: the sun, and the little night scene behind every creature ---------- */
+:root {
+  /* A pixel-art circle, cut by horizontal blinds that widen towards the bottom. */
+  --sun-clip: polygon(
+    65% 0%,
+    65% 5%,
+    77.5% 5%,
+    77.5% 10%,
+    82.5% 10%,
+    82.5% 15%,
+    87.5% 15%,
+    87.5% 20%,
+    92.5% 20%,
+    92.5% 25%,
+    95% 25%,
+    95% 30%,
+    97.5% 30%,
+    97.5% 40%,
+    100% 40%,
+    100% 60%,
+    97.5% 60%,
+    97.5% 70%,
+    95% 70%,
+    95% 75%,
+    92.5% 75%,
+    92.5% 80%,
+    87.5% 80%,
+    87.5% 85%,
+    82.5% 85%,
+    82.5% 90%,
+    77.5% 90%,
+    77.5% 95%,
+    65% 95%,
+    65% 100%,
+    35% 100%,
+    35% 95%,
+    22.5% 95%,
+    22.5% 90%,
+    17.5% 90%,
+    17.5% 85%,
+    12.5% 85%,
+    12.5% 80%,
+    7.5% 80%,
+    7.5% 75%,
+    5% 75%,
+    5% 70%,
+    2.5% 70%,
+    2.5% 60%,
+    0% 60%,
+    0% 40%,
+    2.5% 40%,
+    2.5% 30%,
+    5% 30%,
+    5% 25%,
+    7.5% 25%,
+    7.5% 20%,
+    12.5% 20%,
+    12.5% 15%,
+    17.5% 15%,
+    17.5% 10%,
+    22.5% 10%,
+    22.5% 5%,
+    35% 5%,
+    35% 0%
+  );
+  --sun-mask: linear-gradient(
+    #000 0 52%,
+    transparent 52% 55%,
+    #000 55% 62%,
+    transparent 62% 66%,
+    #000 66% 72%,
+    transparent 72% 77%,
+    #000 77% 82%,
+    transparent 82% 88%,
+    #000 88%
+  );
+  --night-bands: linear-gradient(
+    #0b0420 0 22%,
+    #140637 22% 40%,
+    #220a4d 40% 55%,
+    #360e5f 55% 66%,
+    #4f1468 66% 72%,
+    #6e1866 72%
+  );
+}
+.sun {
+  aspect-ratio: 1;
+  background: var(--sun-bands);
+  clip-path: var(--sun-clip);
+  -webkit-mask-image: var(--sun-mask);
+  mask-image: var(--sun-mask);
+}
+/* The floor of a scene: a lit horizon and the grid in perspective (the asset is a real file because of the CSP). */
+.grid-floor {
+  background:
+    url('../../../assets/ui/grid-floor.svg') center top / max(100%, 1440px) 100% no-repeat,
+    linear-gradient(#8a1d6c 0 30px, #6e1866 30px 80px, #561460 80px 150px, #42105a 150px 240px, #320c4e 240px);
+}
+
+/* ---------- Creature portrait: 2px neon frame with pixel-cut corners, a night scene inside ---------- */
 .portrait {
   --px: 4px;
   flex: none;
@@ -214,12 +334,43 @@ canvas.sprite {
   background: var(--frame);
 }
 .portrait > .inner {
+  position: relative;
   width: 100%;
   height: 100%;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   overflow: hidden;
+  background: var(--night-bands);
+}
+.portrait > .inner::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: var(--sun-top, 8%);
+  width: var(--sun-size, 76%);
+  aspect-ratio: 1;
+  transform: translateX(-50%);
+  background: var(--sun-bands);
+  clip-path: var(--sun-clip);
+  -webkit-mask-image: var(--sun-mask);
+  mask-image: var(--sun-mask);
+}
+.portrait > .inner::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 28%;
+  border-top: 2px solid var(--neon-glow);
+  background:
+    url('../../../assets/ui/grid-tile.svg') center top / 100% 100% no-repeat,
+    linear-gradient(#8a1d6c 0 22%, #6e1866 22% 50%, #561460 50%);
+}
+.portrait > .inner > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* ---------- Pixel art (shared/pixel-art.js): tier palettes ---------- */
@@ -274,34 +425,23 @@ canvas.sprite {
 }
 /* Not earned yet: the same shapes in the colors of the surface. */
 .tier-locked {
-  --t-main: #e4dfec;
-  --t-light: #f3f0f8;
-  --t-dark: #cbc4d8;
-  --t-ink: #b0a8c2;
-}
-@media (prefers-color-scheme: dark) {
-  .tier-locked {
-    --t-main: #2d2939;
-    --t-light: #3b3649;
-    --t-dark: #221f2c;
-    --t-ink: #524c68;
-  }
+  --t-main: #2e1a5c;
+  --t-light: #3a2470;
+  --t-dark: #22104a;
+  --t-ink: #4a2f8a;
 }
 
 /* ---------- Chips, dots, notices ---------- */
 .count-chip {
-  padding: 1px 6px;
-  border-radius: 6px;
+  padding: 0 6px;
   background: var(--chip);
   color: var(--chip-text);
-  font-size: 11px;
-  font-weight: 600;
+  font: 400 16px/15px var(--font-num);
 }
 .dot {
   flex: none;
   width: 8px;
   height: 8px;
-  border-radius: 50%;
   background: var(--dot-done);
 }
 .dot.waiting {
@@ -315,8 +455,8 @@ canvas.sprite {
   align-items: center;
   gap: 8px;
   padding: 9px 12px;
-  border-radius: var(--radius);
   background: var(--warning-bg);
+  box-shadow: inset 0 0 0 1px var(--warning-ring);
   color: var(--warning-text);
   font-size: 13px;
 }
@@ -337,7 +477,6 @@ canvas.sprite {
 
 /* ---------- Section card (profile, settings): pages set the padding ---------- */
 .card {
-  border-radius: var(--radius-xl);
   background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--card-border);
 }
@@ -370,7 +509,6 @@ canvas.sprite {
   gap: 8px;
   height: 40px;
   padding: 0 12px;
-  border-radius: var(--radius);
   box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--text-3);
 }
@@ -384,7 +522,7 @@ canvas.sprite {
   font: 14px var(--font-ui);
 }
 .field:focus-within {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--select);
 }
 input[type='checkbox'] {
   width: 16px;

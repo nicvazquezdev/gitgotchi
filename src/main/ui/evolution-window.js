@@ -1,10 +1,10 @@
-// Evolution celebration window (dark, shown when the pet reaches a new stage).
+// Evolution celebration window (a synthwave scene, shown when the pet reaches a new stage).
 const { createAppWindow } = require('./app-window');
 const { EVOLUTION_WINDOW } = require('../config');
 
 const celebration = createAppWindow('evolution', {
   ...EVOLUTION_WINDOW,
-  backgroundColor: '#1b1630',
+  backgroundColor: '#0a0318', // --sky-1
   resizable: false,
   maximizable: false,
   fullscreenable: false,

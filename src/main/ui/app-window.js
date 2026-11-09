@@ -6,6 +6,8 @@ const { createWindow } = require('./create-window');
 const { centeredIn } = require('./placement');
 const { IS_MAC } = require('../config');
 
+const WINDOW_BACKGROUND = '#120726'; // --bg-subtle: what shows before the page paints
+
 let openCount = 0;
 
 function windowOpened() {
@@ -53,6 +55,7 @@ function createAppWindow(page, options) {
       title: 'Gitgotchi',
       titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
       trafficLightPosition: { x: 16, y: 14 },
+      backgroundColor: WINDOW_BACKGROUND,
       ...resolved,
       ...centeredIn(activeDisplay().workArea, size),
     });

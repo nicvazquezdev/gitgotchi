@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="240" height="60" viewBox="0 0 240 60" preserveAspectRatio="none" shape-rendering="crispEdges">
+  <!-- The same grid, light enough for the small floor of a creature portrait. Strokes keep their width when it is stretched. -->
+  <g stroke="#ffb36b" fill="none" stroke-width="1.5">
+    <line x1="0" y1="3" x2="240" y2="3" stroke-opacity=".4" vector-effect="non-scaling-stroke" />
+    <line x1="0" y1="9" x2="240" y2="9" stroke-opacity=".5" vector-effect="non-scaling-stroke" />
+    <line x1="0" y1="18.5" x2="240" y2="18.5" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="0" y1="30" x2="240" y2="30" stroke-opacity=".72" vector-effect="non-scaling-stroke" />
+    <line x1="0" y1="44" x2="240" y2="44" stroke-opacity=".85" vector-effect="non-scaling-stroke" />
+    <line x1="56" y1="0" x2="-200" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="64" y1="0" x2="-160" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="72" y1="0" x2="-120" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="80" y1="0" x2="-80" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="88" y1="0" x2="-40" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="96" y1="0" x2="0" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="104" y1="0" x2="40" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="112" y1="0" x2="80" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="120" y1="0" x2="120" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="128" y1="0" x2="160" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="136" y1="0" x2="200" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="144" y1="0" x2="240" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="152" y1="0" x2="280" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="160" y1="0" x2="320" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="168" y1="0" x2="360" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="176" y1="0" x2="400" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+    <line x1="184" y1="0" x2="440" y2="60" stroke-opacity=".6" vector-effect="non-scaling-stroke" />
+  </g>
+</svg>

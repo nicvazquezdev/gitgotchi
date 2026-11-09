@@ -1,5 +1,5 @@
 // Entry point: app lifecycle and wiring between services and UI.
-const { app, screen, powerMonitor, systemPreferences } = require('electron');
+const { app, screen, powerMonitor, systemPreferences, nativeTheme } = require('electron');
 const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD, LIVE } = require('./config');
 
 const session = require('./services/session');
@@ -225,6 +225,7 @@ if (!app.requestSingleInstanceLock()) app.quit();
 app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : actions.openSetup()));
 
 app.whenReady().then(() => {
+  nativeTheme.themeSource = 'dark'; // the design is synthwave, dark only: scrollbars, menus and title bars follow it
   if (IS_MAC) app.dock?.hide();
   registerIpc(actions);
   loginItem.applyDefault();

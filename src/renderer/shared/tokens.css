@@ -1,76 +1,114 @@
 /*
- * Design tokens (from the app design). Light by default; dark follows the system setting.
+ * Design tokens: the synthwave look of the app. It is dark only, a night sky with neon on top.
  * Use the semantic tokens (--bg, --text, --accent…) in components, never raw hex values.
+ * The neon colors are the palette; the semantic tokens below say what each one is for.
  */
 @import url('../../../node_modules/@fontsource/inter/400.css');
 @import url('../../../node_modules/@fontsource/inter/500.css');
 @import url('../../../node_modules/@fontsource/inter/600.css');
+@import url('../../../node_modules/@fontsource/inter/700.css');
 @import url('../../../node_modules/@fontsource/pixelify-sans/500.css');
 @import url('../../../node_modules/@fontsource/pixelify-sans/600.css');
+@import url('../../../node_modules/@fontsource/vt323/400.css');
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
   /* Type */
   --font-ui: Inter, system-ui, -apple-system, sans-serif;
-  --font-pixel: 'Pixelify Sans', var(--font-ui);
+  --font-pixel: 'Pixelify Sans', var(--font-ui); /* names and titles */
+  --font-num: VT323, 'Pixelify Sans', ui-monospace, monospace; /* figures: XP, counts, stats */
+
+  /* Neon palette */
+  --neon-pink: #ff3ea5;
+  --neon-pink-soft: #ff7ac8;
+  --neon-glow: #ff7adf; /* the horizon line */
+  --neon-cyan: #2de2ff;
+  --neon-gold: #ffd23f;
+  --neon-amber: #ffb547;
+  --neon-mint: #4dffb4;
+  --neon-violet: #8a2ad0;
+
+  /* Sky: the stripes of the night, from the top of the window to the horizon */
+  --sky-1: #0a0318;
+  --sky-2: #10052a;
+  --sky-3: #19073a;
+  --sky-4: #250a4c;
+  --sky-5: #360d5e;
+  --sky-6: #4c1268;
+  --sky-7: #66176f;
+  --sun-bands: linear-gradient(
+    #fff27a 0 16%,
+    #ffd23f 16% 32%,
+    #ffa63a 32% 48%,
+    #ff6a5c 48% 64%,
+    #ff3e8a 64% 80%,
+    #d22fae 80%
+  );
+  --xp-fill: linear-gradient(90deg, #ffd23f, #ff8a3d 45%, #ff3e8a);
 
   /* Surfaces */
-  --bg: #ffffff; /* windows, cards */
-  --bg-subtle: #faf8f5; /* profile window background */
-  --bg-menu: #fbfaf8; /* menu bar dropdown */
-  --surface: #f7f5fa; /* stat tiles, list hover */
-  --surface-hover: #f6f4fa;
-  --titlebar: #f6f3ef;
-  --titlebar-border: #ebe5dd;
-  --card-border: #ece6dd; /* inset ring of section cards */
-  --border: #e7e1ef; /* inset ring of lists and inputs */
-  --border-strong: #ddd6e8;
-  --divider: #efeaf3;
-  --divider-soft: #f3eff6;
-  --overlay-hover: #ebe7f3; /* menu row hover */
+  --bg: #170a31; /* cards */
+  --bg-subtle: #120726; /* window background */
+  --bg-menu: #140a2c; /* menu bar dropdown, popover panel */
+  --surface: #22104a; /* stat tiles, raised rows */
+  --surface-hover: #2a1458;
+  --titlebar: #1a0b36;
+  --titlebar-border: #2e1a5c;
+  --card-border: #34205f; /* inset ring of section cards */
+  --border: #34205f; /* inset ring of lists and inputs */
+  --border-strong: #4a2f8a;
+  --divider: #2a1a55;
+  --divider-soft: #231247;
+  --overlay-hover: #2a1458; /* menu row hover */
 
   /* Text */
-  --text: #1d1830;
-  --text-2: #5f5872; /* secondary */
-  --text-3: #6e6780; /* tertiary, meta */
-  --text-4: #8a8399; /* placeholders, locked */
+  --text: #f6efff;
+  --text-2: #c4b3ea; /* secondary */
+  --text-3: #a898d4; /* tertiary, meta */
+  --text-4: #8f7fc4; /* placeholders, locked */
 
-  /* Accent (purple) */
-  --accent: #5b3fd6;
-  --accent-hover: #3f2a9e;
-  --accent-edge: #3d2899; /* pixel button bottom edge */
-  --accent-text: #4a2fc2; /* XP figures, links on light surfaces */
-  --accent-soft: #ece6f8; /* chips, size badges */
-  --accent-tint: #f5f2ff; /* selected card */
-  --on-accent: #ffffff;
-  --track: #e6e0f2; /* empty XP blocks, progress tracks */
+  /* Accent (hot pink) */
+  --accent: #ff3ea5;
+  --accent-hover: #ffffff; /* hover of links */
+  --accent-edge: #b3157a; /* pixel button bottom edge */
+  --accent-text: var(--neon-pink-soft); /* XP figures */
+  --accent-soft: #0f2c48; /* chips, size badges */
+  --accent-tint: #22104a; /* selected card */
+  --on-accent: #1a0530;
+  --track: #2c1a5c; /* empty XP blocks, progress tracks */
+  --link: var(--neon-cyan);
+  --select: var(--neon-cyan); /* ring of the selected card */
+  --glow: rgba(255, 62, 165, 0.35);
 
   /* Secondary button */
-  --btn-2: #f3f0f8;
-  --btn-2-edge: #dcd5e8;
-  --btn-2-text: #1d1830;
+  --btn-2: #2a1656;
+  --btn-2-edge: #0d0620;
+  --btn-2-text: #f6efff;
 
   /* Status */
-  --chip: #f0ecf7;
-  --chip-text: #4d4460;
-  --warning-bg: #fff3df;
-  --warning-text: #8a4600;
-  --warning-icon: #b35c00;
-  --success: #1f7a4d;
-  --success-bg: #e3f4ea;
-  --dot-waiting: #e08a00;
-  --dot-approved: #2f9e64;
-  --dot-done: #a39cb3;
-  --switch-off: #d9d3e4;
-  --frame: #1d1830; /* 2px pixel frame around creature portraits */
-  --pet-shadow: rgba(42, 24, 64, 0.16);
+  --chip: #241245;
+  --chip-text: #ddd0ff;
+  --size-text: var(--neon-cyan); /* PR size badges (XS, S, M, L) */
+  --warning-bg: #2e1c12;
+  --warning-text: #ffd08a;
+  --warning-icon: var(--neon-amber);
+  --warning-ring: #6b4518;
+  --success: var(--neon-mint);
+  --success-bg: #0e3527;
+  --dot-waiting: var(--neon-amber);
+  --dot-approved: var(--neon-mint);
+  --dot-done: #8f7fc4;
+  --switch-off: #2c1a5c;
+  --switch-knob-off: #9786c4;
+  --frame: var(--neon-pink); /* 2px pixel frame around creature portraits */
+  --pet-shadow: rgba(0, 0, 0, 0.55);
 
   /* Elevation */
-  --ring: rgba(29, 24, 48, 0.1); /* 1px edge of floating cards (the OS draws the shadow) */
-  --shadow-menu: 0 0 0 1px rgba(29, 24, 48, 0.1), 0 14px 36px rgba(29, 24, 48, 0.22);
-  --shadow-popover: 0 0 0 1px rgba(29, 24, 48, 0.08), 0 16px 40px rgba(29, 24, 48, 0.2);
-  --shadow-bubble: 0 0 0 1px rgba(29, 24, 48, 0.06), 0 10px 28px rgba(29, 24, 48, 0.18);
+  --ring: #3d2775; /* 1px edge of floating cards (the OS draws the shadow) */
+  --shadow-menu: 0 0 0 1px #3d2775, 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 36px rgba(255, 62, 165, 0.18);
+  --shadow-popover: 0 0 0 2px var(--neon-pink), 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 36px rgba(255, 62, 165, 0.3);
+  --shadow-bubble: 0 0 0 1px #3d2775, 0 10px 28px rgba(0, 0, 0, 0.55);
 
   /* Shape */
   --radius-sm: 6px;
@@ -78,59 +116,4 @@
   --radius-lg: 12px;
   --radius-xl: 16px;
   --px: 3px; /* notch of pixel-cut corners */
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #1d1a26;
-    --bg-subtle: #17141f;
-    --bg-menu: #24212e;
-    --surface: #262231;
-    --surface-hover: #2a2537;
-    --titlebar: #221f2c;
-    --titlebar-border: #312c3d;
-    --card-border: #322d3e;
-    --border: #383148;
-    --border-strong: #463e58;
-    --divider: #2f2a3b;
-    --divider-soft: #2a2535;
-    --overlay-hover: #342d48;
-
-    --text: #f2eff8;
-    --text-2: #bdb6cc;
-    --text-3: #a59eb6;
-    --text-4: #857e96;
-
-    --accent: #7058ee;
-    --accent-hover: #c9bcff;
-    --accent-edge: #4630b0;
-    --accent-text: #b8a9ff;
-    --accent-soft: #312a55;
-    --accent-tint: #28224a;
-    --on-accent: #ffffff;
-    --track: #3a3452;
-
-    --btn-2: #2e2a3b;
-    --btn-2-edge: #1e1a28;
-    --btn-2-text: #f2eff8;
-
-    --chip: #322c44;
-    --chip-text: #cfc7e6;
-    --warning-bg: #3a2a14;
-    --warning-text: #ffcf8f;
-    --warning-icon: #f0a050;
-    --success: #6fd6a2;
-    --success-bg: #183a29;
-    --dot-waiting: #f0a030;
-    --dot-approved: #4cc285;
-    --dot-done: #7a7390;
-    --switch-off: #4a4360;
-    --frame: #0f0d16;
-    --pet-shadow: rgba(0, 0, 0, 0.35);
-
-    --ring: rgba(255, 255, 255, 0.08);
-    --shadow-menu: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 14px 36px rgba(0, 0, 0, 0.5);
-    --shadow-popover: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 16px 40px rgba(0, 0, 0, 0.5);
-    --shadow-bubble: 0 0 0 1px rgba(255, 255, 255, 0.08), 0 10px 28px rgba(0, 0, 0, 0.45);
-  }
 }

@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -21,7 +21,6 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagVal
 app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-shots-profile'));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
-const light = process.argv.includes('--light');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const goalOpen = process.argv.includes('--goal-open'); // today has little XP yet: the goal is still ahead
@@ -223,7 +222,7 @@ async function shot(name) {
     show: false,
     ...size,
     useContentSize: true,
-    backgroundColor: light ? '#e8e5ef' : '#0f0d14',
+    backgroundColor: '#120726',
     webPreferences: { preload: path.join(__dirname, 'shots-preload.js'), contextIsolation: true, sandbox: false },
   });
   await win.loadFile(path.join(ROOT, 'src/renderer', name, 'index.html'), tab ? { hash: tab } : {});
@@ -248,7 +247,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };
@@ -270,7 +269,7 @@ function renderAll() {
 
 app.whenReady().then(async () => {
   if (pages.length !== 1) return renderAll();
-  nativeTheme.themeSource = light ? 'light' : 'dark';
+  nativeTheme.themeSource = 'dark';
   fs.mkdirSync(outDir, { recursive: true });
   const [name] = pages;
   try {
