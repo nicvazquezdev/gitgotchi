@@ -20,6 +20,7 @@ const ICON_PATHS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/>',
   chevron: '<path d="M9 5l7 7-7 7"/>',
   down: '<path d="M6 9l6 6 6-6"/>',
+  back: '<path d="M15 5l-7 7 7 7"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   dots: '<g fill="currentColor" stroke="none"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></g>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',

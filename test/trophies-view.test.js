@@ -5,7 +5,7 @@ const { achievementProgress, groupAchievements } = require('../src/main/game/ach
 const { ACHIEVEMENTS } = require('../src/main/game/catalog');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const view = () => import(path.join(__dirname, '../src/renderer/profile/achievements-view.js'));
+const view = () => import(path.join(__dirname, '../src/renderer/profile/trophies-view.js'));
 const art = () => import(path.join(__dirname, '../src/renderer/shared/pixel-art.js'));
 
 const day = (counts = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...counts });
@@ -65,25 +65,6 @@ test('daysSince counts calendar days, across months; dayLabel adds the year only
   assert.equal(dayLabel('2025-12-31', now), 'Dec 31, 2025');
 });
 
-test('applyFilter keeps the matching items and drops the groups left empty', async () => {
-  const { applyFilter } = await view();
-  const all = groups({ '2026-03-02': day({ prs: 1, reviews: 1 }) }).groups;
-  const unlocked = applyFilter(all, 'unlocked');
-  assert.deepEqual(
-    unlocked
-      .flatMap((g) => g.items)
-      .map((a) => a.id)
-      .sort(),
-    ['first-pr', 'first-review'],
-  );
-  assert.deepEqual(unlocked.map((g) => g.id).sort(), ['prs', 'reviews']);
-  const locked = applyFilter(all, 'locked');
-  assert.equal(locked.flatMap((g) => g.items).length, ACHIEVEMENTS.length - 2);
-  assert.ok(locked.every((g) => g.items.length > 0));
-  assert.equal(applyFilter(all, 'all').flatMap((g) => g.items).length, ACHIEVEMENTS.length);
-  assert.equal(applyFilter(all, 'whatever').flatMap((g) => g.items).length, ACHIEVEMENTS.length);
-});
-
 test('pixel art: every icon of the catalog has a glyph, 10 x 10', async () => {
   const { GLYPH_NAMES, medalRows } = await art();
   for (const icon of new Set(ACHIEVEMENTS.map((a) => a.icon))) assert.ok(GLYPH_NAMES.includes(icon), icon);
@@ -122,10 +103,4 @@ test('pixel art: the bitmap font draws digits and the slash, 7 rows tall, one co
   assert.ok(rows.every((row) => row.length === 4 * 5 + 3));
   assert.deepEqual(digitRows('x'), digitRows('0')); // unknown characters draw as 0
   for (const digit of '0123456789/') assert.ok(digitRows(digit).join('').includes('i'), digit);
-});
-
-test('pixel art: the arrow of the level-up toast has a glyph too', async () => {
-  const { GLYPH_NAMES, medalRows } = await art();
-  assert.ok(GLYPH_NAMES.includes('up'));
-  assert.equal(medalRows('up').length, 20);
 });

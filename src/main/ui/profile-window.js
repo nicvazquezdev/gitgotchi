@@ -1,4 +1,4 @@
-// Profile window: the pet's level, evolution line, weekly activity and XP rules; the collection; the achievements.
+// Pet page window: the pet, its growth and its week; the pets; the trophies; and the rules of XP in a sheet.
 const { createAppWindow } = require('./app-window');
 const { PROFILE_WINDOW } = require('../config');
 
@@ -9,14 +9,14 @@ const profile = createAppWindow('profile', {
   fullscreenable: false,
 });
 
-const VIEWS = ['overview', 'collection', 'achievements'];
+const VIEWS = ['pets', 'trophies', 'xp'];
 let requested = null; // the view the page should show when it starts
 
 module.exports = {
-  /** Opens the window; `view` picks the tab (a window that is already open switches to it). */
+  /** Opens the window; `view` picks where it starts (a window that is already open goes there). */
   open: (view) => {
     requested = VIEWS.includes(view) ? view : null;
-    if (!profile.open() && requested) profile.send('profile:view', requested);
+    if (!profile.open()) profile.send('profile:view', requested ?? 'home');
   },
   /** The view asked for by the last open, once: the page reads it when it starts. */
   takeView: () => {

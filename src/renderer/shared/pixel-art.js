@@ -90,18 +90,6 @@ const GLYPHS = {
     '.###......',
     '.##.......',
   ],
-  up: [
-    '..........',
-    '....##....',
-    '...####...',
-    '..######..',
-    '.########.',
-    '...####...',
-    '...####...',
-    '...####...',
-    '...####...',
-    '..........',
-  ],
   cycle: [
     '..####....',
     '.#....#.#.',
@@ -266,6 +254,12 @@ function digitRows(text) {
 
 /** A tier medal with the glyph `name`: 20 x 20 grid pixels. */
 const medal = (name, scale = 3) => pixelSvg(medalRows(name), scale);
+/** A glyph of the medals on its own, in the text color (a flame, an arrow): 10 x 10 grid pixels. */
+const glyph = (name, scale = 2) =>
+  pixelSvg(
+    (GLYPHS[name] ?? GLYPHS.issue).map((row) => row.replaceAll('#', 'i')),
+    scale,
+  );
 /** A trophy cup. */
 const cup = (scale = 2) => pixelSvg(CUP, scale);
 /** A padlock. */
@@ -273,4 +267,4 @@ const lock = (scale = 2) => pixelSvg(LOCK, scale);
 /** Digits and slashes in the bitmap font, in the text color. */
 const digits = (text, scale = 4) => pixelSvg(digitRows(text), scale);
 
-export { GLYPH_NAMES, MEDAL_SIZE, pixelPaths, medalRows, digitRows, medal, cup, lock, digits };
+export { GLYPH_NAMES, MEDAL_SIZE, pixelPaths, medalRows, digitRows, medal, glyph, cup, lock, digits };

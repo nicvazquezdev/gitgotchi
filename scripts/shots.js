@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--mine] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).

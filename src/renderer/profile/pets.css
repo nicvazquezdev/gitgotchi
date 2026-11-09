@@ -1,0 +1,146 @@
+/* Pets: a grid of cards, and under it what can be done with the selected one. */
+.pets-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+}
+.pets-page .note {
+  margin: 0;
+  padding: 14px 24px 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.pets-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px 14px;
+  padding: 18px 24px 8px;
+}
+.pet-card {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.pet-card .portrait {
+  --frame: transparent;
+  position: relative;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.pet-card.active .portrait {
+  --frame: var(--neon-pink);
+}
+.pet-card.sel .portrait {
+  --frame: var(--select);
+}
+.pet-card .portrait > .inner {
+  --sun-size: 74%;
+  --sun-top: 8%;
+  --floor-h: 28%;
+}
+.pet-card .portrait > .inner img {
+  margin-bottom: 8px;
+}
+.pet-card.locked .portrait > .inner {
+  background: var(--surface);
+}
+.pet-card.locked .portrait > .inner::before,
+.pet-card.locked .portrait > .inner::after {
+  display: none;
+}
+/* Silhouettes are near-black: on the flat tile they are turned into a faint lilac. */
+.pet-card.locked img {
+  filter: brightness(0) invert(1);
+  opacity: 0.16;
+}
+.pet-card .nm {
+  display: block;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.pet-card .lv {
+  display: block;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.pet-card.locked .nm {
+  color: var(--text-3);
+}
+.tile-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+  padding: 0 6px 0 4px;
+  background: var(--accent);
+  clip-path: var(--cut-3);
+  color: var(--on-accent);
+  font: 700 11px var(--font-ui);
+}
+.tile-crown {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  z-index: 3;
+  line-height: 0;
+  color: var(--neon-gold);
+}
+.tile-lock {
+  position: absolute;
+  right: 7px;
+  bottom: 7px;
+  z-index: 3;
+  color: var(--text-4);
+}
+
+.action-bar {
+  position: sticky;
+  bottom: 0;
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 10px 14px;
+  padding: 14px 24px 16px;
+  border-top: 1px solid var(--divider);
+  background: var(--titlebar);
+}
+.action-bar .who {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+.action-bar .who b {
+  font-size: 14px;
+}
+.bar-name {
+  font-size: 20px;
+  line-height: 24px;
+}
+.action-bar .btn {
+  height: 38px;
+}
+.hatch-row {
+  grid-column: 1 / -1;
+  display: flex;
+  gap: 10px;
+}
+.hatch-row .field {
+  flex: 1;
+  height: 38px;
+}
+.action-bar .problem {
+  grid-column: 1 / -1;
+  margin: 0;
+}
