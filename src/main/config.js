@@ -11,6 +11,10 @@ module.exports = {
   RENDERER_DIR: path.join(ROOT, 'src/renderer'),
   PRELOAD: path.join(ROOT, 'src/preload/preload.js'),
   IS_MAC: process.platform === 'darwin',
+  IS_WIN: process.platform === 'win32',
+  IS_LINUX: process.platform === 'linux',
+  // Same id for the Windows taskbar identity, the macOS LaunchAgent label and the installers (electron-builder.yml).
+  APP_ID: 'com.gitgotchi.app',
 
   // Window size at the default sprite size; it grows with the sprite (see ui/pet-size.js).
   // The pet is drawn on a canvas of whole native sprite pixels: `rows` tall = `headroom` (hearts and particles float
@@ -61,8 +65,15 @@ module.exports = {
     HOST: 'github.com', // Only github.com accounts are listed (GitHub Enterprise hosts are not supported yet)
     API: 'https://api.github.com',
     USER_AGENT: 'gitgotchi-desktop',
-    // Where to look for `gh`: apps launched from Finder don't inherit the shell PATH.
-    GH_PATHS: ['/opt/homebrew/bin/gh', '/usr/local/bin/gh', '/usr/bin/gh'],
+    // Where to look for `gh`: apps launched from Finder or a desktop launcher don't inherit the shell PATH.
+    GH_PATHS: [
+      '/opt/homebrew/bin/gh',
+      '/usr/local/bin/gh',
+      '/usr/bin/gh',
+      '/home/linuxbrew/.linuxbrew/bin/gh',
+      '/snap/bin/gh',
+      ...(process.env.ProgramFiles ? [path.join(process.env.ProgramFiles, 'GitHub CLI', 'gh.exe')] : []),
+    ],
     REPO_PAGES: 3,
     EVENT_PAGES: 3,
     PR_PAGES: 20, // pages of 50 PRs when backfilling the user's PRs

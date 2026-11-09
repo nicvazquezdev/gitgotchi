@@ -1,5 +1,6 @@
 // Factory for the regular app windows (onboarding, settings, profile): one instance per page,
-// opened centered on the display in use, with the native traffic lights over the page's 40 px title bar.
+// opened centered on the display in use, with the native window buttons over the page's 40 px title bar
+// (the traffic lights on macOS, the minimize and close buttons on Windows and Linux).
 // The app lives in the menu bar: on macOS the Dock icon only shows while at least one of these windows is open.
 const { app, screen } = require('electron');
 const { createWindow } = require('./create-window');
@@ -7,6 +8,10 @@ const { centeredIn } = require('./placement');
 const { IS_MAC } = require('../config');
 
 const WINDOW_BACKGROUND = '#120726'; // --bg-subtle: what shows before the page paints
+
+const TITLE_BAR = IS_MAC
+  ? { titleBarStyle: 'hiddenInset', trafficLightPosition: { x: 16, y: 14 } }
+  : { titleBarStyle: 'hidden', titleBarOverlay: { color: '#1a0b36', symbolColor: '#ffffff', height: 40 } }; // --titlebar
 
 let openCount = 0;
 
@@ -53,8 +58,7 @@ function createAppWindow(page, options) {
     windowOpened();
     win = createWindow(page, {
       title: 'Gitgotchi',
-      titleBarStyle: IS_MAC ? 'hiddenInset' : 'default',
-      trafficLightPosition: { x: 16, y: 14 },
+      ...TITLE_BAR,
       backgroundColor: WINDOW_BACKGROUND,
       ...resolved,
       ...centeredIn(activeDisplay().workArea, size),

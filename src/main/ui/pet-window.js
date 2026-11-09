@@ -2,7 +2,7 @@
 const { screen } = require('electron');
 const store = require('../store');
 const { createWindow } = require('./create-window');
-const { IS_MAC } = require('../config');
+const { IS_MAC, IS_LINUX } = require('../config');
 const petSize = require('./pet-size');
 const throwing = require('./pet-throw');
 
@@ -61,11 +61,15 @@ function create() {
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // Clicks pass through by default; the renderer turns this off while hovering the pet.
   win.setIgnoreMouseEvents(true, { forward: true });
+  watchPointer(true);
   // The page went away while the pet was held (a reload, a crash): nobody will say that the drag is over.
   win.webContents.on('did-start-loading', () => dragging && stopDrag({ throwable: false }));
   win.webContents.on('render-process-gone', () => dragging && stopDrag({ throwable: false }));
   win.once('ready-to-show', () => win.showInactive());
-  win.on('closed', () => (win = null));
+  win.on('closed', () => {
+    win = null;
+    watchPointer(false);
+  });
 }
 
 function show() {
@@ -86,7 +90,34 @@ function send(channel, payload) {
 }
 
 function setClickThrough(enabled) {
-  if (isOpen() && !followTimer) win.setIgnoreMouseEvents(enabled, { forward: true });
+  if (!isOpen() || followTimer) return;
+  win.setIgnoreMouseEvents(enabled, { forward: true });
+  watchPointer(enabled);
+}
+
+// Electron forwards mouse moves through a click-through window on macOS and Windows, but not on Linux: there the page
+// would never hear that the cursor reached the pet. So, while clicks pass through, the cursor is asked for instead and
+// the page is told where it is (the same message as when the window moves from under a still cursor, `tellPointer`).
+const POINTER_POLL_MS = 50;
+let pointerTimer = null;
+let lastPointer = null;
+
+function watchPointer(enabled) {
+  if (!IS_LINUX) return;
+  clearInterval(pointerTimer);
+  pointerTimer = null;
+  lastPointer = null;
+  if (enabled) pointerTimer = setInterval(pollPointer, POINTER_POLL_MS);
+}
+
+function pollPointer() {
+  if (!isVisible()) return;
+  const { x, y } = screen.getCursorScreenPoint();
+  const bounds = win.getBounds();
+  const inside = x >= bounds.x && x < bounds.x + bounds.width && y >= bounds.y && y < bounds.y + bounds.height;
+  if (!inside || (lastPointer?.x === x && lastPointer?.y === y)) return;
+  lastPointer = { x, y };
+  send('pet:pointer', { x: x - bounds.x, y: y - bounds.y });
 }
 
 // ---------- Drag: the window follows the cursor from the main process ----------

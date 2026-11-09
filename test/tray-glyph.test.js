@@ -23,3 +23,11 @@ test('glyphBitmap fills each glyph pixel as a solid square and leaves the gaps t
   assert.equal(alphaAt(bmp, 8, 16), 0); // row 8, column 4: an eye
   assert.equal(alphaAt(bmp, 8, 12), 255); // row 6, column 4: the eye highlight
 });
+
+const pixelAt = ({ buffer, width }, x, y) => [...buffer.subarray((y * width + x) * 4, (y * width + x) * 4 + 4)];
+
+test('glyphBitmap is black by default and takes a color for trays that have no templates', () => {
+  assert.deepEqual(pixelAt(glyphBitmap(1), 2, 0), [0, 0, 0, 255]);
+  assert.deepEqual(pixelAt(glyphBitmap(1, undefined, [255, 62, 165]), 2, 0), [255, 62, 165, 255]);
+  assert.deepEqual(pixelAt(glyphBitmap(1, undefined, [255, 62, 165]), 0, 0), [0, 0, 0, 0]);
+});

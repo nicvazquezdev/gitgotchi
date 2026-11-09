@@ -1,6 +1,16 @@
 // Entry point: app lifecycle and wiring between services and UI.
-const { app, screen, powerMonitor, systemPreferences, nativeTheme } = require('electron');
-const { IS_MAC, PET_SIZE_RANGE, DEFAULT_PET_SIZE, TICK_INTERVAL_MS, CLOUD, LIVE } = require('./config');
+const { app, screen, powerMonitor, systemPreferences, nativeTheme, Menu } = require('electron');
+const {
+  IS_MAC,
+  IS_WIN,
+  IS_LINUX,
+  APP_ID,
+  PET_SIZE_RANGE,
+  DEFAULT_PET_SIZE,
+  TICK_INTERVAL_MS,
+  CLOUD,
+  LIVE,
+} = require('./config');
 
 const session = require('./services/session');
 const petService = require('./services/pet-service');
@@ -13,6 +23,7 @@ const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
 const { createTray } = require('./ui/tray');
+const { trayMenuTemplate } = require('./ui/tray-menu');
 const store = require('./store');
 const prefs = require('./prefs');
 const { registerIpc } = require('./ipc');
@@ -31,6 +42,9 @@ if (IS_MAC) {
   systemPreferences.setUserDefault('NSQuitAlwaysKeepsWindows', 'boolean', false);
 }
 
+// The Windows taskbar groups and names the app by this id (the installer uses the same one).
+if (IS_WIN) app.setAppUserModelId(APP_ID);
+
 // ---------- App actions ----------
 
 const actions = {
@@ -43,6 +57,7 @@ const actions = {
     if (petWindow.isVisible()) petWindow.hide();
     else petWindow.show();
     panelWindow.send();
+    refreshTrayMenu();
   },
   // Setup flow (onboarding): connect GitHub, pick repos and the pet.
   openSetup: () =>
@@ -133,7 +148,17 @@ const actions = {
   quit: () => app.quit(),
 };
 
-const trayAnchor = () => tray.getBounds();
+// Linux does not say where the tray icon is (it reports zeros): the cursor, where the person just clicked, stands in.
+const trayAnchor = () => {
+  const bounds = tray.getBounds();
+  if (bounds.width || bounds.height) return bounds;
+  const { x, y } = screen.getCursorScreenPoint();
+  return { x, y, width: 0, height: 0 };
+};
+
+// The tray menu on Linux is native and static: it is built again whenever what it shows changes.
+const refreshTrayMenu = () =>
+  IS_LINUX && tray?.setContextMenu(Menu.buildFromTemplate(trayMenuTemplate(actions.panelState(), actions)));
 
 // The popover hangs from the creature (its rect in the pet window's coordinates) or from the menu bar icon (null).
 // From the creature it goes along when the pet is dragged.
@@ -166,6 +191,7 @@ petService.on('status', (status) => {
   panelWindow.send();
   settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();
+  refreshTrayMenu();
 });
 petService.on('evolved', (stage) => petWindow.send('pet:evolved', stage));
 petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
@@ -198,16 +224,20 @@ app.on('second-instance', () => (petService.isConfigured() ? petWindow.show() : 
 app.whenReady().then(() => {
   nativeTheme.themeSource = 'dark'; // the design is synthwave, dark only: scrollbars, menus and title bars follow it
   if (IS_MAC) app.dock?.hide();
+  else Menu.setApplicationMenu(null); // no File/Edit/View bar over the windows
   registerIpc(actions);
   loginItem.applyDefault();
   panelWindow.init(actions.panelState);
   popoverWindow.init(actions.panelState);
   settingsWindow.init(actions.settingsState);
   tray = createTray();
-  // The icon is the menu (a click or a right-click); the card hangs from the pet.
-  const toggleMenu = () => panelWindow.toggle(tray.getBounds());
-  tray.on('click', toggleMenu);
-  tray.on('right-click', toggleMenu);
+  // The icon is the menu (a click or a right-click); the card hangs from the pet. On Linux the menu is a native one.
+  if (IS_LINUX) refreshTrayMenu();
+  else {
+    const toggleMenu = () => panelWindow.toggle(trayAnchor());
+    tray.on('click', toggleMenu);
+    tray.on('right-click', toggleMenu);
+  }
 
   if (petService.isConfigured()) {
     petWindow.show();
@@ -226,5 +256,5 @@ app.whenReady().then(() => {
   screen.on('display-removed', petWindow.ensureOnScreen);
 });
 
-// Lives in the menu bar: closing windows doesn't quit the app.
+// Lives in the menu bar (the tray on Windows and Linux): closing windows doesn't quit the app.
 app.on('window-all-closed', () => {});
