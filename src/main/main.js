@@ -43,6 +43,7 @@ let pendingEvolution = null;
 const actions = {
   openProfile: (view) => profileWindow.open(view),
   openCollection: () => profileWindow.open('collection'),
+  openXp: () => profileWindow.open('xp'),
   celebrateEvolution: ({ index }) => {
     pendingEvolution = { fromIndex: pendingEvolution?.fromIndex ?? index - 1, toIndex: index };
     actions.flushEvolution();
@@ -107,6 +108,7 @@ const actions = {
     petWindow.setSize(size, { persist });
     if (persist) settingsWindow.send();
   },
+  openMenu: () => actions.showMenu(),
   showMenu: () => {
     actions.flushEvolution();
     actions.refreshReviews();

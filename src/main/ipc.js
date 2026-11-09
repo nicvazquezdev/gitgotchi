@@ -45,8 +45,8 @@ const PANEL_ACTIONS = [
   'quit',
 ];
 const KEEP_OPEN = new Set(['sync', 'togglePet']);
-// Popover buttons and header: they close the popover first.
-const POPOVER_ACTIONS = ['openProfile', 'openCollection', 'openSettings'];
+// Card buttons: they close the card first.
+const POPOVER_ACTIONS = ['openProfile', 'openXp', 'openMenu', 'resume'];
 // ---- end everyday UI ----
 
 // Settings window controls.

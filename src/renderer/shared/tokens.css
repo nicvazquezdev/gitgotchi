@@ -99,6 +99,8 @@
   --warning-ring: #6b4518;
   --success: var(--neon-mint);
   --success-bg: #0e3527;
+  --danger: #ff6b6b; /* checks failing, merge conflicts */
+  --dot-failing: var(--danger);
   --dot-waiting: var(--neon-amber);
   --dot-approved: var(--neon-mint);
   --dot-done: #8f7fc4;

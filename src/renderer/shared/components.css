@@ -454,6 +454,9 @@ canvas.sprite {
 .dot.approved {
   background: var(--dot-approved);
 }
+.dot.failing {
+  background: var(--dot-failing);
+}
 .notice {
   display: flex;
   align-items: center;

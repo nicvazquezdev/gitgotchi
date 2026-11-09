@@ -1,17 +1,17 @@
-// PR popover: the pet's header and two tabs. "To review" is the queue of PRs waiting for the user's review;
-// "My PRs" is the user's own PRs (waiting, approved, merged today). Rows open the PR in the browser.
+// The card of the pet: its header (level, one bar and what is left) and two tabs. "To review" is the queue of PRs that
+// wait for the user's review; "My PRs" is the user's own (waiting, approved, merged today). Rows open the PR in the
+// browser. The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
-import { plural, timeAgo } from '../shared/format.js';
+import { timeAgo } from '../shared/format.js';
 import { icon, xpBar } from '../shared/ui.js';
+import { pauseUntilText } from '../shared/pause-text.js';
 import { PetView } from '../pet/pet-view.js';
 
 const api = window.gitgotchi.popover;
 const app = $('#app');
 
-const NOTICE_ICONS = { happy: 'smile' }; // the moods that come with a reason on the card
 const TABS = ['review', 'mine'];
 
-const days = (n) => (n > 0 ? plural(n, 'day') : 'today');
 const shortAge = (n) => (n > 0 ? `${n}d` : 'today');
 const ago = (n) => (n > 0 ? `${n}d ago` : 'today');
 /** 'acme/code' -> 'code' when the team is in the same organization as the repo (it is the usual case). */
@@ -20,8 +20,8 @@ const teamName = (pr) => (pr.via?.startsWith(`${pr.fullRepo.split('/')[0]}/`) ? 
 // ---------- Portrait: the pet playing its mood ----------
 
 // One canvas for the life of the page: the card is rebuilt on every state, and a new animator each time would restart
-// the sweat and the shivers. The pet is not on the desktop in this mood (there it is always normal), so this is where
-// it shows: the mood's pose and effects, standing in place.
+// its effects. The pet is not on the desktop in this mood (there it is always normal), so this is where it shows:
+// the mood's pose, standing in place.
 // The creature is drawn at 2 CSS px per native px and the frame fits it, so it grows with each stage: the creature's
 // rows, plus 2 above for its hop and 2 under the floor line (the canvas is bottom-aligned, the rest is clipped).
 const PORTRAIT_SCALE = 2;
@@ -34,7 +34,7 @@ const portrait = new PetView(portraitCanvas, { getWidth: () => portraitWidth });
 portrait.setScale(PORTRAIT_SCALE);
 portrait.setStill(true);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-const syncCalm = () => portrait.setCalm(reducedMotion.matches); // the pose, without sweat or shivers
+const syncCalm = () => portrait.setCalm(reducedMotion.matches); // the pose, without effects
 syncCalm();
 reducedMotion.addEventListener('change', syncCalm);
 
@@ -62,8 +62,11 @@ function currentTab({ status } = latest) {
 
 // ---------- Header ----------
 
+/** The next level is an evolution: then what is left is "to evolve". */
+const evolvesNext = ({ nextStage, level }) => nextStage?.level === level + 1;
+
 function header(status) {
-  const { name, species, stage, level, levelXp, levelXpNeeded } = status;
+  const { name, level, levelXp, levelXpNeeded, todayXp } = status;
   const frame = `${portraitInner(status) + 2 * FRAME_BORDER}px`;
   return h(
     'div',
@@ -81,46 +84,48 @@ function header(status) {
         { class: 'head-title' },
         h('span', { class: 'pixel-name name' }, name),
         h(
-          'span',
-          { class: 'head-actions' },
-          h(
-            'button',
-            {
-              class: 'icon-btn',
-              type: 'button',
-              'aria-label': 'Companions',
-              title: 'Switch companion',
-              onclick: () => api.action('openCollection'),
-            },
-            icon('swap', { size: 18 }),
-          ),
-          h(
-            'button',
-            { class: 'icon-btn', type: 'button', 'aria-label': 'Settings', onclick: () => api.action('openSettings') },
-            icon('gear', { size: 18 }),
-          ),
+          'button',
+          {
+            class: 'icon-btn',
+            type: 'button',
+            'aria-label': 'Menu',
+            title: 'Menu',
+            onclick: () => api.action('openMenu'),
+          },
+          icon('dots', { size: 18 }),
         ),
       ),
-      h('div', { class: 'stage-line' }, `${stage.name} · Level ${level}`),
+      h('div', { class: 'level' }, `Level ${level}`),
       xpBar(levelXp / levelXpNeeded),
       h(
         'div',
-        { class: 'xp-row' },
-        h('b', {}, `${levelXp} / ${levelXpNeeded} XP`),
-        h('span', { class: 'meta' }, `${levelXpNeeded - levelXp} XP to level ${level + 1}`),
+        { class: 'caption' },
+        h(
+          'span',
+          {},
+          h('b', { class: 'num' }, String(levelXpNeeded - levelXp)),
+          evolvesNext(status) ? ' XP to evolve' : ` XP to level ${level + 1}`,
+        ),
+        todayXp > 0 ? h('span', { class: 'today' }, `+${todayXp} today`) : null,
       ),
     ),
   );
 }
 
-/** Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. */
-function moodNotice({ mood, moodLabel, moodReason }) {
-  if (!NOTICE_ICONS[mood] || !moodReason) return null;
+/** While paused, the card says until when and offers the way back. */
+function pauseBanner(pause) {
+  if (!pause?.active) return null;
   return h(
     'div',
-    { class: `notice ${mood}` },
-    icon(NOTICE_ICONS[mood], { stroke: 2.2 }),
-    h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
+    { class: 'banner' },
+    icon('pause', { size: 16, stroke: 2.4 }),
+    h(
+      'span',
+      { class: 'banner-text' },
+      h('b', {}, `Paused ${pauseUntilText(pause)}`),
+      h('span', { class: 'meta' }, 'Streak safe · no alerts'),
+    ),
+    h('button', { class: 'link', type: 'button', onclick: () => api.action('resume') }, 'Resume'),
   );
 }
 
@@ -171,166 +176,122 @@ function tabs(status) {
 // ---------- Rows ----------
 
 /**
- * One PR row. `badge` is the left chip, `meta` the second line, `end` the right-hand text.
- * Hovering swaps the end text for the "open" icon.
+ * One PR row: a dot for what it needs, the title, the reason in bold and where (repo, author), and on the right how
+ * long it has waited (hovering swaps it for the "open" icon).
  */
-function prRow(pr, { badge, meta, end, endClass = 'xp-text', endTitle, done = false }) {
+function prRow(pr, { dot = '', reason, where, end, done = false }) {
   return h(
     'button',
-    { class: 'pr', type: 'button', title: pr.title, onclick: () => api.openPullRequest(pr.url) },
-    badge,
+    { class: 'need', type: 'button', title: pr.title, onclick: () => api.openPullRequest(pr.url) },
+    h('span', { class: `dot ${dot}` }),
     h(
       'span',
-      { class: 'pr-body' },
-      h('span', { class: `pr-title${done ? ' done' : ''}` }, pr.title),
-      h('span', { class: 'meta' }, meta),
+      { class: 'need-body' },
+      h('span', { class: `need-title${done ? ' done' : ''}` }, pr.title),
+      h('span', { class: 'need-meta' }, h('b', {}, reason), ` · ${where}`),
     ),
-    end ? h('span', { class: `pr-end ${endClass}`, title: endTitle }, end) : null,
-    h('span', { class: 'pr-open' }, icon('external')),
+    end ? h('span', { class: 'need-age' }, end) : null,
+    h('span', { class: 'need-open' }, icon('external', { size: 14 })),
   );
 }
 
-// The left chip is the size of the PR in the letters of the XP table (XS, S, M, L), as in the design; its name is the
-// tooltip. A PR that needs attention (changes asked, checks failing, conflicts) shows its state icon instead, and
-// then the size is spelled out in the text.
-const STATUS_ICONS = {
-  changes: 'alert',
-  conflicts: 'merge',
-  failing: 'x',
-  ready: 'check',
-  running: 'clock',
-  review: 'clock',
-};
-const ATTENTION = ['changes', 'conflicts', 'failing']; // states that take the chip from the size
-const showsSize = (pr) => Boolean(pr.size) && !ATTENTION.includes(pr.status?.kind);
-const stateBadge = (pr) =>
-  h(
-    'span',
-    { class: `badge ${pr.status?.kind ?? 'review'}`, title: pr.status?.label },
-    icon(STATUS_ICONS[pr.status?.kind] ?? 'clock', { size: 14, stroke: 2.6 }),
-  );
-const sizeBadge = (pr) =>
-  h('span', { class: 'badge size', role: 'img', 'aria-label': pr.sizeName, title: pr.sizeName }, pr.size);
-const statusBadge = (pr) => (showsSize(pr) ? sizeBadge(pr) : stateBadge(pr));
-const doneBadge = () => h('span', { class: 'badge ready' }, icon('check', { size: 14, stroke: 3 }));
-const queueBadge = (pr) =>
-  showsSize(pr) ? sizeBadge(pr) : h('span', { class: 'badge review' }, icon('search', { size: 14, stroke: 2.6 }));
-
-const FLAGGED = ['changes', 'conflicts', 'failing', 'running']; // states worth a line of their own
-
-/**
- * Detail lines: the fast-review bonus while it lasts, the PR's state when it needs attention (each on its own line),
- * then repo, size and the rest.
- */
-function metaLine(pr, ...rest) {
-  const flag = FLAGGED.includes(pr.status?.kind) ? pr.status : null;
-  const text = [repoRef(pr), !showsSize(pr) && (pr.sizeName ?? 'Medium'), ...rest].filter(Boolean).join(' · ');
-  return [
-    pr.fastBonus
-      ? h(
-          'span',
-          { class: 'flag bonus', title: 'Review it within an hour of the request for the bonus' },
-          `Fast bonus +${pr.fastXp} XP`,
-        )
-      : null,
-    flag ? h('span', { class: `flag ${flag.kind}` }, flag.label) : null,
-    text,
-  ];
-}
 const repoRef = (pr) => `${pr.repo} #${pr.number}`;
-const xpText = (pr, suffix = 'XP') => (pr.xp ? `+${pr.xp} ${suffix}` : null);
+// Broken first (they need the author), then the rest in the order they come.
+const PROBLEMS = ['failing', 'conflicts', 'changes'];
+const byProblem = (a, b) => PROBLEMS.includes(b.status?.kind) - PROBLEMS.includes(a.status?.kind);
+const DOTS = { failing: 'failing', conflicts: 'failing', ready: 'approved' };
 
 function section(title, prs, render) {
   if (!prs.length) return null;
-  return h(
-    'section',
-    { class: 'prs' },
-    h('div', { class: 'section-title eyebrow' }, title, h('span', { class: 'count-chip' }, prs.length)),
-    ...prs.map(render),
-  );
+  return h('section', { class: 'prs' }, h('div', { class: 'section-title eyebrow' }, title), ...prs.map(render));
 }
 
 // ---------- Tab contents ----------
 
-function reviewTab(queue) {
+const starter = () =>
+  h(
+    'p',
+    { class: 'starter' },
+    h('b', {}, 'Your pet is just getting started.'),
+    ' Open a PR, review one or get one merged to earn XP.',
+    h('button', { class: 'link', type: 'button', onclick: () => api.action('openXp') }, 'How XP works'),
+  );
+
+const allClear = (text) =>
+  h(
+    'div',
+    { class: 'clear' },
+    h('span', { class: 'tick' }, icon('check', { size: 18, stroke: 3 })),
+    h('div', {}, h('b', {}, 'All clear'), h('span', { class: 'meta' }, text)),
+  );
+
+/** A pet that has earned nothing yet is told how to start; otherwise nothing is waiting, and that is news too. */
+const nothing = (status, text) => (status.xp === 0 ? starter() : allClear(text));
+
+function reviewTab(status) {
+  const queue = status.reviewQueue ?? null;
   if (queue === null) return h('p', { class: 'empty' }, 'Looking for review requests…');
-  if (!queue.length) {
-    return h(
-      'div',
-      { class: 'empty calm' },
-      h('span', { class: 'empty-icon' }, icon('check', { size: 18, stroke: 3 })),
-      h('div', {}, h('strong', {}, 'All caught up'), h('div', { class: 'meta' }, 'Nobody is waiting for your review.')),
-    );
-  }
-  const earned = queue[0].xp;
+  if (!queue.length) return nothing(status, 'Nobody is waiting for your review.');
   return h(
     'section',
     { class: 'prs' },
-    h(
-      'div',
-      { class: 'list-note meta' },
-      `Oldest request first · +${earned} XP each, +${queue[0].fastXp} more within an hour`,
-    ),
     ...queue.map((pr) => {
       // The wait counts from when the user was asked. When that date could not be proved, say how old the PR is
-      // instead, and do not flag it as late: it would be a guess.
+      // instead: it would be a guess to show it as a wait.
       const known = pr.waitingDays !== null;
+      const where = [repoRef(pr), pr.author, pr.via && `via ${teamName(pr)}`, !known && `opened ${ago(pr.ageDays)}`];
       return prRow(pr, {
-        badge: queueBadge(pr),
-        meta: metaLine(pr, pr.author, pr.via && `via ${teamName(pr)}`, !known && `opened ${ago(pr.ageDays)}`),
+        dot: 'waiting',
+        reason: 'Review requested',
+        where: where.filter(Boolean).join(' · '),
         end: known ? shortAge(pr.waitingDays) : null,
-        endClass: 'quiet',
-        endTitle: known ? `Asked ${ago(pr.waitingDays)}${pr.via ? ` through ${pr.via}` : ''}` : undefined,
       });
     }),
   );
 }
 
-function minePrsTab({ waiting, approved, mergedToday }) {
+function minePrsTab(status) {
+  const { waiting, approved, mergedToday } = status.prs ?? { waiting: [], approved: [], mergedToday: [] };
   if (!waiting.length && !approved.length && !mergedToday.length) {
-    return h('p', { class: 'empty' }, 'No open PRs. Nothing of yours is waiting.');
+    return nothing(status, 'None of your PRs is open.');
   }
+  const flagged = (pr) => PROBLEMS.includes(pr.status?.kind) || pr.status?.kind === 'running';
   return h(
     'div',
     {},
-    section('Waiting for review', waiting, (pr) =>
+    section('Waiting for review', [...waiting].sort(byProblem), (pr) =>
       prRow(pr, {
-        badge: statusBadge(pr),
-        meta: metaLine(pr, days(pr.ageDays)),
-        end: xpText(pr),
+        dot: DOTS[pr.status?.kind] ?? 'waiting',
+        reason: flagged(pr) ? pr.status.label : 'Waiting for review',
+        where: repoRef(pr),
+        end: shortAge(pr.ageDays),
       }),
     ),
     section('Approved', approved, (pr) =>
       prRow(pr, {
-        badge: statusBadge(pr),
-        meta: metaLine(pr),
-        end: xpText(pr, 'on merge'),
-        endClass: 'success',
+        dot: DOTS[pr.status?.kind] ?? 'approved',
+        reason: pr.status?.kind === 'ready' ? 'Ready to merge' : (pr.status?.label ?? 'Approved'),
+        where: repoRef(pr),
       }),
     ),
     section('Merged today', mergedToday, (pr) =>
-      prRow(pr, {
-        badge: doneBadge(),
-        meta: `${repoRef(pr)} · ${pr.sizeName ?? 'Medium'} · ${timeAgo(pr.mergedAt)}`,
-        end: xpText(pr),
-        endClass: 'quiet',
-        done: true,
-      }),
+      prRow(pr, { reason: 'Merged', where: `${repoRef(pr)} · ${timeAgo(pr.mergedAt)}`, done: true }),
     ),
   );
 }
 
 // ---------- Footer ----------
 
-/** The popover has no main action: its rows already open each PR. Only the way to the profile. */
+/** The card has no main action: its rows open each PR. Only the way to the pet page. */
 const footer = () =>
   h(
     'div',
-    { class: 'actions' },
+    { class: 'card-foot' },
     h(
       'button',
-      { class: 'btn sm pixel-cut grow', type: 'button', onclick: () => api.action('openProfile') },
-      'View profile',
+      { class: 'foot-btn', type: 'button', onclick: () => api.action('openProfile') },
+      'Pet page',
+      icon('chevron', { size: 14, stroke: 2.5 }),
     ),
   );
 
@@ -387,6 +348,7 @@ function render(state = latest, { resetScroll = false } = {}) {
   const { status, placement = 'above', tailX = 180, room } = state;
   const tab = currentTab(state);
   if (status) syncPortrait(status);
+  const mood = status?.pause?.active ? 'paused' : (status?.mood ?? 'neutral'); // what the eyes of the shell show
 
   const card = h(
     'div',
@@ -394,14 +356,12 @@ function render(state = latest, { resetScroll = false } = {}) {
     ...(status
       ? [
           header(status),
-          moodNotice(status),
+          pauseBanner(status.pause),
           tabs(status),
           h(
             'div',
             { class: 'list', id: 'panel', role: 'tabpanel', 'aria-labelledby': `tab-${tab}` },
-            tab === 'review'
-              ? reviewTab(status.reviewQueue ?? null)
-              : minePrsTab(status.prs ?? { waiting: [], approved: [], mergedToday: [] }),
+            tab === 'review' ? reviewTab(status) : minePrsTab(status),
           ),
           footer(),
         ]
@@ -412,7 +372,7 @@ function render(state = latest, { resetScroll = false } = {}) {
   const tail = h('div', { class: 'tail-zone' }, h('i', { class: 'tail', style: { left: `${tailX}px` } }));
   const scroll = resetScroll ? 0 : ($('.list')?.scrollTop ?? 0);
   app.className = `wrap ${placement}`;
-  app.replaceChildren(h('div', { class: 'rig' }, shell(), card), tail);
+  app.replaceChildren(h('div', { class: 'rig', 'data-mood': mood }, shell(), card), tail);
   fitList(room);
   const list = $('.list');
   if (list) list.scrollTop = scroll;

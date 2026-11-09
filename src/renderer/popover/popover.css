@@ -30,6 +30,8 @@ body {
   --shell: #4a1f9e;
   --shell-lo: #2e1270;
   --ear-in: #2a0f5a;
+  --eye: var(--neon-cyan); /* the eyes show how the pet feels: cyan calm, mint happy, dim while paused */
+  --eye-glow: rgba(45, 226, 255, 0.55);
   position: relative;
   padding: 120px 44px 32px;
 }
@@ -474,8 +476,8 @@ body {
   top: 86px;
   width: 18px;
   height: 8px;
-  background: var(--neon-cyan);
-  box-shadow: 0 0 10px 2px rgba(45, 226, 255, 0.55);
+  background: var(--eye);
+  box-shadow: 0 0 10px 2px var(--eye-glow);
   transform-origin: 50% 70%;
 }
 .eye.l {
@@ -558,12 +560,27 @@ body {
   transform: scaleY(-1);
 }
 
-/* ---------- Header ---------- */
+/* ---------- Mood: the eyes of the shell ---------- */
+.rig[data-mood='happy'] {
+  --eye: var(--neon-mint);
+  --eye-glow: rgba(77, 255, 180, 0.5);
+}
+.rig[data-mood='paused'] {
+  --eye: var(--text-4);
+  --eye-glow: transparent;
+}
+.rig[data-mood='paused'] .eye {
+  height: 4px;
+  margin-top: 4px;
+  animation: none;
+}
+
+/* ---------- Header: the pet, one bar and what is left ---------- */
 .head {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 16px 12px;
+  padding: 16px 16px 14px;
 }
 /* The frame's size comes from the creature (see popover.js). */
 .head-body {
@@ -575,37 +592,60 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.head-actions {
-  display: flex;
-  gap: 2px;
-}
 .name {
   font-size: 20px;
   line-height: 24px;
 }
-.stage-line {
+.level {
   margin-top: 1px;
   font-size: 13px;
   color: var(--text-2);
 }
 .head .xp-bar {
-  margin-top: 8px;
+  margin-top: 10px;
 }
-.xp-row {
+.caption {
   display: flex;
-  justify-content: space-between;
-  margin-top: 6px;
-  font-size: 12px;
-}
-.xp-row {
   align-items: baseline;
+  justify-content: space-between;
+  margin-top: 7px;
+  font-size: 12px;
+  color: var(--text-3);
 }
-.xp-row b {
-  font: 400 21px/18px var(--font-num);
+.caption .num {
+  margin-right: 3px;
+  font: 400 20px/14px var(--font-num);
+  color: var(--accent-text);
+}
+.caption .today {
+  color: var(--text-2);
 }
 
-.card > .notice {
+/* ---------- Pause ---------- */
+.banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   margin: 0 16px 12px;
+  padding: 10px 12px;
+  clip-path: var(--cut-3);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 13px;
+}
+.banner svg {
+  flex: none;
+  color: var(--text-3);
+}
+.banner-text {
+  display: grid;
+}
+.banner-text b {
+  font-weight: 600;
+  color: var(--text);
+}
+.banner .link {
+  margin-left: auto;
 }
 
 /* ---------- Tabs: a segmented control with a count per tab ---------- */
@@ -643,7 +683,7 @@ body {
   color: var(--on-accent);
 }
 
-/* ---------- PR lists: about five rows, then it scrolls ---------- */
+/* ---------- Lists: about five rows, then it scrolls ---------- */
 .list {
   max-height: 284px;
   margin-top: 8px;
@@ -653,18 +693,12 @@ body {
 .prs {
   padding: 4px 8px;
 }
-.list-note {
-  padding: 4px 8px 6px;
-}
 .section-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 8px 6px;
-  color: var(--text-2);
+  padding: 8px 8px 6px;
 }
 
-.pr {
+/* One row: a dot for what it needs, the title, the reason and where, and how long it has waited. */
+.need {
   display: flex;
   align-items: center;
   gap: 12px;
@@ -678,126 +712,124 @@ body {
   text-align: left;
   cursor: pointer;
 }
-.pr:hover,
-.pr:focus-visible {
+.need:hover,
+.need:focus-visible {
   background: var(--surface-hover);
 }
-.pr-body {
+.need-body {
   flex: 1;
   min-width: 0;
+  display: grid;
 }
-.pr-body > span {
-  display: block;
-}
-.pr-title {
+.need-title {
   overflow: hidden;
   font-size: 14px;
   font-weight: 500;
+  line-height: 20px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.pr-title.done {
+.need-title.done {
   color: var(--text-2);
 }
-.pr-body .meta {
-  margin-top: 1px;
+.need-meta {
+  overflow: hidden;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-3);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.pr-end.success {
-  color: var(--success);
+.need-meta b {
+  font-weight: 500;
+  color: var(--text-2);
 }
-.pr-end.quiet {
+.need-age {
+  flex: none;
   font-size: 12px;
   color: var(--text-3);
+  font-variant-numeric: tabular-nums;
 }
-.pr-open {
+.need-open {
   display: none;
+  flex: none;
   color: var(--link);
 }
-.pr:hover .pr-open,
-.pr:focus-visible .pr-open {
+.need:hover .need-open,
+.need:focus-visible .need-open {
   display: flex;
 }
-.pr:hover .pr-end,
-.pr:focus-visible .pr-end {
+.need:hover .need-age,
+.need:focus-visible .need-age {
   display: none;
 }
-.badge {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  clip-path: var(--cut-3);
-  background: var(--accent-soft);
-  color: var(--size-text);
-}
-/* The size of the PR, in the terminal font like the figures. */
-.badge.size {
-  height: 22px;
-  font: 400 18px/1 var(--font-num);
-  letter-spacing: 0.02em;
-}
-.badge.ready {
-  background: var(--success-bg);
-  color: var(--success);
-}
-.badge.changes,
-.badge.conflicts,
-.badge.failing {
-  background: var(--warning-bg);
-  color: var(--warning-icon);
-}
-.flag {
-  display: block;
-  font-weight: 600;
-}
-.flag.bonus {
-  color: var(--accent-text);
-}
-.flag.running {
-  color: var(--text-2);
-}
-.flag.changes,
-.flag.conflicts {
-  color: var(--warning-icon);
-}
-.flag.failing {
-  color: var(--fx-red, #e5484d);
-}
+
+/* ---------- Nothing to show ---------- */
 .empty {
   margin: 0;
   padding: 16px;
   color: var(--text-2);
 }
-.empty.calm {
+.clear {
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--text);
+  padding: 8px 16px 18px;
 }
-.empty-icon {
+.tick {
   flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   width: 32px;
   height: 32px;
   clip-path: var(--cut-3);
   background: var(--success-bg);
   color: var(--success);
 }
+.clear b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+.clear .meta {
+  display: block;
+}
+.starter {
+  margin: 0;
+  padding: 8px 16px 18px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.starter b {
+  color: var(--text);
+  font-weight: 600;
+}
+.starter .link {
+  display: block;
+  margin-top: 6px;
+}
 
-/* ---------- Footer ---------- */
-.actions {
-  display: flex;
-  gap: 8px;
-  margin-top: 4px;
-  padding: 12px 16px 16px;
+/* ---------- Footer: the way to the pet page ---------- */
+.card-foot {
+  padding: 8px;
   border-top: 1px solid var(--divider);
 }
-.grow {
-  flex: 1;
+.foot-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 36px;
+  padding: 0 10px;
+  border: 0;
+  clip-path: var(--cut-3);
+  background: transparent;
+  color: var(--text-2);
+  font: 600 13px var(--font-ui);
+  cursor: pointer;
 }
-.btn.sm {
-  height: 38px;
+.foot-btn:hover,
+.foot-btn:focus-visible {
+  background: var(--surface-hover);
+  color: var(--text);
 }
