@@ -115,5 +115,34 @@
   --radius: 10px;
   --radius-lg: 12px;
   --radius-xl: 16px;
-  --px: 3px; /* notch of pixel-cut corners */
+  --px: 3px; /* notch of pixel-cut corners (see .pixel-cut) */
+  /* Pixel-cut corners with a fixed notch, for styles that do not take the class: clip-path: var(--cut-3). */
+  --cut-3: polygon(
+    0 3px,
+    3px 3px,
+    3px 0,
+    calc(100% - 3px) 0,
+    calc(100% - 3px) 3px,
+    100% 3px,
+    100% calc(100% - 3px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 3px) 100%,
+    3px 100%,
+    3px calc(100% - 3px),
+    0 calc(100% - 3px)
+  );
+  --cut-4: polygon(
+    0 4px,
+    4px 4px,
+    4px 0,
+    calc(100% - 4px) 0,
+    calc(100% - 4px) 4px,
+    100% 4px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    4px calc(100% - 4px),
+    0 calc(100% - 4px)
+  );
 }

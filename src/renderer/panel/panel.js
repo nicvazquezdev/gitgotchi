@@ -25,7 +25,7 @@ function header({ name, species, stage, nextStage, level, levelXp, levelXpNeeded
   return h(
     'div',
     { class: 'head' },
-    h('div', { class: 'thumb', style: { background: species.tint } }, portraitImg({ species, stage })),
+    h('div', { class: 'thumb night' }, portraitImg({ species, stage })),
     h(
       'div',
       { class: 'head-body' },
@@ -51,12 +51,11 @@ function face(entry) {
   return h(
     'button',
     {
-      class: `face${entry.active ? ' active' : ''}`,
+      class: `face night${entry.active ? ' active' : ''}`,
       type: 'button',
       title: label,
       'aria-label': label,
       'aria-pressed': String(entry.active),
-      style: { background: species.tint },
       onclick: () => !entry.active && window.gitgotchi.pets.activate(entry.id),
     },
     portraitImg({ species, stage: { index: entry.stageIndex } }, 44),

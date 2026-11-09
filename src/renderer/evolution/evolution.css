@@ -1,36 +1,40 @@
-/* Celebration screen: always dark, whatever the system setting. Palette from the design. */
+/* Celebration screen: a synthwave sunset, always the same whatever the system setting. Fixed size: 960 × 640. */
 body {
-  background: #1b1630;
-  color: #ffffff;
+  background: var(--sky-1);
+  color: var(--text);
   overflow: hidden;
 }
 .titlebar-drag {
   position: fixed;
   inset: 0 0 auto;
   height: 40px;
+  z-index: 2;
   -webkit-app-region: drag;
 }
 .scene {
-  --glow-1: #241d42;
-  --glow-2: #2e2555;
-  --glow-3: #3a2f6b;
   position: relative;
   width: 960px;
   height: 640px;
   overflow: hidden;
+  background: linear-gradient(
+    var(--sky-1) 0 110px,
+    var(--sky-2) 110px 190px,
+    var(--sky-3) 190px 262px,
+    var(--sky-4) 262px 320px,
+    var(--sky-5) 320px 362px,
+    var(--sky-6) 362px 400px,
+    #100326 400px
+  );
 }
 .scene > * {
   position: absolute;
 }
 
-/* Pixel sparkles (stars) and 4-point glints */
+/* ---------- Sky: stars, glints, the glow behind the sun and the sun ---------- */
 .star {
-  width: 4px;
-  height: 4px;
-  background: #8f84c9;
-}
-.star.dim {
-  background: #5f5590;
+  width: var(--s);
+  height: var(--s);
+  background: var(--c);
 }
 .glint {
   width: var(--s);
@@ -48,59 +52,231 @@ body {
 .glint::after {
   inset: 0 calc(var(--s) / 2 - 2px);
 }
-.circle {
+.glow {
+  left: 190px;
+  top: 30px;
+  width: 580px;
+  height: 580px;
   border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 62, 165, 0.45),
+    rgba(255, 62, 165, 0.12) 45%,
+    rgba(255, 62, 165, 0) 70%
+  );
+}
+.scene > .sun {
+  left: 290px;
+  top: 110px;
+  width: 380px;
+  height: 380px;
 }
 
+/* ---------- Mountains: two ridges outlined in neon pink ---------- */
+.mountains {
+  left: 0;
+  top: 250px;
+  width: 960px;
+  height: 150px;
+  filter: drop-shadow(0 -3px 0 var(--neon-pink)) drop-shadow(2px 0 0 var(--neon-pink))
+    drop-shadow(-2px 0 0 var(--neon-pink));
+}
+.ridge {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(#1c0742 0 6px, #24094f 6px 8px);
+}
+.ridge.left {
+  clip-path: polygon(
+    0 150px,
+    0 70px,
+    17px 70px,
+    17px 62px,
+    33px 62px,
+    33px 46px,
+    50px 46px,
+    50px 38px,
+    67px 38px,
+    67px 30px,
+    83px 30px,
+    83px 14px,
+    118px 14px,
+    118px 22px,
+    136px 22px,
+    136px 38px,
+    154px 38px,
+    154px 46px,
+    172px 46px,
+    172px 54px,
+    190px 54px,
+    190px 62px,
+    208px 62px,
+    208px 78px,
+    226px 78px,
+    226px 86px,
+    244px 86px,
+    244px 94px,
+    262px 94px,
+    262px 102px,
+    280px 102px,
+    280px 118px,
+    300px 118px,
+    300px 134px,
+    320px 134px,
+    320px 142px,
+    340px 142px,
+    340px 150px
+  );
+}
+.ridge.right {
+  clip-path: polygon(
+    620px 150px,
+    620px 142px,
+    636px 142px,
+    636px 134px,
+    652px 134px,
+    652px 118px,
+    668px 118px,
+    668px 110px,
+    684px 110px,
+    684px 102px,
+    700px 102px,
+    700px 86px,
+    718px 86px,
+    718px 78px,
+    736px 78px,
+    736px 62px,
+    754px 62px,
+    754px 46px,
+    772px 46px,
+    772px 38px,
+    822px 38px,
+    822px 54px,
+    854px 54px,
+    854px 70px,
+    888px 70px,
+    888px 62px,
+    906px 62px,
+    906px 54px,
+    942px 54px,
+    942px 46px,
+    960px 46px,
+    960px 150px
+  );
+}
+
+/* ---------- Floor: grid, the sun's reflection, the lit horizon and scanlines ---------- */
+.floor,
+.floor-grid {
+  left: 0;
+  top: 400px;
+  width: 960px;
+  height: 240px;
+}
+.floor {
+  background-size:
+    1440px 360px,
+    auto;
+}
+.floor-grid {
+  background: url('../../../assets/ui/grid-floor.svg') center top / 1440px 360px no-repeat;
+}
+.reflection {
+  height: var(--h);
+  opacity: 0.55;
+  background: var(--c);
+}
+.horizon {
+  left: 0;
+  top: 398px;
+  width: 960px;
+  height: 3px;
+  background: var(--neon-glow);
+  box-shadow: 0 0 16px 4px rgba(255, 62, 165, 0.55);
+}
+.scan {
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(rgba(0, 0, 0, 0.18) 0 1px, transparent 1px 3px);
+}
+
+/* ---------- The new form ---------- */
 .head {
-  inset: 48px 0 auto;
+  inset: 32px 0 auto;
   text-align: center;
 }
 .head .eyebrow {
   font-size: 13px;
-  letter-spacing: 0.12em;
-  color: #ffd36a;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--neon-cyan);
 }
-.head h1 {
-  margin: 8px 0 0;
-  font: 600 38px/44px var(--font-pixel);
+.head .level {
+  margin-top: 6px;
+  font: 400 24px/1 var(--font-num);
+  color: var(--warning-text);
 }
 .floor-shadow {
   left: 432px;
-  top: 384px;
+  top: 423px;
   width: 96px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.35);
+  background: var(--pet-shadow);
 }
 .hero {
   left: 50%;
-  top: 398px;
+  top: 437px;
   transform: translate(-50%, -100%);
 }
 
+/* ---------- Panel: what happened, and what is next ---------- */
+.panel {
+  --px: 4px;
+  left: 100px;
+  top: 448px;
+  width: 760px;
+  padding: 3px;
+  background: var(--neon-pink);
+}
+.panel-in {
+  --px: 4px;
+  padding: 16px 24px 18px;
+  background: var(--bg-subtle);
+  box-shadow: inset 0 0 0 2px #3a1470;
+}
+.panel h1 {
+  margin: 0;
+  font: 600 30px/36px var(--font-pixel);
+  color: #ffffff;
+}
+.grad {
+  background: linear-gradient(#fff6c2 0 38%, #ffd23f 38% 58%, #ff8a3d 58% 78%, #ff3e8a 78%);
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+}
 .pills {
-  inset: 432px 0 auto;
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 10px;
+  margin-top: 10px;
   font-size: 13px;
 }
 .pills svg {
-  color: #8f84c9;
+  color: var(--neon-cyan);
 }
 .pill {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 10px 4px 4px;
-  border-radius: 999px;
-  background: #2a2348;
-  color: #c9c0ec;
+  padding: 3px 10px 3px 4px;
+  clip-path: var(--cut-3);
+  background: var(--surface);
+  color: var(--text-2);
 }
 .pill.to {
-  background: #4a3a8c;
+  background: #3a1470;
   color: #ffffff;
   font-weight: 600;
 }
@@ -108,22 +284,20 @@ body {
   width: 24px;
   height: 24px;
 }
+.next {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 14px;
+}
 .hint {
-  inset: 474px 0 auto;
+  flex: 1;
   margin: 0;
-  text-align: center;
   font-size: 15px;
-  color: #c9c0ec;
+  color: var(--text-2);
 }
 .actions {
-  --accent: #6a4ff0;
-  --accent-edge: #3d2899;
-  --btn-2: #322a58;
-  --btn-2-edge: #241d42;
-  --btn-2-text: #ffffff;
-  inset: 530px 0 auto;
   display: flex;
-  justify-content: center;
   gap: 10px;
 }
 .actions .btn {

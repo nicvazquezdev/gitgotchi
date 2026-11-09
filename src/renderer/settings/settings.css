@@ -78,9 +78,8 @@ body {
 .size-value {
   min-width: 40px;
   text-align: right;
-  font-size: 12px;
+  font: 400 18px/1 var(--font-num);
   color: var(--text-2);
-  font-variant-numeric: tabular-nums;
 }
 .slider {
   --fill: 50%;
@@ -94,18 +93,14 @@ body {
 }
 .slider::-webkit-slider-runnable-track {
   height: 6px;
-  border-radius: 3px;
   background: linear-gradient(to right, var(--accent) var(--fill), var(--track) var(--fill));
 }
 .slider::-webkit-slider-thumb {
-  width: 14px;
-  height: 14px;
-  margin-top: -4px;
-  border-radius: 50%;
-  background: #ffffff;
-  box-shadow:
-    0 0 0 1px var(--border-strong),
-    0 1px 2px rgba(0, 0, 0, 0.25);
+  width: 12px;
+  height: 16px;
+  margin-top: -5px;
+  background: var(--text);
+  box-shadow: 0 0 0 2px var(--on-accent);
   appearance: none;
 }
 
@@ -122,14 +117,14 @@ body {
   height: 32px;
   padding: 0 10px;
   border: 0;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--text);
-  color-scheme: light dark; /* the calendar follows the system theme */
+  color-scheme: dark;
   font: 13px var(--font-ui);
 }
 .date:focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--select);
   outline-offset: 1px;
 }

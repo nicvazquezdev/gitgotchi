@@ -35,10 +35,12 @@ body {
   padding: 8px 8px 10px;
 }
 .thumb {
+  --sun-top: -4%;
+  --sun-size: 112%;
   flex: none;
   width: 48px;
   height: 48px;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   overflow: hidden;
   display: flex;
   align-items: flex-end;
@@ -97,21 +99,21 @@ body {
   height: 44px;
   padding: 0;
   border: 0;
-  border-radius: 10px;
+  clip-path: var(--cut-4);
   overflow: hidden;
-  box-shadow: inset 0 0 0 1px rgba(29, 24, 48, 0.14);
+  box-shadow: inset 0 0 0 1px var(--border-strong);
   cursor: pointer;
-  transition: transform 100ms;
+  transition: transform 100ms steps(2);
 }
 .face .sprite {
   margin-bottom: -2px;
 }
 .face:hover:not(.active) {
   transform: translateY(-2px);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--select) 55%, transparent);
 }
 .face.active {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--select);
   cursor: default;
 }
 .face-lv {
@@ -119,10 +121,9 @@ body {
   left: 3px;
   bottom: 3px;
   padding: 0 3px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.8);
+  background: rgba(10, 3, 24, 0.8);
   font: 600 9px/12px var(--font-pixel);
-  color: #2a1840;
+  color: var(--text);
 }
 .face-bolt {
   position: absolute;
@@ -132,7 +133,7 @@ body {
   place-items: center;
   width: 14px;
   height: 14px;
-  border-radius: 50%;
+  clip-path: var(--cut-3);
   background: var(--accent);
   color: var(--on-accent);
 }
@@ -156,7 +157,7 @@ body {
   height: 32px;
   padding: 0 8px;
   border: 0;
-  border-radius: var(--radius-sm);
+  clip-path: var(--cut-3);
   background: transparent;
   color: var(--text);
   font: inherit;

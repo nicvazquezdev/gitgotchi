@@ -326,23 +326,14 @@ canvas.sprite {
     linear-gradient(#8a1d6c 0 30px, #6e1866 30px 80px, #561460 80px 150px, #42105a 150px 240px, #320c4e 240px);
 }
 
-/* ---------- Creature portrait: 2px neon frame with pixel-cut corners, a night scene inside ---------- */
-.portrait {
-  --px: 4px;
-  flex: none;
-  padding: 2px;
-  background: var(--frame);
-}
+/* ---------- A night scene (.night): sky bands, the sun (--sun-top, --sun-size) and a grid floor. Children paint above it ---------- */
+.night,
 .portrait > .inner {
   position: relative;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
   overflow: hidden;
   background: var(--night-bands);
 }
+.night::before,
 .portrait > .inner::before {
   content: '';
   position: absolute;
@@ -356,6 +347,7 @@ canvas.sprite {
   -webkit-mask-image: var(--sun-mask);
   mask-image: var(--sun-mask);
 }
+.night::after,
 .portrait > .inner::after {
   content: '';
   position: absolute;
@@ -368,9 +360,25 @@ canvas.sprite {
     url('../../../assets/ui/grid-tile.svg') center top / 100% 100% no-repeat,
     linear-gradient(#8a1d6c 0 22%, #6e1866 22% 50%, #561460 50%);
 }
+.night > *,
 .portrait > .inner > * {
   position: relative;
   z-index: 1;
+}
+
+/* ---------- Creature portrait: 2px neon frame with pixel-cut corners, a night scene inside ---------- */
+.portrait {
+  --px: 4px;
+  flex: none;
+  padding: 2px;
+  background: var(--frame);
+}
+.portrait > .inner {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
 }
 
 /* ---------- Pixel art (shared/pixel-art.js): tier palettes ---------- */
@@ -433,6 +441,7 @@ canvas.sprite {
 
 /* ---------- Chips, dots, notices ---------- */
 .count-chip {
+  --px: 2px; /* a small chip: a 3px notch would read as a cross */
   padding: 0 6px;
   background: var(--chip);
   color: var(--chip-text);

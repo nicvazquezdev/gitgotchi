@@ -73,7 +73,7 @@ function header(status) {
     h(
       'div',
       { class: 'portrait pixel-cut', style: { width: frame, height: frame } },
-      h('div', { class: 'inner pixel-cut', style: { background: species.tint } }, portraitCanvas),
+      h('div', { class: 'inner pixel-cut' }, portraitCanvas),
     ),
     h(
       'div',

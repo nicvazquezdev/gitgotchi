@@ -25,11 +25,7 @@ function portrait({ species, stage, mood }) {
   const size = species.stages[stage.index].size;
   const canvas = h('canvas', { class: 'sprite', style: { width: `${size * portraitScale(size)}px` } });
   animate(canvas, () => ({ species, stageIndex: stage.index, mood }));
-  return h(
-    'div',
-    { class: 'portrait pixel-cut' },
-    h('div', { class: 'inner pixel-cut' }, h('div', { class: 'floor', ariaHidden: 'true' }), canvas),
-  );
+  return h('div', { class: 'portrait pixel-cut' }, h('div', { class: 'inner pixel-cut' }, canvas));
 }
 
 const MOOD_VIEW = {
@@ -137,7 +133,7 @@ function stageCard(stage, i, current) {
   return h(
     'div',
     { class: `stage ${state}` },
-    h('div', { class: 'stage-art' }, art),
+    h('div', { class: 'stage-art night' }, art),
     h(
       'div',
       {},
@@ -352,7 +348,6 @@ function render(status, { focus: focusOn } = {}) {
   shownView = view;
   $('#title').replaceChildren(viewTabs(status), shareButton());
   app.className = `content ${view}`;
-  app.style.setProperty('--tint', status.species.tint);
   if (view === 'achievements') {
     stopAnimation(); // the pet card is not on screen
     app.replaceChildren(
