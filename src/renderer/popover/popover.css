@@ -9,7 +9,6 @@ body {
   display: flex;
   flex-direction: column;
   width: 440px;
-  padding: 16px 0 28px; /* room for the glow and the shadow of the shell */
   user-select: none;
   cursor: default;
 }
@@ -25,7 +24,7 @@ body {
 }
 /* ---------- The shell: a little creature around the card (ears, eyes, feet) ---------- */
 /* The rig is 440 wide; the coordinates below are those of the design (its y axis starts 20px above the ears). The
-   card sits inside the body, the body grows with it. The window is transparent: the glow and shadow need the padding. */
+   card sits inside the body, the body grows with it. The window is transparent: only the shell and the tail are drawn. */
 .rig {
   --shell-hi: #7a4ad6;
   --shell: #4a1f9e;
@@ -43,10 +42,9 @@ body {
   position: absolute;
   display: block;
 }
-/* The outlines of ears and body, with the glow and the drop shadow of the whole silhouette. */
+/* The outlines of ears and body: the dark edge of the whole silhouette. */
 .silhouette {
   inset: 0;
-  filter: drop-shadow(0 0 20px rgba(255, 62, 165, 0.35)) drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
 }
 .silhouette > * {
   position: absolute;
