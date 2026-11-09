@@ -1,8 +1,9 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const load = () => import(path.join(__dirname, '../src/renderer/shared/pet-stroll.js'));
+const load = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/pet-stroll.js')).href);
 
 /** Just what the stroller reads and writes of an animator; `tick` moves it one pixel the way a walker does. */
 const fakePet = (over = {}) => ({

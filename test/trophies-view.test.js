@@ -1,12 +1,13 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { achievementProgress, groupAchievements } = require('../src/main/game/achievements');
 const { ACHIEVEMENTS } = require('../src/main/game/catalog');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const view = () => import(path.join(__dirname, '../src/renderer/popover/trophies-view.js'));
-const art = () => import(path.join(__dirname, '../src/renderer/shared/pixel-art.js'));
+const view = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/popover/trophies-view.js')).href);
+const art = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/pixel-art.js')).href);
 
 const day = (counts = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...counts });
 const groups = (days = {}, stored = {}) => groupAchievements(achievementProgress({ days, stored }));

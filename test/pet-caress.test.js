@@ -1,8 +1,9 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const load = () => import(path.join(__dirname, '../src/renderer/shared/pet-caress.js'));
+const load = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/pet-caress.js')).href);
 
 /** Strokes `n` times back and forth over `width` px, one mouse move every 16 ms from `start`; true when it is a caress. */
 async function stroke({ n, width = 40, start = 0, caress }) {

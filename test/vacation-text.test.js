@@ -1,8 +1,9 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const text = () => import(path.join(__dirname, '../src/renderer/shared/vacation-text.js'));
+const text = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/vacation-text.js')).href);
 const NOON = new Date(2026, 5, 15, 12); // Monday 2026-06-15
 
 test('tomorrowOf gives the next day, across a month end', async () => {

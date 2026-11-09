@@ -1,8 +1,9 @@
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const text = () => import(path.join(__dirname, '../src/renderer/shared/update-text.js'));
+const text = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/update-text.js')).href);
 const base = { supported: true, status: 'idle', latest: null, progress: 0, error: null };
 
 test('a development build says it does not look for updates, and offers nothing', async () => {

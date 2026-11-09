@@ -1,8 +1,9 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 
-const load = () => import(path.join(__dirname, '../src/renderer/shared/pet-squish.js'));
+const load = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/pet-squish.js')).href);
 
 /** Steps `ms` in 16 ms frames, calling `each` after every one. */
 function step(squish, ms, each = () => {}) {

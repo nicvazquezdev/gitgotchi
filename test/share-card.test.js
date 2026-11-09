@@ -1,11 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
+const { pathToFileURL } = require('node:url');
 const { validRect, MIN, MAX } = require('../src/main/capture-rect');
 const { computeStatus } = require('../src/main/game/engine');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const card = () => import(path.join(__dirname, '../src/renderer/share/share-card.js'));
+const card = () => import(pathToFileURL(path.join(__dirname, '../src/renderer/share/share-card.js')).href);
 
 test('the rectangle to copy has to be whole numbers inside the window, of a sensible size', () => {
   assert.deepEqual(validRect({ x: 10.4, y: 20.6, width: 512.2, height: 302.7 }), {
@@ -58,7 +59,7 @@ test('the card shows three figures: pets, achievements and the streak', async ()
 
 test('every figure can be drawn in the bitmap font, and the longer ones get smaller pixels so they fit', async () => {
   const { cardStats, digitScale } = await card();
-  const { digitRows } = await import(path.join(__dirname, '../src/renderer/shared/pixel-art.js'));
+  const { digitRows } = await import(pathToFileURL(path.join(__dirname, '../src/renderer/shared/pixel-art.js')).href);
   for (const { value } of cardStats(status())) assert.ok(/^[0-9/]+$/.test(value), value);
   assert.deepEqual(
     ['3', '4/8', '170', '1250', '10/28', '100/100'].map((v) => digitScale(v)),
