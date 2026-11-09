@@ -67,6 +67,9 @@ app.whenReady().then(async () => {
   if (windows < 5) fail(`expected at least 5 windows (pet, settings, share, card, menu), found ${windows}`);
   console.log(`smoke: ${windows} windows on ${process.platform}, ${problems.length} problem(s)`);
   for (const problem of problems) console.error(`  - ${problem}`);
-  fs.rmSync(profile, { recursive: true, force: true });
+  // Windows keeps some of the profile's files open until the process ends: removing it is best effort.
+  try {
+    fs.rmSync(profile, { recursive: true, force: true });
+  } catch {}
   app.exit(problems.length ? 1 : 0);
 });
