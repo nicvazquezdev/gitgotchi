@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onPrefs: subscribe('pet:prefs'),
     openPopover: send('pet:popover'), // creature rect in window coords { x, y, width, height }: toggles the PR popover
     onPopoverRequest: subscribe('pet:popover-request'), // the menu asks for the rect to anchor on
+    onPopoverOpen: subscribe('pet:popover-open'), // boolean: the popover hangs from the creature (or not any more)
     // ---- end everyday UI ----
     size: invoke('pet:size'), // sprite size in px
     onSize: subscribe('pet:size'),

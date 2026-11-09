@@ -24,6 +24,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   let placed = null;
   let held = false; // the anchor is being dragged: losing the focus does not close the window
   let getState = () => null;
+  let onVisibility = () => {};
 
   const isOpen = () => Boolean(win && !win.isDestroyed());
   const isVisible = () => isOpen() && win.isVisible();
@@ -53,6 +54,8 @@ function createPopup({ page, channel, size, level, boundsFor }) {
         hide();
       }
     });
+    win.on('show', () => onVisibility(true));
+    win.on('hide', () => onVisibility(false));
     win.on('closed', () => (win = null));
   }
 
@@ -127,6 +130,8 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   return {
     /** @param {() => object} stateProvider  what the page shows (sent on every open and update) */
     init: (stateProvider) => (getState = stateProvider),
+    /** @param {(visible: boolean) => void} listener  called when the window shows or hides */
+    onVisibility: (listener) => (onVisibility = listener),
     show,
     follow,
     hold,

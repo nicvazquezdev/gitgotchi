@@ -28,6 +28,7 @@ let drag = null;
 let spoken = null; // the line being said right now: { title, sub, dot }
 let momentTimer = null; // a moment (a level, a trophy) is on screen: it takes the place of the speech bubble
 let bubbleTimer = null;
+let popoverOpen = false; // the popover hangs from the creature: it takes the place of the speech bubble
 let waitingVisible = false; // the reminder is only up for a moment, so the pet never nags
 let waitingTimer = null;
 let reviewCount = null;
@@ -83,7 +84,7 @@ function waitingMessage() {
 
 function renderBubble() {
   const bubble = $('#bubble');
-  const message = quiet() || momentTimer ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
+  const message = quiet() || momentTimer || popoverOpen ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
   bubble.hidden = !message;
   document.body.classList.toggle('speaking', Boolean(message) || Boolean(momentTimer));
   if (!message) return;
@@ -338,6 +339,15 @@ api.onPrefs((next) => {
   renderBubble();
 });
 api.onPopoverRequest(() => status && openPopover());
+api.onPopoverOpen((open) => {
+  popoverOpen = open;
+  if (open) {
+    // What the bubble said is in the popover now: it does not come back when the popover closes.
+    spoken = null;
+    waitingVisible = false;
+  }
+  renderBubble();
+});
 
 setSize(await api.size());
 prefs = await api.prefs();

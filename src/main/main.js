@@ -172,6 +172,9 @@ petWindow.setDragHooks({
   end: () => popoverWindow.hold(false),
 });
 
+// The pet clears its speech bubble while the popover hangs from it (from the menu bar icon it does not cover the pet).
+popoverWindow.onVisibility((visible) => petWindow.send('pet:popover-open', visible && popoverPetRect !== null));
+
 function togglePref(key) {
   prefs.toggle(key);
   panelWindow.send();
