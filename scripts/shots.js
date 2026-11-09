@@ -202,7 +202,6 @@ const fixtures = {
     login: 'sample-user',
     repoCount: repos.length,
     speechBubbles: true,
-    notifications: true,
     pause: status.pause,
     openAtLogin: false,
     cloud: { enabled: false, repo: null, saved: false, phase: null, error: null, lastPushAt: null },

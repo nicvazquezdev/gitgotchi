@@ -1,5 +1,5 @@
 // Pause: one idea for "leave me alone for a while", with three lengths: an hour, until tomorrow, or a vacation.
-// - An hour is a moment (`pausedUntil`, a time in ms): it only quiets the app (no bubbles, notifications or popups;
+// - An hour is a moment (`pausedUntil`, a time in ms): it only quiets the app (no bubbles or popups;
 //   the pet just idles). It touches no day.
 // - Until tomorrow and a vacation are days of time off (see time-off.js): they quiet the app too, and no streak is
 //   broken by them.

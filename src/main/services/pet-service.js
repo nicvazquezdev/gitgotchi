@@ -5,10 +5,7 @@
 // the next one; also fires on the level that evolves),
 // 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier }]`),
 // 'activity' (new activity per kind, e.g. { merges: 1 }; the live `pushes`, `approvals`, `changesRequested`,
-// `checksFailed`, `mergeConflicts` and `readyToMerge` reactions are animation only;
-// `reviewRequests` is not XP: someone asked the user for a review),
-// 'attention' (what the user may want a system notification for: `[{ kind, id, title, repo, number, url, author, via }]`,
-// kind: 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed' | 'mergeConflicts'),
+// `checksFailed`, `mergeConflicts` and `readyToMerge` reactions are animation only),
 // 'companion' (the user hatched or switched to a pet: `{ kind: 'hatched' | 'switched', species, name }`),
 // 'configured' (the profile was saved: repos or pets may have changed).
 // The user has a collection of pets, one per species, and only the active one earns XP (see game/collection.js).
@@ -19,7 +16,6 @@ const engine = require('../game/engine');
 const { PUSH_LOOKUPS_PER_SYNC } = require('../game/catalog');
 const { speciesOf, newPet, cleanName, creditXp } = require('../game/collection');
 const { commitKey, pendingPushes } = require('../game/commits');
-const { reviewQueue, attentionOf } = require('../game/pull-requests');
 const { unlockedOf } = require('../game/achievements');
 const { rememberRequests, fastReviewsIn } = require('../game/review-speed');
 const timeOffRules = require('../game/time-off');
@@ -38,9 +34,6 @@ class PetService extends EventEmitter {
   #pauseTimer = null;
   // Live reactions the Events diff has not reported yet (see live/credits.js).
   #credits = [];
-  // Open PRs waiting for the user's review, as fetched (every repo); null until the first fetch. Not saved:
-  // it is only the current queue. `status().reviewQueue` is the selected repos' part of it.
-  #reviewRequests = null;
   #reviewsAt = 0;
   #reviewing = null;
   #teams = { slugs: [], at: 0 }; // the teams of the user ('org/slug'), read again every LIVE.TEAMS_REFRESH_MS
@@ -56,7 +49,6 @@ class PetService extends EventEmitter {
     return (
       status && {
         ...status,
-        reviewQueue: this.#reviewRequests && reviewQueue(this.#reviewRequests, state.repos),
         syncing: Boolean(this.#syncing),
         error: this.#error,
       }
@@ -248,7 +240,6 @@ class PetService extends EventEmitter {
 
   #resetBaseline() {
     this.#credits = [];
-    this.#reviewRequests = null; // a new baseline: the requests that are already there do not count as new
     this.#poll.etag = null;
     this.#baselined = false;
   }
@@ -298,22 +289,14 @@ class PetService extends EventEmitter {
   }
 
   /**
-   * Fetches the PRs waiting for the user's review. A failure is logged and the last queue stays.
-   * `maxAgeMs`: skip when the queue is fresher than that. Reuses the in-flight fetch. Never rejects.
+   * Fetches the PRs that ask for the user's review, to remember when they were asked (the bonus for a fast review,
+   * see `#rememberRequests`). A failure is logged. `maxAgeMs`: skip when the last fetch is fresher than that. Reuses
+   * the in-flight fetch. Never rejects.
    */
   refreshReviews({ gh, maxAgeMs = 0 } = {}) {
     if (!this.isConfigured() || Date.now() - this.#reviewsAt < maxAgeMs) return Promise.resolve();
     this.#reviewing ??= this.#fetchReviews(gh).finally(() => (this.#reviewing = null));
     return this.#reviewing;
-  }
-
-  /** Tells whoever listens what just happened to the user's PRs (moments from the PR watcher, see pr-diff.js). */
-  announce(moments) {
-    if (!this.isConfigured() || moments.length === 0) return;
-    this.emit(
-      'attention',
-      moments.map(({ kind, pr }) => attentionOf(kind, pr)),
-    );
   }
 
   /** The user's teams: a request to one of them is a request to the user. A failure keeps the last list. */
@@ -334,18 +317,6 @@ class PetService extends EventEmitter {
       const prs = await client.reviewRequests({ login, teams: await this.#myTeams(client, login) });
       this.#reviewsAt = Date.now();
       this.#rememberRequests(prs);
-      const known = new Set(this.#reviewRequests?.map((pr) => pr.id));
-      const first = this.#reviewRequests === null; // the first fetch is the baseline: nothing in it is news
-      this.#reviewRequests = prs;
-      const added = first ? [] : reviewQueue(prs, store.get().repos).filter((pr) => !known.has(pr.id));
-      if (added.length > 0) {
-        this.emit('activity', { reviewRequests: added.length });
-        this.emit(
-          'attention',
-          added.map((pr) => attentionOf('reviewRequested', pr)),
-        );
-      }
-      this.notify();
     } catch (err) {
       console.error('[sync] review requests', err.message);
     }

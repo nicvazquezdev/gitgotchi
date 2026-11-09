@@ -220,12 +220,6 @@ const rows = {
     checked: speechBubbles,
     hint: pause.active ? 'Hidden for now: the pet is paused.' : 'Short messages above the pet.',
   })),
-  notifications: switchRow('Alerts', 'toggleNotifications', ({ notifications, pause }) => ({
-    checked: notifications,
-    hint: pause.active
-      ? 'Off for now: the pet is paused.'
-      : 'A notification when someone asks for your review or one of your PRs needs you.',
-  })),
   pause: pauseRow(),
   pauseReturn: returnRow(),
   account: accountRow(),
@@ -240,7 +234,7 @@ const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
   group(rows.size, rows.bubbles),
-  group(rows.notifications, rows.pause, rows.pauseReturn),
+  group(rows.pause, rows.pauseReturn),
   group(rows.account, rows.backup, rows.openAtLogin),
 );
 

@@ -146,16 +146,15 @@ test('diffPullRequests: a PR entering the window with a decision already set is 
   assert.deepEqual(diffPullRequests(snapshot, [old], REPOS, NOW + 10_000).delta, {});
 });
 
-describe('diffPullRequests: moments (what the user may want to hear about)', () => {
+describe('diffPullRequests: the animation-only reactions (no XP)', () => {
   const open = (extra = {}) =>
     pr('1', 'OPEN', { reviewDecision: null, ci: 'SUCCESS', createdAt: '2025-12-01T00:00:00Z', ...extra });
-  const kinds = (result) => result.moments.map((m) => m.kind);
+  const delta = (result) => result.delta;
 
-  test('an approval, changes requested and failing checks come with the PR', () => {
+  test('an approval, changes requested and failing checks', () => {
     const base = diffPullRequests(null, [open({ ci: 'PENDING' })], REPOS, NOW).snapshot;
     const approved = diffPullRequests(base, [open({ reviewDecision: 'APPROVED', ci: 'PENDING' })], REPOS, NOW + 10_000);
-    assert.deepEqual(kinds(approved), ['approved']);
-    assert.equal(approved.moments[0].pr.id, '1');
+    assert.deepEqual(delta(approved), { approvals: 1 });
 
     const changes = diffPullRequests(
       base,
@@ -163,11 +162,10 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
       REPOS,
       NOW + 10_000,
     );
-    assert.deepEqual(kinds(changes), ['changesRequested']);
+    assert.deepEqual(delta(changes), { changesRequested: 1 });
 
     const red = diffPullRequests(base, [open({ ci: 'FAILURE' })], REPOS, NOW + 10_000);
-    assert.deepEqual(kinds(red), ['checksFailed']);
-    assert.deepEqual(red.delta, { checksFailed: 1 }, 'the pet reacts to red checks (animation only, no XP)');
+    assert.deepEqual(delta(red), { checksFailed: 1 });
   });
 
   test('ready to merge: approved with green checks, whichever of the two comes last', () => {
@@ -176,20 +174,16 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
 
     // Approved first, the checks turn green later: the approval is one thing, being ready is another.
     let result = at({ reviewDecision: 'APPROVED', ci: 'PENDING' }, base, 10_000);
-    assert.deepEqual(kinds(result), ['approved']);
-    assert.deepEqual(result.delta, { approvals: 1 });
+    assert.deepEqual(delta(result), { approvals: 1 });
     result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, result.snapshot, 20_000);
-    assert.deepEqual(kinds(result), ['readyToMerge']);
-    assert.deepEqual(result.delta, { readyToMerge: 1 }, 'animation only: no XP');
-    assert.equal(result.moments[0].pr.id, '1');
+    assert.deepEqual(delta(result), { readyToMerge: 1 });
     result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, result.snapshot, 30_000);
-    assert.deepEqual(kinds(result), [], 'still ready: nothing new');
+    assert.deepEqual(delta(result), {}, 'still ready: nothing new');
 
-    // Green first, approved later: one moment, ready (not "approved" as well), and the pet still gets its cheer.
+    // Green first, approved later: both happen at once.
     const green = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
     result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, green, 10_000);
-    assert.deepEqual(kinds(result), ['readyToMerge']);
-    assert.deepEqual(result.delta, { approvals: 1, readyToMerge: 1 });
+    assert.deepEqual(delta(result), { approvals: 1, readyToMerge: 1 });
   });
 
   test('ready to merge again after a new failure and a green re-run, and never without a green check', () => {
@@ -197,52 +191,50 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
     const approved = { reviewDecision: 'APPROVED' };
     const pending = diffPullRequests(null, [open({ ...approved, ci: 'PENDING' })], REPOS, NOW).snapshot;
     let result = at({ ...approved, ci: 'SUCCESS' }, pending, 1);
-    assert.deepEqual(kinds(result), ['readyToMerge']);
+    assert.deepEqual(delta(result), { readyToMerge: 1 });
     result = at({ ...approved, ci: 'FAILURE' }, result.snapshot, 10_000);
-    assert.deepEqual(kinds(result), ['checksFailed']);
+    assert.deepEqual(delta(result), { checksFailed: 1 });
     result = at({ ...approved, ci: 'SUCCESS' }, result.snapshot, 20_000);
-    assert.deepEqual(kinds(result), ['readyToMerge']);
+    assert.deepEqual(delta(result), { readyToMerge: 1 });
 
     // No checks at all (ci is null): an approval, but not "ready".
     const none = diffPullRequests(null, [open({ ci: null })], REPOS, NOW).snapshot;
-    assert.deepEqual(kinds(at({ ...approved, ci: null }, none, 10_000)), ['approved']);
+    assert.deepEqual(delta(at({ ...approved, ci: null }, none, 10_000)), { approvals: 1 });
   });
 
   test('failing checks count once per failure: going from pending or green to red, not red to red', () => {
     const at = (ci, snapshot, t) => diffPullRequests(snapshot, [open({ ci })], REPOS, NOW + t);
     let result = at('SUCCESS', diffPullRequests(null, [open()], REPOS, NOW).snapshot, 10_000);
     result = at('PENDING', result.snapshot, 20_000);
-    assert.deepEqual(kinds(result), []);
+    assert.deepEqual(delta(result), {});
     result = at('FAILURE', result.snapshot, 30_000);
-    assert.deepEqual(kinds(result), ['checksFailed']);
+    assert.deepEqual(delta(result), { checksFailed: 1 });
     result = at('FAILURE', result.snapshot, 40_000);
-    assert.deepEqual(kinds(result), [], 'still red: nothing new');
+    assert.deepEqual(delta(result), {}, 'still red: nothing new');
     result = at('ERROR', result.snapshot, 50_000);
-    assert.deepEqual(kinds(result), [], 'FAILURE and ERROR are both red');
+    assert.deepEqual(delta(result), {}, 'FAILURE and ERROR are both red');
     result = at('PENDING', result.snapshot, 60_000); // a re-run
     result = at('ERROR', result.snapshot, 70_000);
-    assert.deepEqual(kinds(result), ['checksFailed'], 'a new failure after a re-run is news again');
+    assert.deepEqual(delta(result), { checksFailed: 1 }, 'a new failure after a re-run counts again');
   });
 
-  test('merge conflicts: reported once when a PR gets them, and GitHub still working it out (UNKNOWN) changes nothing', () => {
+  test('merge conflicts: once when a PR gets them, and GitHub still working it out (UNKNOWN) changes nothing', () => {
     const at = (mergeable, snapshot, t, extra = {}) =>
       diffPullRequests(snapshot, [open({ mergeable, ...extra })], REPOS, NOW + t);
     let result = at('MERGEABLE', diffPullRequests(null, [open({ mergeable: 'MERGEABLE' })], REPOS, NOW).snapshot, 1);
-    assert.deepEqual(kinds(result), []);
+    assert.deepEqual(delta(result), {});
     result = at('UNKNOWN', result.snapshot, 10_000); // the base moved: not known yet
-    assert.deepEqual(kinds(result), []);
+    assert.deepEqual(delta(result), {});
     result = at('CONFLICTING', result.snapshot, 20_000);
-    assert.deepEqual(kinds(result), ['mergeConflicts']);
-    assert.deepEqual(result.delta, { mergeConflicts: 1 }, 'animation only: no XP');
-    assert.equal(result.moments[0].pr.id, '1');
+    assert.deepEqual(delta(result), { mergeConflicts: 1 });
     result = at('CONFLICTING', result.snapshot, 30_000);
-    assert.deepEqual(kinds(result), [], 'still conflicted: nothing new');
+    assert.deepEqual(delta(result), {}, 'still conflicted: nothing new');
     result = at('UNKNOWN', result.snapshot, 40_000); // recomputing: it is still what it was
     result = at('CONFLICTING', result.snapshot, 50_000);
-    assert.deepEqual(kinds(result), [], 'no second notice for the same conflict');
+    assert.deepEqual(delta(result), {}, 'the same conflict is not counted twice');
     result = at('MERGEABLE', result.snapshot, 60_000);
     result = at('CONFLICTING', result.snapshot, 70_000);
-    assert.deepEqual(kinds(result), ['mergeConflicts'], 'fixed and conflicted again is news again');
+    assert.deepEqual(delta(result), { mergeConflicts: 1 }, 'fixed and conflicted again counts again');
   });
 
   test('a PR with conflicts is not ready to merge, and becomes ready when they are fixed', () => {
@@ -251,34 +243,31 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
       diffPullRequests(snapshot, [open({ ...approved, mergeable })], REPOS, NOW + t);
     const before = diffPullRequests(null, [open({ ci: 'SUCCESS', mergeable: 'CONFLICTING' })], REPOS, NOW).snapshot;
     let result = at('CONFLICTING', before, 10_000); // approved, green, but conflicted
-    assert.deepEqual(kinds(result), ['approved'], 'an approval, not "ready"');
+    assert.deepEqual(delta(result), { approvals: 1 }, 'an approval, not "ready"');
     result = at('UNKNOWN', result.snapshot, 20_000);
-    assert.deepEqual(kinds(result), [], 'not worked out yet: nothing');
+    assert.deepEqual(delta(result), {}, 'not worked out yet: nothing');
     result = at('MERGEABLE', result.snapshot, 30_000); // the conflicts were fixed
-    assert.deepEqual(kinds(result), ['readyToMerge']);
-    assert.deepEqual(result.delta, { readyToMerge: 1 });
+    assert.deepEqual(delta(result), { readyToMerge: 1 });
     result = at('UNKNOWN', result.snapshot, 40_000); // the base moved and GitHub is recomputing
     result = at('MERGEABLE', result.snapshot, 50_000);
-    assert.deepEqual(kinds(result), [], 'a recomputation is not a new ready');
+    assert.deepEqual(delta(result), {}, 'a recomputation is not a new ready');
   });
 
-  test('nothing is news for a PR the app did not know, on the first look, or when it is not open', () => {
-    assert.deepEqual(diffPullRequests(null, [open({ ci: 'FAILURE' })], REPOS, NOW).moments, []);
-    assert.deepEqual(diffPullRequests(null, [open({ mergeable: 'CONFLICTING' })], REPOS, NOW).moments, []);
+  test('nothing for a PR the app did not know, on the first look, or when it is not open', () => {
+    assert.deepEqual(delta(diffPullRequests(null, [open({ ci: 'FAILURE' })], REPOS, NOW)), {});
+    assert.deepEqual(delta(diffPullRequests(null, [open({ mergeable: 'CONFLICTING' })], REPOS, NOW)), {});
     const empty = diffPullRequests(null, [], REPOS, NOW).snapshot;
-    assert.deepEqual(
-      diffPullRequests(empty, [open({ ci: 'FAILURE', reviewDecision: 'APPROVED' })], REPOS, NOW + 10_000).moments,
-      [],
-    );
+    const unknown = open({ ci: 'FAILURE', reviewDecision: 'APPROVED' });
+    assert.deepEqual(delta(diffPullRequests(empty, [unknown], REPOS, NOW + 10_000)), {});
 
     const base = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
     const merged = pr('1', 'MERGED', { reviewDecision: 'APPROVED', ci: 'SUCCESS', mergedAt: '2026-01-01T12:00:05Z' });
-    assert.deepEqual(diffPullRequests(base, [merged], REPOS, NOW + 10_000).moments, []);
+    assert.deepEqual(delta(diffPullRequests(base, [merged], REPOS, NOW + 10_000)), { merges: 1 });
   });
 
   test('PRs of repos that are not selected are ignored', () => {
     const other = (extra) => open({ repo: 'someone/else', ...extra });
     const base = diffPullRequests(null, [other()], REPOS, NOW).snapshot;
-    assert.deepEqual(diffPullRequests(base, [other({ ci: 'FAILURE' })], REPOS, NOW + 10_000).moments, []);
+    assert.deepEqual(delta(diffPullRequests(base, [other({ ci: 'FAILURE' })], REPOS, NOW + 10_000)), {});
   });
 });

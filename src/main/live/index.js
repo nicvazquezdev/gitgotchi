@@ -13,7 +13,6 @@ function startLive({ petService, powerMonitor }) {
     getRepos: () => store.get().repos,
     onActivity: (delta) => petService.react(delta),
     onPullRequests: (prs) => petService.applyPullRequests(prs),
-    onMoments: (moments) => petService.announce(moments),
   });
   const gitWatcher = new GitWatcher(() => {
     petService.react({ pushes: 1 }); // animation only: pushes give no XP

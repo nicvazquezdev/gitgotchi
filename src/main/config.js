@@ -48,8 +48,6 @@ module.exports = {
     IDLE_AFTER_S: 5 * 60,
     // The teams the user belongs to (to tell which review requests are theirs) are read this often.
     TEAMS_REFRESH_MS: 60 * 60 * 1000,
-    // The review queue is also fetched when the popover or the menu opens, at most this often.
-    REVIEW_QUEUE_OPEN_REFRESH_MS: 20 * 1000,
     // A live reaction hides the same activity from the Events diff for this long.
     CREDIT_TTL_MS: 10 * 60 * 1000,
     // Local clone discovery: folders under the home dir, scanned to a limited depth and size.

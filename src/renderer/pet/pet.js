@@ -29,9 +29,6 @@ let spoken = null; // the line being said right now: { title, sub, dot }
 let momentTimer = null; // a moment (a level, a trophy) is on screen: it takes the place of the speech bubble
 let bubbleTimer = null;
 let popoverOpen = false; // the popover hangs from the creature: it takes the place of the speech bubble
-let waitingVisible = false; // the reminder is only up for a moment, so the pet never nags
-let waitingTimer = null;
-let reviewCount = null;
 let loading = Promise.resolve(); // the creature on screen is being swapped for another one
 
 /** The creature for the current stage, e.g. { name: 'Chispín', size: 36, ... }. */
@@ -49,12 +46,6 @@ function setStatus(next) {
   if (creatureChanged) {
     loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
   }
-  const reviews = status.reviewQueue?.length ?? 0;
-  if (reviews !== reviewCount) {
-    const grew = reviews > 0;
-    reviewCount = reviews;
-    if (grew) showWaiting(); // first status, or the number changed
-  }
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
   $('#alert').hidden = !status.error;
@@ -69,22 +60,14 @@ function setSize(px) {
 }
 
 // ---------- Bubble ----------
-// A card with a dot and one line (and sometimes a second one). It only speaks for a moment: live reactions, and the
-// reminder that someone asked for the user's review (click to see it). Off with Speech bubbles or during a pause.
+// A card with a dot and one line (and sometimes a second one). It only speaks for a moment, to react to what just
+// happened (a merge, an approval, a hatch). Off with Speech bubbles or during a pause.
 
 const quiet = () => !prefs.speechBubbles || paused();
 
-/** The standing message: review requests wait for the user, nothing else is worth a reminder. */
-function waitingMessage() {
-  if (paused()) return null;
-  const queue = status?.reviewQueue ?? [];
-  if (!queue.length) return null;
-  return { title: queue.length === 1 ? '1 review waiting' : `${queue.length} reviews waiting`, dot: 'waiting' };
-}
-
 function renderBubble() {
   const bubble = $('#bubble');
-  const message = quiet() || momentTimer || popoverOpen ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
+  const message = quiet() || momentTimer || popoverOpen ? null : spoken;
   bubble.hidden = !message;
   document.body.classList.toggle('speaking', Boolean(message) || Boolean(momentTimer));
   if (!message) return;
@@ -99,18 +82,7 @@ function renderBubble() {
   replayClass(bubble, 'bubble');
 }
 
-/** Shows the review reminder for a few seconds. */
-function showWaiting(ms = 5000) {
-  waitingVisible = true;
-  renderBubble();
-  clearTimeout(waitingTimer);
-  waitingTimer = setTimeout(() => {
-    waitingVisible = false;
-    renderBubble();
-  }, ms);
-}
-
-/** Says a line for a moment; the standing message comes back afterwards. */
+/** Says a line for a moment. */
 function say(title, { sub, dot, ms = 3500 } = {}) {
   spoken = { title, sub, dot };
   renderBubble();
@@ -185,14 +157,6 @@ const REACTIONS = [
   { kind: 'checksFailed', anim: 'wiggle', text: 'Checks failed on your PR', dot: 'waiting' },
   { kind: 'mergeConflicts', anim: 'wiggle', text: 'Merge conflicts on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
-  {
-    kind: 'reviewRequests',
-    anim: 'jump',
-    fx: 'sparkle',
-    text: 'New review request',
-    sub: '+5 XP if you answer within the hour',
-    dot: 'waiting',
-  },
   { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!', dot: 'approved' },
   { kind: 'issues', anim: 'wiggle', text: 'Issue noted!' },
   { kind: 'comments', anim: 'wiggle', text: 'Chatty today!' },
@@ -343,9 +307,8 @@ api.onPopoverOpen((open) => {
   popoverOpen = open;
   document.body.classList.toggle('popover-open', open);
   if (open) {
-    // What the bubble said is in the popover now: it does not come back when the popover closes.
+    // The popover tells it all: what the bubble said does not come back when the popover closes.
     spoken = null;
-    waitingVisible = false;
   }
   renderBubble();
 });

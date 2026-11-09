@@ -24,12 +24,8 @@ const isReady = (pr, conflicting) => pr.reviewDecision === 'APPROVED' && pr.ci =
  * `checksFailed`, when its checks just went red, `mergeConflicts`, when it just got conflicts, and `readyToMerge`, when
  * it just became approved with green checks and no conflicts (by an approval, by the checks turning green after one,
  * or by the conflicts being fixed).
- * `prev`: the previous snapshot or null. Returns the next snapshot, the new activity, and the `moments`: what just
- * happened to one of the user's open PRs that they may want to hear about, with the PR:
- * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed' | 'mergeConflicts' | 'readyToMerge', pr }]`. A PR the app already knew is
+ * `prev`: the previous snapshot or null. Returns the next snapshot and the new activity. A PR the app already knew is
  * needed to tell a change from something that was already so; checks count when they go from not failing to failing.
- * An approval that comes with green checks is reported as `readyToMerge` only: it says more, and it is one thing to
- * hear about, not two.
  * The first call (prev = null) only sets the baseline: no activity.
  */
 function diffPullRequests(prev, prs, repos, now = Date.now()) {
@@ -44,8 +40,7 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
     ready: Object.fromEntries(selected.map((pr) => [pr.id, isReady(pr, conflicting[pr.id])])),
   };
   const delta = {};
-  const moments = [];
-  if (!prev) return { snapshot, delta, moments };
+  if (!prev) return { snapshot, delta };
 
   const since = prev.at - SKEW_MS;
   const bump = (kind) => (delta[kind] = (delta[kind] || 0) + 1);
@@ -61,28 +56,14 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
     const known = pr.state === 'OPEN' && pr.id in (prev.decisions ?? {}) && pr.id in (prev.checks ?? {});
     const ready = known && snapshot.ready[pr.id] && !prev.ready?.[pr.id];
     if (known && prev.decisions[pr.id] !== decision) {
-      if (decision === 'APPROVED') {
-        bump('approvals');
-        if (!ready) moments.push({ kind: 'approved', pr });
-      } else if (decision === 'CHANGES_REQUESTED') {
-        bump('changesRequested');
-        moments.push({ kind: 'changesRequested', pr });
-      }
+      if (decision === 'APPROVED') bump('approvals');
+      else if (decision === 'CHANGES_REQUESTED') bump('changesRequested');
     }
-    if (ready) {
-      bump('readyToMerge');
-      moments.push({ kind: 'readyToMerge', pr });
-    }
-    if (known && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) {
-      bump('checksFailed');
-      moments.push({ kind: 'checksFailed', pr });
-    }
-    if (known && conflicting[pr.id] && !prev.conflicting?.[pr.id]) {
-      bump('mergeConflicts');
-      moments.push({ kind: 'mergeConflicts', pr });
-    }
+    if (ready) bump('readyToMerge');
+    if (known && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) bump('checksFailed');
+    if (known && conflicting[pr.id] && !prev.conflicting?.[pr.id]) bump('mergeConflicts');
   }
-  return { snapshot, delta, moments };
+  return { snapshot, delta };
 }
 
 module.exports = { diffPullRequests };

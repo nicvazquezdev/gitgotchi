@@ -88,19 +88,18 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
     onState: subscribe('popover:state'),
     action: send('popover:action'), // 'openProfile' | 'openXp' | 'openMenu' | 'resume'
-    openPullRequest: send('popover:open-pr'), // https://github.com URL
     setHeight: send('popover:height'),
   },
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, notifications, openAtLogin,
+    // -> { login, repoCount, speechBubbles, openAtLogin,
     //      pause: { active, until, backOn, since },
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume'
+    // 'toggleSpeechBubbles' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume'
     // | 'toggleOpenAtLogin'
     // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'

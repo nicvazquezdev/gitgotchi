@@ -14,7 +14,6 @@ const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
 const { createTray } = require('./ui/tray');
-const { createNotifier } = require('./ui/notifier');
 const store = require('./store');
 const prefs = require('./prefs');
 const { registerIpc } = require('./ipc');
@@ -116,22 +115,16 @@ const actions = {
     const { x, y } = screen.getCursorScreenPoint();
     panelWindow.show({ x, y, width: 0, height: 0 });
   },
-  // --- everyday UI: menu bar dropdown, PR popover, pet bubble ---
+  // --- everyday UI: menu bar dropdown, the card, pet bubble ---
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
-  toggleNotifications: () => togglePref('notifications'),
   // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
-    actions.refreshReviews();
     const win = petWindow.window;
     const onPet = win && petWindow.isVisible();
     popoverPetRect = onPet ? rect : null;
     popoverWindow.toggle(onPet ? toScreenRect(win.getBounds(), rect) : trayAnchor());
   },
-  // The review queue is also fetched when a window that shows it opens (not more than every few seconds).
-  refreshReviews: () => petService.refreshReviews({ maxAgeMs: LIVE.REVIEW_QUEUE_OPEN_REFRESH_MS }),
-  // Only opens PR pages in the browser; it never writes to GitHub.
-  openPullRequest: (url) => openGithub(url),
   // --- end everyday UI ---
   panelState: () => ({
     status: petService.status(),
@@ -145,7 +138,6 @@ const actions = {
       login: user?.login ?? null,
       repoCount: repos.length,
       speechBubbles: prefs.speechBubbles(),
-      notifications: prefs.notifications(),
       pause: petService.pause(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
@@ -182,13 +174,6 @@ function togglePref(key) {
   petWindow.send('pet:prefs', prefs.petPrefs());
 }
 
-// System notifications for the moments worth interrupting for (see notify-plan.js). A pause silences them.
-const notifier = createNotifier({
-  isEnabled: () => prefs.notifications() && !petService.isPaused(),
-  openPullRequest: (url) => openGithub(url),
-  openPopover: showPopoverAtTray,
-});
-
 // ---------- Events ----------
 
 petService.on('status', (status) => {
@@ -199,7 +184,6 @@ petService.on('status', (status) => {
   popoverWindow.send();
   actions.flushEvolution();
 });
-petService.on('attention', (items) => notifier.notify(items));
 petService.on('evolved', (stage) => {
   petWindow.send('pet:evolved', stage);
   actions.celebrateEvolution(stage);

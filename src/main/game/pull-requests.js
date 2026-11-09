@@ -1,5 +1,5 @@
 // Pure rules for the user's pull requests: size, XP, the stored list and the UI views.
-const { PR_SIZES, WEIGHTS, FAST_REVIEW, PR_KEEP_MERGED_DAYS } = require('./catalog');
+const { PR_SIZES, WEIGHTS, PR_KEEP_MERGED_DAYS } = require('./catalog');
 const { toDay } = require('../dates');
 const { emptyDay } = require('./stats');
 
@@ -128,49 +128,6 @@ function classify(prs, now = new Date()) {
   };
 }
 
-/**
- * What the user may want to be told about, one PR at a time (for a system notification): `kind` is
- * 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed' | 'mergeConflicts'. `pr`: a normalized PR (repo is 'owner/name')
- * or a queue entry (see `reviewQueue`, where it is `fullRepo`).
- */
-function attentionOf(kind, pr) {
-  const { id, title, number, url, author = null, via = null } = pr;
-  return { id, kind, title, repo: pr.fullRepo ?? pr.repo, number, url, author, via };
-}
-
-/**
- * PRs waiting for the user's review, for the UI: only the selected repos (like everything else).
- * `xp` is what reviewing gives, and `fastXp` the bonus on top of it while `fastBonus` is true: the user was asked less
- * than FAST_REVIEW.minutes ago, so a review now still counts as fast (see review-speed.js). `prs`: normalized PRs with
- * an `author` login and, when known, `requestedAt` and `via` (client.reviewRequests).
- *
- * The wait that matters is since the user was asked (`waitingDays`), not since the PR was opened (`ageDays`): a PR
- * can be months old and have asked the user yesterday. It is null when the request date could not be proved, and
- * those PRs come after the ones that are known, by the age of the PR, so a guess never ranks as urgent.
- */
-function reviewQueue(prs, repos, now = new Date()) {
-  const selected = new Set(repos.map((r) => r.toLowerCase()));
-  return prs
-    .filter((pr) => pr.state === 'OPEN' && !pr.isDraft && selected.has(pr.repo.toLowerCase()))
-    .sort((a, b) => {
-      if (Boolean(a.requestedAt) !== Boolean(b.requestedAt)) return a.requestedAt ? -1 : 1;
-      return (a.requestedAt ?? a.createdAt).localeCompare(b.requestedAt ?? b.createdAt);
-    })
-    .map((pr) => ({
-      ...toView(pr, now),
-      author: pr.author,
-      xp: WEIGHTS.reviews,
-      fastXp: WEIGHTS.fastReviews,
-      fastBonus:
-        Boolean(pr.requestedAt) && now.getTime() - new Date(pr.requestedAt).getTime() <= FAST_REVIEW.minutes * 60000,
-      requestedAt: pr.requestedAt ?? null,
-      via: pr.via ?? null,
-      waitingDays: pr.requestedAt
-        ? Math.max(0, Math.floor((now.getTime() - new Date(pr.requestedAt).getTime()) / DAY_MS))
-        : null,
-    }));
-}
-
 module.exports = {
   sizeOf,
   statusOf,
@@ -179,6 +136,4 @@ module.exports = {
   prunePullRequests,
   pullRequestDays,
   classify,
-  attentionOf,
-  reviewQueue,
 };

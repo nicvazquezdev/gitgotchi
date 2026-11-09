@@ -51,7 +51,6 @@ const POPOVER_ACTIONS = ['openProfile', 'openXp', 'openMenu', 'resume'];
 // Settings window controls.
 const SETTINGS_ACTIONS = [
   'toggleSpeechBubbles',
-  'toggleNotifications',
   'pauseHour',
   'pauseTomorrow',
   'pauseVacation',
@@ -64,8 +63,7 @@ const SETTINGS_ACTIONS = [
 
 /**
  * @param {{ openProfile: () => void, finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
- *           setPetSize: (size: number, persist?: boolean) => void, togglePopover: (rect: object) => void,
- *           openPullRequest: (url: string) => void }} actions
+ *           setPetSize: (size: number, persist?: boolean) => void, togglePopover: (rect: object) => void }} actions
  */
 function registerIpc(actions) {
   // App
@@ -167,7 +165,6 @@ function registerIpc(actions) {
     popoverWindow.hide();
     actions[name]();
   });
-  on('popover:open-pr', (url) => typeof url === 'string' && actions.openPullRequest(url));
   on('popover:height', (height) => Number.isFinite(height) && popoverWindow.setHeight(height));
   // ---- end everyday UI ----
 
