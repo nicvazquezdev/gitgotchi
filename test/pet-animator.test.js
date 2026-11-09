@@ -221,12 +221,12 @@ describe('the animation rules', () => {
     assert.equal(front.facingSign, 0);
   });
 
-  test('landing dust: a puff at each side of the feet, twice for a hard landing, for every creature, none in calm mode', async () => {
+  test('landing dust: a puff at each side of the feet, twice for a hard landing; none for a floater or in calm mode', async () => {
     const puffs = (a) => a.parts.filter((p) => p.kind === 'puff');
     for (const [line, stage] of [
-      ['ram', 1],
-      ['jelly', 0],
-      ['koi', 2],
+      ['ram', 1], // walks
+      ['phoenix', 0], // hops
+      ['stag', 0],
     ]) {
       const a = await pet(line, stage);
       a.dust();
@@ -236,6 +236,20 @@ describe('the animation rules', () => {
       assert.equal(puffs(hard).length, 4, `${line}: a second round after the first`);
       step(hard, 1000);
       assert.equal(puffs(hard).length, 0, `${line}: and they are gone`);
+    }
+    // The pack gives no dust to the ones that float: they never touch the ground.
+    for (const [line, stage] of [
+      ['jelly', 0],
+      ['koi', 2],
+      ['moth', 1],
+      ['phoenix', 3],
+    ]) {
+      const floater = await pet(line, stage);
+      assert.equal(floater.motion, 'float', `${line} ${stage} floats`);
+      floater.dust(true);
+      floater.skidDust(1);
+      floater.skidDust(-1);
+      assert.equal(puffs(floater).length, 0, `${line}: no dust, only the squash`);
     }
     const calm = await pet('ram', 1);
     calm.calm = true;

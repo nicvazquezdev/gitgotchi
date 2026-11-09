@@ -44,7 +44,8 @@ const WOOZY_SWAY_MS = 110; // and it sways a pixel to each side
  *   can be happy for days, so they only come in a burst after `rejoice(ms)` (the happy pose itself stays).
  * - Held by the user: the arms-up pose, and `hop` rows off the ground (a click's hop, being held up). How the body
  *   squashes and swings is in pet-squish.js; pet-view.js feeds the result in here.
- * - Dizzy (`woozy`): the eyes half shut and a pixel of sway. Dust (`dust`, `skidDust`) when it lands and skids.
+ * - Dizzy (`woozy`): the eyes half shut and a pixel of sway. Dust (`dust`, `skidDust`) when it lands and skids, except
+ *   for the creatures that float.
  * - "Calm" mode: no effects and no cheer, just the idle loop of the mood's pose.
  */
 export class DesktopPet extends PetAnimator {
@@ -89,18 +90,18 @@ export class DesktopPet extends PetAnimator {
   }
 
   /**
-   * Dust at both sides of the feet: it landed. `strong`: a second round right after, for a hard landing. The pack
-   * gives none to a floater (it never touches the ground), but one that is thrown and lands gets it too.
+   * Dust at both sides of the feet: it landed. `strong`: a second round right after, for a hard landing. A floater
+   * gets none, as in the pack: it never touches the ground, so all it has of a landing is the squash.
    */
   dust(strong = false) {
-    if (this.calm) return;
+    if (this.calm || this.motion === 'float') return;
     this._spawnPuffs(this.t);
     if (strong) this._spawnPuffs(this.t + 90);
   }
 
-  /** One puff behind the feet of a pet that skids; `direction`: where it goes (1 right, -1 left). */
+  /** One puff behind the feet of a pet that skids; `direction`: where it goes (1 right, -1 left). Not for a floater. */
   skidDust(direction) {
-    if (this.calm) return;
+    if (this.calm || this.motion === 'float') return;
     const e = this.stage.shadowEllipse;
     const cx = this.flip ? this.stage.size - e.cx : e.cx;
     const side = direction > 0 ? -1 : 1;
