@@ -9,7 +9,6 @@ const onboardingWindow = require('./ui/onboarding-window');
 const panelWindow = require('./ui/panel-window');
 const shareWindow = require('./ui/share-window');
 const settingsWindow = require('./ui/settings-window');
-const evolutionWindow = require('./ui/evolution-window');
 const popoverWindow = require('./ui/popover-window');
 const { toScreenRect } = require('./ui/popover-position');
 const { openGithub } = require('./ui/external-links');
@@ -34,26 +33,11 @@ if (IS_MAC) {
 
 // ---------- App actions ----------
 
-// --- Share & evolution windows ---
-// An evolution that happens during a vacation waits here ({ fromIndex, toIndex }, merged if several pile up)
-// and is shown by `flushEvolution`: on the next status update after the vacation ends, or when the menu opens.
-let pendingEvolution = null;
-
 const actions = {
   openShare: () => shareWindow.open(),
   // The card hangs from the pet (it answers with the rect to anchor on, see `togglePopover`), or from the menu bar icon
   // when the pet is hidden.
   openCard: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
-  celebrateEvolution: ({ index }) => {
-    pendingEvolution = { fromIndex: pendingEvolution?.fromIndex ?? index - 1, toIndex: index };
-    actions.flushEvolution();
-  },
-  flushEvolution: () => {
-    if (!pendingEvolution || petService.isOnTimeOff()) return;
-    evolutionWindow.open(pendingEvolution);
-    pendingEvolution = null;
-  },
-  // --- end Share & evolution windows ---
   sync: () => petService.sync(),
   togglePet: () => {
     if (petWindow.isVisible()) petWindow.hide();
@@ -110,7 +94,6 @@ const actions = {
   },
   openMenu: () => actions.showMenu(),
   showMenu: () => {
-    actions.flushEvolution();
     const { x, y } = screen.getCursorScreenPoint();
     panelWindow.show({ x, y, width: 0, height: 0 });
   },
@@ -183,12 +166,8 @@ petService.on('status', (status) => {
   panelWindow.send();
   settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();
-  actions.flushEvolution();
 });
-petService.on('evolved', (stage) => {
-  petWindow.send('pet:evolved', stage);
-  actions.celebrateEvolution(stage);
-});
+petService.on('evolved', (stage) => petWindow.send('pet:evolved', stage));
 petService.on('activity', (delta) => petWindow.send('pet:activity', delta));
 petService.on('levelUp', (level, info) => petWindow.send('pet:level-up', { level, ...info }));
 petService.on('companion', (companion) => petWindow.send('pet:companion', companion));
@@ -226,10 +205,7 @@ app.whenReady().then(() => {
   settingsWindow.init(actions.settingsState);
   tray = createTray();
   // The icon is the menu (a click or a right-click); the card hangs from the pet.
-  const toggleMenu = () => {
-    actions.flushEvolution();
-    panelWindow.toggle(tray.getBounds());
-  };
+  const toggleMenu = () => panelWindow.toggle(tray.getBounds());
   tray.on('click', toggleMenu);
   tray.on('right-click', toggleMenu);
 

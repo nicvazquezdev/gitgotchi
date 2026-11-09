@@ -1,5 +1,5 @@
-// `npm run shots [-- page ...] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
-// so a UI change can be checked by eye without running the app. Pages: share popover panel settings evolution pet onboarding.
+// `npm run shots [-- page ...] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--fresh] [--complete] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// so a UI change can be checked by eye without running the app. Pages: share popover panel settings pet onboarding.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
 const { app, BrowserWindow, nativeTheme } = require('electron');
@@ -27,7 +27,6 @@ const happy = process.argv.includes('--happy'); // a happy pet: it merged PRs re
 const levelUp = process.argv.includes('--level-up'); // pet: a new level (the hop and the toast)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
 const complete = process.argv.includes('--complete'); // a pet with every achievement
-const final = process.argv.includes('--final'); // evolution: into the last stage (the pet is fully grown)
 // Selectors to click, in order, before the capture (each `--click` is one).
 const clicks = process.argv.flatMap((a, i) => (a === '--click' ? [process.argv[i + 1]] : []));
 const restore = process.argv.includes('--restore'); // onboarding: a save of the pets was found in the account
@@ -37,7 +36,6 @@ const freeze = process.argv.includes('--freeze'); // a fixed clock and nothing t
 const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // popover: a tab (pets, trophies, xp)
 const PAGES = {
   share: { size: config.SHARE_WINDOW },
-  evolution: { size: config.EVOLUTION_WINDOW },
   settings: { size: config.SETTINGS_WINDOW },
   popover: { size: { width: config.POPOVER_WINDOW.width, height: 1000 }, fit: true },
   panel: { size: { width: config.PANEL_WINDOW.width, height: 1000 }, fit: true },
@@ -125,7 +123,6 @@ const status = computeStatus({ pets, activePet: 'phoenix', achievements, activit
 if (happy) Object.assign(status, { mood: 'happy', moodLabel: 'Happy', moodReason: '2 PRs merged recently' });
 const fixtures = {
   freeze: freeze ? NOW.getTime() : null,
-  evolution: final ? { fromIndex: 2, toIndex: 3 } : { fromIndex: 0, toIndex: 1 },
   levelUp: levelUp ? { level: 10, name: 'Mergon', toNext: 48 } : null,
   celebrate: celebrate
     ? [
@@ -230,7 +227,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${restore ? '-restore' : ''}${clicks.length ? `-clicked${clicks.length > 1 ? clicks.length : ''}` : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${restore ? '-restore' : ''}${clicks.length ? `-clicked${clicks.length > 1 ? clicks.length : ''}` : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

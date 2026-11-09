@@ -11,7 +11,6 @@ const settingsWindow = require('./ui/settings-window');
 const prefs = require('./prefs');
 const catalog = require('./game/catalog');
 const collection = require('./game/collection');
-const evolutionWindow = require('./ui/evolution-window');
 const { copyRegion } = require('./ui/share');
 
 // Only accept messages from our own local pages.
@@ -125,7 +124,7 @@ function registerIpc(actions) {
   });
   // ---- end everyday UI ----
 
-  // --- Share & evolution windows ---
+  // --- Share window ---
   handle('share:status', () => petService.status());
   // The share card: copies the part of the window it is drawn in to the clipboard, as an image. It needs the window
   // that asked, so it does not go through `handle`.
@@ -133,9 +132,7 @@ function registerIpc(actions) {
     if (!isTrusted(event)) throw new Error('Untrusted sender');
     return copyRegion(event.sender, rect);
   });
-  handle('evolution:data', () => evolutionWindow.current());
-  on('evolution:close', () => evolutionWindow.close());
-  // --- end Share & evolution windows ---
+  // --- end Share window ---
 
   // ---- everyday UI ----
   // Menu

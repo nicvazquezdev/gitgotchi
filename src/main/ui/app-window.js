@@ -1,4 +1,4 @@
-// Factory for the regular app windows (onboarding, settings, profile, evolution): one instance per page,
+// Factory for the regular app windows (onboarding, settings, profile): one instance per page,
 // opened centered on the display in use, with the native traffic lights over the page's 40 px title bar.
 // The app lives in the menu bar: on macOS the Dock icon only shows while at least one of these windows is open.
 const { app, screen } = require('electron');

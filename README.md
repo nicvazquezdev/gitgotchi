@@ -141,7 +141,7 @@ Levels come from the XP a pet has earned and scale with your own weekly baseline
 | Young | 10         |
 | Adult | 18         |
 
-Every level up gets a pill over the pet (_Level 10_), the XP that arrives floats up as _+10 XP_, and every evolution gets a celebration window (the picture at the top is from one).
+Every level up gets a pill over the pet (_Level 10_), the XP that arrives floats up as _+10 XP_, and an evolution happens right on the pet: the old form shakes and flashes white, and the new one comes out of the light with a burst of sparkles and a cheer.
 
 ### Collection
 
@@ -167,7 +167,7 @@ The one way to say "leave me alone for a while". Start it from the menu (_Vacati
 
 - Your streak is safe: those days are skipped, like weekends.
 - The dates travel with the cloud backup.
-- Nothing talks to you (no speech bubbles or evolution popups) and the pet only idles.
+- Nothing talks to you (no speech bubbles) and the pet only idles; if it evolves, it just changes form, with no show.
 - While it lasts, the card says so and offers _I'm back_.
 
 ### Achievements
@@ -261,6 +261,6 @@ The desktop pet is animated by `src/renderer/shared/pet-animator.js`, copied ver
 - `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
 - `npm run format` / `npm run lint`: Prettier
-- `npm run shots [-- share popover panel settings evolution pet] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--happy] [--fresh] [--complete] [--click selector]`: renders the windows with sample data (four pets, one fully grown) to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye. The pictures in `docs/images/` use the same sample data: take them again after a UI change
-- `npm run shots:check [case ...]`: visual tests. Renders the card (and its tabs), the share window, the menu, settings, the setup and the evolution windows (with a fixed clock, no animation and no animated sprites) and compares each with the screenshot saved in `test/visual/`. A window that changed, grew, shrank or overflows fails, and `test/visual/__failures__/` gets the actual and a diff image (changes in red). If the change is on purpose, `npm run shots:update` saves the new screenshots: look at them before committing (the pet window is not covered: it is random and has its own tests). It needs Electron, so CI does not run it, and the references are made on macOS (another system may need its own)
+- `npm run shots [-- share popover panel settings pet] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--happy] [--fresh] [--complete] [--click selector]`: renders the windows with sample data (four pets, one fully grown) to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye. The pictures in `docs/images/` use the same sample data: take them again after a UI change
+- `npm run shots:check [case ...]`: visual tests. Renders the card (and its tabs), the share window, the menu, settings and the setup (with a fixed clock, no animation and no animated sprites) and compares each with the screenshot saved in `test/visual/`. A window that changed, grew, shrank or overflows fails, and `test/visual/__failures__/` gets the actual and a diff image (changes in red). If the change is on purpose, `npm run shots:update` saves the new screenshots: look at them before committing (the pet window is not covered: it is random and has its own tests). It needs Electron, so CI does not run it, and the references are made on macOS (another system may need its own)
 - `npm test`: unit tests (Node built-in runner, files in `test/`)

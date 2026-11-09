@@ -47,8 +47,6 @@ const CASES = [
     flags: ['--click', '.btn.primary', '--click', '.actions .btn.primary'],
   },
   { name: 'settings-time-off-dark', page: 'settings', flags: ['--time-off'] },
-  { name: 'evolution-dark', page: 'evolution', flags: [] },
-  { name: 'evolution-final-dark', page: 'evolution', flags: ['--final'] },
 ];
 
 /** Renders one case with shots.js. Returns the PNG path, or an error message. */

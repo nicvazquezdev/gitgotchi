@@ -69,7 +69,6 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   },
   pets: { activate: ignore, hatch: ignore, rename: ignore },
   share: { status: value(fx.status), onStatus: never, copyCard: value({ ok: true }) },
-  evolution: { data: value(fx.evolution), close: ignore },
   panel: { state: value(fx.panel), onState: never, action: ignore, setHeight: ignore },
   popover: {
     state: value({ ...fx.panel, placement: 'above' }),

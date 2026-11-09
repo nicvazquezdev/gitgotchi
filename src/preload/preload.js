@@ -63,18 +63,13 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
   },
 
-  // --- Share & evolution windows ---
+  // --- Share window ---
   share: {
     status: invoke('share:status'),
     onStatus: subscribe('share:status'),
     copyCard: invoke('share:copy-card'), // { x, y, width, height } of the share card: copies it to the clipboard as an image -> { ok } | { error, message }
   },
-
-  evolution: {
-    data: invoke('evolution:data'), // -> { fromIndex, toIndex }
-    close: send('evolution:close'),
-  },
-  // --- end Share & evolution windows ---
+  // --- end Share window ---
 
   // ---- everyday UI ----
   panel: {
