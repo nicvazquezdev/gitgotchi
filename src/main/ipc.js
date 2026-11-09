@@ -147,10 +147,6 @@ function registerIpc(actions) {
   });
   handle('evolution:data', () => evolutionWindow.current());
   on('evolution:close', () => evolutionWindow.close());
-  on('evolution:view-profile', (view) => {
-    evolutionWindow.close();
-    actions.openProfile(view);
-  });
   // --- end Profile & evolution windows ---
 
   // ---- everyday UI ----

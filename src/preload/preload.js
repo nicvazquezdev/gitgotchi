@@ -70,7 +70,6 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   evolution: {
     data: invoke('evolution:data'), // -> { fromIndex, toIndex }
     close: send('evolution:close'),
-    viewProfile: send('evolution:view-profile'), // optional tab: 'collection'
   },
   // --- end Profile & evolution windows ---
 

@@ -446,34 +446,6 @@ body {
   -webkit-background-clip: text;
   color: transparent;
 }
-.pills {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 10px;
-  font-size: 13px;
-}
-.pills svg {
-  color: var(--neon-cyan);
-}
-.pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 10px 3px 4px;
-  clip-path: var(--cut-3);
-  background: var(--surface);
-  color: var(--text-2);
-}
-.pill.to {
-  background: #3a1470;
-  color: #ffffff;
-  font-weight: 600;
-}
-.pill img {
-  width: 24px;
-  height: 24px;
-}
 .next {
   display: flex;
   align-items: center;

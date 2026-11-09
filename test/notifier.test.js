@@ -118,15 +118,15 @@ describe('createNotifier', () => {
 
   test('where the system has no notifications, it does nothing', () => {
     supported = false;
-    notifier.notify([item('approved', 1)]);
+    notifier.notify([item('readyToMerge', 1)]);
     mock.timers.tick(5000);
     assert.equal(shown.length, 0);
   });
 
   test('good news is silent, problems are not', () => {
-    notifier.notify([item('approved', 1), item('changesRequested', 2)]);
+    notifier.notify([item('readyToMerge', 1), item('changesRequested', 2)]);
     mock.timers.tick(2000);
     const silent = Object.fromEntries(shown.map((n) => [n.options.title, n.options.silent]));
-    assert.deepEqual(silent, { 'Changes requested': false, 'PR approved': true });
+    assert.deepEqual(silent, { 'Changes requested': false, 'Ready to merge': true });
   });
 });

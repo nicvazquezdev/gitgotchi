@@ -31,26 +31,25 @@ describe('planNotifications', () => {
     ]);
   });
 
-  test('each kind reads on its own, and good news is silent', () => {
-    const titles = [
-      'reviewRequested',
-      'changesRequested',
-      'checksFailed',
-      'mergeConflicts',
-      'readyToMerge',
-      'approved',
-    ].map((kind) => planNotifications([item(kind, 1)], { now: NOW }).notifications[0]);
+  test('each thing reads on its own, and good news is silent', () => {
+    const titles = ['reviewRequested', 'changesRequested', 'checksFailed', 'mergeConflicts', 'readyToMerge'].map(
+      (kind) => planNotifications([item(kind, 1)], { now: NOW }).notifications[0],
+    );
     assert.deepEqual(
       titles.map((n) => n.title),
-      ['Review requested', 'Changes requested', 'Checks failed', 'Merge conflicts', 'Ready to merge', 'PR approved'],
+      ['Review requested', 'Changes requested', 'Checks failed', 'Merge conflicts', 'Ready to merge'],
     );
     assert.deepEqual(
       titles.map((n) => n.silent),
-      [false, false, false, false, true, true],
+      [false, false, false, false, true],
     );
   });
 
-  test('several of one kind are summed up in one notification; clicking opens the popover', () => {
+  test('an approval alone is not news: what it makes possible is (ready to merge)', () => {
+    assert.deepEqual(planNotifications([item('approved', 1)], { now: NOW }), { notifications: [], shown: [] });
+  });
+
+  test('several of one kind are summed up in one notification; clicking opens the card', () => {
     const { notifications } = planNotifications(
       [1, 2, 3, 4].map((n) => item('reviewRequested', n)),
       { now: NOW },
@@ -62,18 +61,28 @@ describe('planNotifications', () => {
     assert.equal(notifications[0].subtitle, undefined);
 
     const two = planNotifications([item('checksFailed', 1), item('checksFailed', 2)], { now: NOW }).notifications[0];
-    assert.equal(two.title, 'Checks failed on 2 PRs');
+    assert.equal(two.title, '2 of your PRs need you');
     assert.equal(two.body, 'Title 1\nTitle 2', 'no "+0 more"');
+  });
+
+  test('what is wrong with your PRs is one kind: changes, failing checks and conflicts are summed up together', () => {
+    const { notifications } = planNotifications(
+      [item('changesRequested', 1), item('checksFailed', 2), item('mergeConflicts', 3)],
+      { now: NOW },
+    );
+    assert.equal(notifications.length, 1);
+    assert.equal(notifications[0].title, '3 of your PRs need you');
+    assert.deepEqual(notifications[0].target, { type: 'popover' });
   });
 
   test('different kinds in the same batch give one notification each, most urgent first', () => {
     const { notifications } = planNotifications(
-      [item('approved', 1), item('checksFailed', 2), item('reviewRequested', 3)],
+      [item('readyToMerge', 1), item('checksFailed', 2), item('reviewRequested', 3)],
       { now: NOW },
     );
     assert.deepEqual(
       notifications.map((n) => n.title),
-      ['Review requested', 'Checks failed', 'PR approved'],
+      ['Review requested', 'Checks failed', 'Ready to merge'],
     );
   });
 
@@ -89,17 +98,19 @@ describe('planNotifications', () => {
     );
     // Another PR, or another kind on the same PR, is not covered by it.
     assert.equal(
-      planNotifications([item('checksFailed', 2), item('approved', 1)], { recent, now: NOW }).notifications.length,
+      planNotifications([item('checksFailed', 2), item('readyToMerge', 1)], { recent, now: NOW }).notifications.length,
       2,
     );
   });
 
   test('a repeated item in one batch counts once; the keys of what was covered are returned', () => {
-    const result = planNotifications([item('approved', 1), item('approved', 1), item('checksFailed', 2)], { now: NOW });
-    assert.deepEqual(result.shown.sort(), ['approved:pr1', 'checksFailed:pr2']);
-    assert.equal(result.notifications.find((n) => n.title === 'PR approved').target.type, 'pr', 'one PR, not two');
+    const result = planNotifications([item('readyToMerge', 1), item('readyToMerge', 1), item('checksFailed', 2)], {
+      now: NOW,
+    });
+    assert.deepEqual(result.shown.sort(), ['checksFailed:pr2', 'readyToMerge:pr1']);
+    assert.equal(result.notifications.find((n) => n.title === 'Ready to merge').target.type, 'pr', 'one PR, not two');
     assert.deepEqual(
-      planNotifications([item('approved', 1)], { recent: new Map([['approved:pr1', NOW]]), now: NOW }).shown,
+      planNotifications([item('readyToMerge', 1)], { recent: new Map([['readyToMerge:pr1', NOW]]), now: NOW }).shown,
       [],
     );
   });

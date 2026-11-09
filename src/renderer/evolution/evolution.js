@@ -1,6 +1,6 @@
 // Evolution celebration: shown when the pet reaches a new stage.
 import { $, h } from '../shared/dom.js';
-import { icon, petAssetUrl, spriteImg } from '../shared/ui.js';
+import { petAssetUrl } from '../shared/ui.js';
 import { PAD } from '../shared/pet-sprites.js';
 
 const api = window.gitgotchi;
@@ -76,15 +76,9 @@ function hero(stage) {
   );
 }
 
-function pill(species, index, text, cls = '') {
-  const stage = species.stages[index];
-  return h('span', { class: `pill ${cls}` }, spriteImg(stage.file, 24, 1), text);
-}
-
-function render({ status, catalog, fromIndex, toIndex }) {
+function render({ status, catalog, toIndex }) {
   const { species, name } = status;
   const to = species.stages[toIndex];
-  const from = species.stages[fromIndex];
   const toInfo = catalog.stages[toIndex];
   const next = catalog.stages[toIndex + 1];
   const { hatched, total } = status.collection;
@@ -119,7 +113,7 @@ function render({ status, catalog, fromIndex, toIndex }) {
   const hint = next
     ? `Keep shipping. ${to.name}’s next form unlocks at level ${next.level}.`
     : hatched < total
-      ? `${to.name} is fully grown! Hatch another companion to keep collecting: ${hatched} of ${total} so far.`
+      ? `${to.name} is fully grown! Hatch another pet to keep collecting: ${hatched} of ${total} so far.`
       : `${to.name} is fully grown, and your collection is complete. Keep shipping!`;
   $('#app').replaceChildren(
     ...sky,
@@ -141,25 +135,11 @@ function render({ status, catalog, fromIndex, toIndex }) {
         h('h1', {}, `${name} evolved into `, h('span', { class: 'grad' }, to.name), '!'),
         h(
           'div',
-          { class: 'pills' },
-          pill(species, fromIndex, `${from.name} · ${catalog.stages[fromIndex].name}`),
-          icon('arrow', { size: 16, stroke: 2.5 }),
-          pill(species, toIndex, `${to.name} · ${toInfo.name} · Level ${toInfo.level}`, 'to'),
-        ),
-        h(
-          'div',
           { class: 'next' },
           h('p', { class: 'hint' }, hint),
           h(
             'div',
             { class: 'actions' },
-            next || hatched === total
-              ? h('button', { class: 'btn pixel-cut', onclick: () => api.evolution.viewProfile() }, 'View profile')
-              : h(
-                  'button',
-                  { class: 'btn pixel-cut', onclick: () => api.evolution.viewProfile('collection') },
-                  'Choose the next companion',
-                ),
             h('button', { class: 'btn primary pixel-cut', onclick: () => api.evolution.close() }, 'Awesome!'),
           ),
         ),
