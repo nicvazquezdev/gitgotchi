@@ -1,10 +1,23 @@
 // Evolution celebration: shown when the pet reaches a new stage.
 import { $, h } from '../shared/dom.js';
-import { icon, spriteImg } from '../shared/ui.js';
+import { icon, petAssetUrl, spriteImg } from '../shared/ui.js';
+import { PAD } from '../shared/pet-sprites.js';
 
 const api = window.gitgotchi;
 
 const HERO_PX = 180; // target size of the new sprite (rounded to an integer scale)
+// [left %, top %, delay s] of the hearts that rise from the new form, and of its sparkles: a share of the hero's
+// frame, so they fit every stage.
+const HEARTS = [
+  [18.75, 17, 0],
+  [68.75, 15, 0.65],
+  [44.8, -2.6, 1.3],
+];
+const SPARKS = [
+  [-6.25, 10, 0],
+  [99, 33, 0.5],
+  [91.7, -8.9, 0.9],
+];
 // [x, y, size, color]: the stars of the sky, and the 4-point glints (bigger, they twinkle in the design)
 const STARS = [
   [70, 70, 4, '#ffffff'],
@@ -36,6 +49,32 @@ const vars = (el, props) => {
   for (const [name, value] of Object.entries(props)) el.style.setProperty(name, value);
   return el;
 };
+
+/** The new form cheering on its sheet, with hearts and sparkles around it. */
+function hero(stage) {
+  const scale = Math.max(1, Math.round(HERO_PX / stage.size));
+  const frame = (stage.size + 2 * PAD) * scale; // the sprite and its padding, in px
+  const sheet = vars(
+    h('div', {
+      class: 'cheer',
+      role: 'img',
+      ariaLabel: `${stage.name} cheering`,
+      style: { backgroundImage: `url(${petAssetUrl(`sheets/${stage.file}`)})` },
+    }),
+    { '--c': `${frame}px`, '--px': `${scale}px`, '--r': '1' },
+  );
+  const around = (cls, list) =>
+    list.map(([x, y, delay]) =>
+      h('div', { class: cls, ariaHidden: 'true', style: { left: `${x}%`, top: `${y}%`, animationDelay: `${delay}s` } }),
+    );
+  return h(
+    'div',
+    { class: 'hero', style: { width: `${frame}px`, height: `${frame}px` } },
+    sheet,
+    ...around('heart', HEARTS),
+    ...around('spark', SPARKS),
+  );
+}
 
 function pill(species, index, text, cls = '') {
   const stage = species.stages[index];
@@ -92,7 +131,7 @@ function render({ status, catalog, fromIndex, toIndex }) {
       h('div', { class: 'level' }, `LEVEL ${toInfo.level} REACHED`),
     ),
     h('div', { class: 'floor-shadow', ariaHidden: 'true' }),
-    h('div', { class: 'hero' }, spriteImg(to.file, to.size, Math.max(1, Math.round(HERO_PX / to.size)), to.name)),
+    hero(to),
     h(
       'div',
       { class: 'panel pixel-cut' },

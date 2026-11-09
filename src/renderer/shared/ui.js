@@ -27,6 +27,9 @@ const ICON_PATHS = {
   hand: '<path d="M9 11V5a2 2 0 0 1 4 0v6M13 10a2 2 0 0 1 4 0v2M17 11a2 2 0 0 1 4 0v4a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3.5L4 14a2 2 0 0 1 3.5-2L9 14"/>',
 };
 
+/** URL of a file under assets/pets (a sheet, an effect) for a style that needs the sprite itself. */
+export const petAssetUrl = (file) => new URL(file, ASSETS).href;
+
 /** Inline SVG icon (decorative unless `label` is given). */
 export function icon(name, { size = 16, stroke = 2 } = {}) {
   const svg = document.createElementNS(SVG_NS, 'svg');

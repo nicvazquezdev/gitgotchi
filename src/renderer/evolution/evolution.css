@@ -217,17 +217,207 @@ body {
   color: var(--warning-text);
 }
 .floor-shadow {
-  left: 432px;
+  left: 450px;
   top: 423px;
-  width: 96px;
+  width: 60px;
   height: 10px;
   border-radius: 50%;
   background: var(--pet-shadow);
 }
+/* The new form cheers: its sheet (14 frames per row, a row per mood) played with steps, as in the design. The
+   frame is the sprite plus its padding, so --c (the frame in px) and --px (one native pixel) come from the page. */
 .hero {
   left: 50%;
-  top: 437px;
+  top: 459px;
   transform: translate(-50%, -100%);
+}
+.cheer {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  background-size: calc(var(--c) * 14) calc(var(--c) * 3);
+  background-position: 0 calc(var(--r) * var(--c) * -1); /* the happy row */
+}
+.heart,
+.spark {
+  position: absolute;
+  image-rendering: pixelated;
+  background-repeat: no-repeat;
+}
+.heart {
+  width: 28px;
+  height: 24px;
+  background-image: url('../../../assets/pets/fx/heart.png');
+  background-size: 84px 24px;
+  opacity: 0;
+}
+.spark {
+  width: 20px;
+  height: 20px;
+  background-image: url('../../../assets/pets/fx/sparkle.png');
+  background-size: 80px 20px;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .cheer {
+    animation: evo-cheer 4.04s steps(1, end) infinite;
+  }
+  .floor-shadow {
+    animation: evo-shadow 4.04s steps(1, end) infinite;
+  }
+  .heart {
+    animation: evo-heart 2.02s linear infinite;
+  }
+  .spark {
+    animation: evo-spark 1.4s steps(1, end) infinite;
+  }
+}
+@keyframes evo-cheer {
+  0% {
+    background-position-x: calc(var(--c) * -10);
+    transform: translateY(0);
+  }
+  3.47% {
+    background-position-x: calc(var(--c) * -11);
+    transform: translateY(calc(var(--px) * -3));
+  }
+  5.69% {
+    background-position-x: calc(var(--c) * -12);
+    transform: translateY(calc(var(--px) * -6));
+  }
+  12.13% {
+    background-position-x: calc(var(--c) * -13);
+    transform: translateY(calc(var(--px) * -3));
+  }
+  14.36% {
+    background-position-x: 0;
+    transform: translateY(0);
+  }
+  18.32% {
+    background-position-x: calc(var(--c) * -10);
+    transform: translateY(0);
+  }
+  21.78% {
+    background-position-x: calc(var(--c) * -11);
+    transform: translateY(calc(var(--px) * -3));
+  }
+  24.01% {
+    background-position-x: calc(var(--c) * -12);
+    transform: translateY(calc(var(--px) * -6));
+  }
+  30.45% {
+    background-position-x: calc(var(--c) * -13);
+    transform: translateY(calc(var(--px) * -3));
+  }
+  32.67% {
+    background-position-x: 0;
+    transform: translateY(0);
+  }
+  42.08% {
+    background-position-x: calc(var(--c) * -1);
+  }
+  49.5% {
+    background-position-x: calc(var(--c) * -2);
+  }
+  58.91% {
+    background-position-x: calc(var(--c) * -3);
+  }
+  66.34% {
+    background-position-x: 0;
+  }
+  75.74% {
+    background-position-x: calc(var(--c) * -1);
+  }
+  83.17% {
+    background-position-x: calc(var(--c) * -2);
+  }
+  92.57% {
+    background-position-x: calc(var(--c) * -3);
+  }
+}
+@keyframes evo-shadow {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  3.47% {
+    transform: scale(0.88);
+    opacity: 0.8;
+  }
+  5.69% {
+    transform: scale(0.76);
+    opacity: 0.6;
+  }
+  12.13% {
+    transform: scale(0.88);
+    opacity: 0.8;
+  }
+  14.36% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  21.78% {
+    transform: scale(0.88);
+    opacity: 0.8;
+  }
+  24.01% {
+    transform: scale(0.76);
+    opacity: 0.6;
+  }
+  30.45% {
+    transform: scale(0.88);
+    opacity: 0.8;
+  }
+  32.67% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes evo-heart {
+  0% {
+    opacity: 1;
+    background-position-x: 0;
+    transform: translateY(0);
+  }
+  3.5% {
+    background-position-x: -28px;
+  }
+  7% {
+    background-position-x: -56px;
+    transform: translateY(-2px);
+  }
+  25% {
+    transform: translateY(-12px) translateX(4px);
+  }
+  45% {
+    transform: translateY(-24px) translateX(-4px);
+    opacity: 1;
+  }
+  65% {
+    transform: translateY(-36px) translateX(4px);
+    opacity: 0;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px);
+  }
+}
+@keyframes evo-spark {
+  0% {
+    background-position-x: 0;
+  }
+  15% {
+    background-position-x: -20px;
+  }
+  30% {
+    background-position-x: -40px;
+  }
+  45% {
+    background-position-x: -60px;
+  }
+  60% {
+    background-position-x: -100px;
+  }
 }
 
 /* ---------- Panel: what happened, and what is next ---------- */
