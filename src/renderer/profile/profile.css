@@ -343,6 +343,12 @@ body {
 .rule .xp-text {
   font-size: 24px;
 }
+.rule .xp-text .unit {
+  margin-left: 5px;
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
 .sheet .fine {
   margin: 12px 0 0;
 }

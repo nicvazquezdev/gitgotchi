@@ -12,7 +12,7 @@ export function xpSheet(rules, { close }) {
       'div',
       { class: 'rule' },
       h('div', {}, h('b', {}, name), hint ? h('span', { class: 'meta' }, hint) : null),
-      h('b', { class: 'xp-text' }, figure),
+      h('b', { class: 'xp-text' }, `+${figure}`, h('span', { class: 'unit' }, 'XP')),
     );
   const low = Math.min(...sizes.map((s) => s.xp));
   const high = Math.max(...sizes.map((s) => s.xp));
