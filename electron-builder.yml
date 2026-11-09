@@ -1,0 +1,48 @@
+# Installers: `npm run dist` builds the ones for this system into dist/ (the release workflow builds all three).
+appId: com.gitgotchi.app # the same id as APP_ID in src/main/config.js
+productName: Gitgotchi
+copyright: Copyright © 2026 Nicolás Vázquez
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+directories:
+  buildResources: build # icon.png: electron-builder makes the .icns and the .ico from it
+  output: dist
+
+files:
+  - src/**/*
+  - assets/**/*
+  - package.json
+
+# Where the app looks for updates (see src/main/services/updater.js), and where `electron-builder --publish` uploads.
+# A release stays a draft until a maintainer publishes it.
+publish:
+  provider: github
+  owner: nicvazquezdev
+  repo: gitgotchi
+  releaseType: draft
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - { target: dmg, arch: [arm64, x64] }
+    - { target: zip, arch: [arm64, x64] } # what the updater reads on macOS
+  # Ad-hoc signature: Apple Silicon only runs signed code, and this one needs no Apple Developer ID. Gatekeeper still
+  # asks for the first open (see the README). With a Developer ID, drop `identity`, set the CSC_* secrets and notarize.
+  identity: '-'
+  hardenedRuntime: false # it only matters when the app is notarized
+
+win:
+  target:
+    - { target: nsis, arch: [x64] }
+
+nsis:
+  oneClick: true
+  perMachine: false # no admin rights
+
+linux:
+  target:
+    - { target: AppImage, arch: [x64] }
+    - { target: deb, arch: [x64] }
+  category: Development
+  synopsis: A pixel pet that evolves with your GitHub activity
+  maintainer: Nicolás Vázquez <157853579+nicvazquezdev@users.noreply.github.com>
