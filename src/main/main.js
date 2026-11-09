@@ -116,6 +116,7 @@ const actions = {
   },
   // --- everyday UI: menu bar dropdown, the card, pet bubble ---
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
+  togglePlayful: () => togglePref('playful'),
   // The pet window knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
@@ -137,6 +138,7 @@ const actions = {
       login: user?.login ?? null,
       repoCount: repos.length,
       speechBubbles: prefs.speechBubbles(),
+      playful: prefs.playful(),
       pause: petService.timeOff(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),

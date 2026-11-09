@@ -1,6 +1,6 @@
 const { test, describe } = require('node:test');
 const assert = require('node:assert/strict');
-const { THROW, releaseVelocity, Slide, overhang, limitMove } = require('../src/main/ui/pet-throw');
+const { THROW, releaseVelocity, Slide, Lowering, overhang, limitMove } = require('../src/main/ui/pet-throw');
 
 const SIZE = { width: 288, height: 320 }; // the pet window
 const SCREEN = { x: 0, y: 25, width: 1440, height: 875 }; // a work area
@@ -12,17 +12,24 @@ const path = (vx, now, ms = 160) =>
     return { t, x: 500 + (vx * (t - (now - ms))) / 1000, y: 300 };
   });
 
-/** Runs a slide to its end in 16 ms steps over `areas`: where the window ended and for how long it slid. */
-function run(slide, from = { x: 0, y: 0 }, areas = [{ x: -1e6, y: -1e6, width: 2e6, height: 2e6 }]) {
+/**
+ * Runs a slide to its end in 16 ms steps over `areas`, the way pet-window.js does: where the window ended, for how long
+ * it slid and the hits against edges ({ axis, speed }). `keep`: the share of its speed it keeps off a wall or the top
+ * (the bottom is the floor: it stops); 0 stops it at any edge.
+ */
+function run(slide, from = { x: 0, y: 0 }, areas = [{ x: -1e6, y: -1e6, width: 2e6, height: 2e6 }], keep = 0) {
   const at = { ...from };
+  const hits = [];
   let ms = 0;
-  while (!slide.over && ms < 5000) {
-    const next = limitMove(at, slide.step(0.016), SIZE, areas);
-    slide.stop({ x: next.hitX, y: next.hitY });
+  while (!slide.over && ms < 8000) {
+    const move = slide.step(0.016);
+    const next = limitMove(at, move, SIZE, areas);
+    if (next.hitX) hits.push({ axis: 'x', speed: slide.bounce('x', keep) });
+    if (next.hitY) hits.push({ axis: 'y', speed: slide.bounce('y', move.dy > 0 ? 0 : keep) });
     Object.assign(at, { x: next.x, y: next.y });
     ms += 16;
   }
-  return { at, ms };
+  return { at, ms, hits };
 }
 
 /** The top-left corner of a window whose feet are at (x, y). */
@@ -130,5 +137,48 @@ describe('letting the pet go while it moves', () => {
       blocked.at.x + SIZE.width / 2 <= 1440 + 0.5,
       'where the other screen has no room above the feet, the head would hang in the void: it stops',
     );
+  });
+  test('it bounces off a wall with part of its speed, and tells how hard it hit', () => {
+    const wall = { x: 0, y: 25, width: 1440, height: 875 };
+    const from = withFeetAt(1100, 500);
+    const { at, hits } = run(new Slide({ x: 3000, y: 0 }), from, [wall], THROW.bounce);
+    const first = hits[0];
+    assert.equal(first.axis, 'x');
+    assert.ok(first.speed > THROW.bumpMin, `a hard hit: ${first.speed}`);
+    assert.ok(at.x + SIZE.width / 2 < 1440 - THROW.edge - 20, 'it came back from the wall');
+    assert.ok(hits.length >= 1 && hits.length <= 4, `a few bounces, not a buzz: ${hits.length}`);
+    assert.ok(
+      hits.every((hit, i) => i === 0 || hit.speed < hits[i - 1].speed),
+      'each softer than the last',
+    );
+
+    const stopped = run(new Slide({ x: 3000, y: 0 }), from, [wall], 0);
+    assert.ok(stopped.at.x + SIZE.width / 2 > 1440 - THROW.edge - 1, 'with no bounce it stays at the wall');
+  });
+
+  test('the bottom of the screen is the floor: it lands and stays, only the top and the walls bounce it', () => {
+    const wall = { x: 0, y: 25, width: 1440, height: 875 };
+    const down = run(new Slide({ x: 0, y: 3000 }), withFeetAt(700, 600), [wall], THROW.bounce);
+    assert.equal(down.hits.length, 1, 'one landing');
+    assert.ok(Math.abs(down.at.y + SIZE.height - THROW.feetGap - 900) < 1, 'and it stays on the floor');
+    const up = run(new Slide({ x: 0, y: -5000 }), withFeetAt(700, 700), [wall], THROW.bounce);
+    assert.ok(up.hits.length >= 1 && up.hits[0].axis === 'y');
+    assert.ok(up.at.y + SIZE.height - THROW.feetGap - THROW.headRoom > 25 + 5, 'it came back down from the top');
+  });
+
+  test('the lowering of the window goes down fast and comes back more slowly', () => {
+    const l = new Lowering();
+    l.target = 200;
+    l.step(0.05);
+    const down = l.value;
+    assert.ok(down > 100 && down < 200, `a good part of the way in 50 ms: ${down}`);
+    for (let i = 0; i < 20; i++) l.step(0.016);
+    assert.equal(l.value, 200, 'it arrives (it snaps the last quarter pixel)');
+    l.target = 0;
+    l.step(0.05);
+    const back = 200 - l.value;
+    assert.ok(back < down * 0.7, `coming back is slower: ${back} vs ${down}`);
+    for (let i = 0; i < 80; i++) l.step(0.016);
+    assert.equal(l.value, 0);
   });
 });

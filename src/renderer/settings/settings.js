@@ -194,6 +194,12 @@ const rows = {
     checked: speechBubbles,
     hint: pause.active ? 'Hidden for now: you are on vacation.' : 'Short messages above the pet.',
   })),
+  playful: switchRow('Playful pet', 'togglePlayful', ({ playful, pause }) => ({
+    checked: playful,
+    hint: pause.active
+      ? 'Resting for now: you are on vacation.'
+      : 'It squashes, hangs and slides when you throw it, gets dizzy, and likes to be petted.',
+  })),
   vacation: switchRow('Vacation', 'toggleVacation', ({ pause }) => ({
     checked: pause.active,
     hint: pause.active
@@ -212,7 +218,7 @@ const rows = {
 const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
-  group(rows.size, rows.bubbles),
+  group(rows.size, rows.bubbles, rows.playful),
   group(rows.vacation, rows.vacationReturn),
   group(rows.account, rows.backup, rows.openAtLogin),
 );

@@ -1,9 +1,10 @@
 // How the body of the pet answers the hand, with no frames from the pack: it squashes under a press, boings at a
 // click (a hop that lands in a squash), looks up while the popover it opened is on screen, and when it is picked up
 // it hangs from the point where it was grabbed (by the feet it turns upside down), swings with the speed of the
-// cursor, and when it is let go it skids a little, rights itself and lands. A few springs and one hop. Pure rules
-// (no DOM, no timers): the host calls `update` on every frame and draws with `scaleX`, `scaleY`, `lean`, `skid`,
-// `gaze` and `air`.
+// cursor, and when it is let go it skids a little, rights itself and lands. Shaken or turned over again and again it
+// gets dizzy, and an edge of the screen squashes it. A few springs and one hop. Pure rules (no DOM, no timers): the
+// host calls `update` on every frame and draws with `scaleX`, `scaleY`, `lean`, `skid`, `gaze` and `air`, and asks for
+// the landings (`takeLanding`: dust) and `slideSpeed` (skid dust).
 
 export const SQUISH = {
   press: -0.14, // stretch while pressed: squat and wide
@@ -23,6 +24,15 @@ export const SQUISH = {
   maxSkid: 0.3, // radians
   slideMin: 350, // px/s: slower than this, the pet does not slide (keep in sync with THROW.minSpeed in main/ui/pet-throw.js)
   slideFade: 0.16, // seconds for the slide to fade out (keep in sync with THROW.fade)
+  bump: 0.003, // stretch per second given for each px per second of a hit against an edge of the screen
+  maxBump: 4.5,
+  bounce: 0.4, // the share of its speed it keeps off a wall (keep in sync with THROW.bounce)
+  agitationFade: 2, // seconds for the swing it was given to be forgotten
+  dizzyAt: 6, // radians of swing (a flip is π and a bit) within that time that make it dizzy: two turns, or a hard shake
+  dizzyFor: 2.4, // seconds it stays dizzy
+  dizzyFadeOut: 0.4, // seconds the dizziness takes to wear off at the end
+  dizzySway: 0.07, // radians of sway while dizzy
+  dizzyHz: 2.2,
 };
 
 // Springs: stiffness (1/s²) and damping (1/s). Under-damped, so they overshoot and wobble before they rest.
@@ -49,6 +59,7 @@ export class Squish {
   lean = 0; // radians about the grab point; + swings the feet to the left; π is upside down
   skid = 0; // radians about the feet; + leans the top to the right
   gaze = 0; // 0 to 1: how far it looks up at the popover
+  dizzy = 0; // 0 to 1: how dizzy it is
   air = 0; // rows above the floor
   held = false;
   #pressed = false;
@@ -61,6 +72,10 @@ export class Squish {
   #airV = 0;
   #speed = 0; // px per second of the cursor while the pet is held
   #slide = 0; // px per second it was going when let go, fading as the slide does
+  #agitation = 0; // radians it has been swung through lately, fading
+  #dizzyLeft = 0; // seconds of dizziness to go
+  #clock = 0; // seconds, for the sway
+  #landed = 0; // the hardest landing since the host last asked, in rows per second
 
   /** Scale about the feet. Volume stays about the same: tall is thin, squat is wide. */
   get scaleY() {
@@ -76,9 +91,21 @@ export class Squish {
     return this.#hang;
   }
 
-  /** In the user's hands, in the air or looking at the popover: it does not go for a walk. */
+  /** In the user's hands, in the air, sliding, dizzy or looking at the popover: it does not go for a walk. */
   get busy() {
-    return this.held || this.#pressed || this.#looking || this.air > 0;
+    return this.held || this.#pressed || this.#looking || this.air > 0 || this.dizzy > 0 || Math.abs(this.#slide) > 20;
+  }
+
+  /** px per second it is sliding at after being let go (+ to the right), fading out; 0 when it is not sliding. */
+  get slideSpeed() {
+    return this.#slide;
+  }
+
+  /** How hard it landed since the last call (rows per second, 0 for none): the host raises some dust. */
+  takeLanding() {
+    const impact = this.#landed;
+    this.#landed = 0;
+    return impact;
   }
 
   /** The pointer goes down on the pet: it squashes under it. */
@@ -124,6 +151,17 @@ export class Squish {
     this.#hang = 0;
   }
 
+  /**
+   * The window slid into an edge of the screen at `speed` px/s: along x it is squeezed tall and thin and goes back the
+   * other way, along y (the top; the bottom is the floor) it is squashed flat.
+   */
+  bump(axis, speed) {
+    if (this.calm) return;
+    const push = Math.min(SQUISH.maxBump, speed * SQUISH.bump);
+    this.#stretchV += axis === 'x' ? push : -push;
+    if (axis === 'x') this.#slide *= -SQUISH.bounce;
+  }
+
   /** The popover it opened is on screen (`true`) or closed: it looks up at it. */
   lookUp(on) {
     this.#looking = on && !this.calm;
@@ -139,10 +177,23 @@ export class Squish {
 
     this.#speed *= Math.exp(-dt / SQUISH.speedFade);
     const swing = this.held ? this.#hang + clamp(this.#speed * SQUISH.leanPerPx, SQUISH.maxLean) : 0;
+    const before = this.lean;
     [this.lean, this.#leanV] = spring(this.lean, this.#leanV, swing, this.held ? LEAN_SPRING : RIGHT_SPRING, dt);
 
+    // Swung or turned over again and again, it gets dizzy (and it stays so for a while after it is let go).
+    this.#agitation =
+      this.#agitation * Math.exp(-dt / SQUISH.agitationFade) + (this.held ? Math.abs(this.lean - before) : 0);
+    if (this.#agitation > SQUISH.dizzyAt) {
+      this.#dizzyLeft = SQUISH.dizzyFor;
+      this.#agitation = 0;
+    }
+    this.#dizzyLeft = Math.max(0, this.#dizzyLeft - dt);
+    this.dizzy = Math.min(1, this.#dizzyLeft / SQUISH.dizzyFadeOut);
+    this.#clock += dt;
+
     this.#slide *= Math.exp(-dt / SQUISH.slideFade);
-    const skidTarget = clamp(this.#slide * SQUISH.skid, SQUISH.maxSkid);
+    const sway = this.dizzy * SQUISH.dizzySway * Math.sin(this.#clock * 2 * Math.PI * SQUISH.dizzyHz);
+    const skidTarget = clamp(this.#slide * SQUISH.skid, SQUISH.maxSkid) + sway;
     [this.skid, this.#skidV] = spring(this.skid, this.#skidV, skidTarget, SKID_SPRING, dt);
 
     [this.gaze, this.#gazeV] = spring(this.gaze, this.#gazeV, looking ? 1 : 0, GAZE_SPRING, dt);
@@ -154,6 +205,7 @@ export class Squish {
       this.air += this.#airV * dt;
       if (this.air <= 0) {
         const impact = -this.#airV;
+        this.#landed = Math.max(this.#landed, impact);
         this.#stretchV -= impact * SQUISH.landing; // the harder it lands, the flatter it gets
         this.air = 0;
         this.#airV = 0;
@@ -167,6 +219,7 @@ export class Squish {
     this.skid = this.#skidV = 0;
     this.gaze = this.#gazeV = 0;
     this.air = this.#airV = this.#speed = this.#slide = this.#hang = 0;
+    this.dizzy = this.#agitation = this.#dizzyLeft = this.#landed = 0;
     this.held = this.#pressed = this.#looking = false;
   }
 }

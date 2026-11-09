@@ -221,6 +221,61 @@ describe('the animation rules', () => {
     assert.equal(front.facingSign, 0);
   });
 
+  test('landing dust: a puff at each side of the feet, twice for a hard landing, for every creature, none in calm mode', async () => {
+    const puffs = (a) => a.parts.filter((p) => p.kind === 'puff');
+    for (const [line, stage] of [
+      ['ram', 1],
+      ['jelly', 0],
+      ['koi', 2],
+    ]) {
+      const a = await pet(line, stage);
+      a.dust();
+      assert.equal(puffs(a).length, 2, `${line}: one each side`);
+      const hard = await pet(line, stage);
+      hard.dust(true);
+      assert.equal(puffs(hard).length, 4, `${line}: a second round after the first`);
+      step(hard, 1000);
+      assert.equal(puffs(hard).length, 0, `${line}: and they are gone`);
+    }
+    const calm = await pet('ram', 1);
+    calm.calm = true;
+    calm.dust(true);
+    calm.skidDust(1);
+    assert.equal(puffs(calm).length, 0);
+  });
+
+  test('skid dust: one puff behind the feet, on the side it comes from, mirrored with the creature', async () => {
+    const a = await pet('ram', 1);
+    const e = a.stage.shadowEllipse;
+    a.skidDust(1); // going right: the dust is on the left
+    a.skidDust(-1);
+    const [behindRight, behindLeft] = a.parts.filter((p) => p.kind === 'puff');
+    assert.equal(behindRight.side, -1);
+    assert.equal(behindLeft.side, 1);
+    assert.ok(behindRight.x < behindLeft.x, 'one at each end of the shadow');
+    assert.equal(behindRight.y, Math.floor(e.cy));
+    assert.equal(behindRight.mirror, false);
+    assert.equal(behindLeft.mirror, true);
+  });
+
+  test('dizzy: the eyes half shut then shut and a pixel of sway, but a held pet keeps its pose', async () => {
+    const a = await pet('moth', 2);
+    const normal = new Set();
+    step(a, 400, () => normal.add(a.frameName));
+    assert.ok(![...normal].some((f) => f === 'blink'), 'not dizzy: it does not blink on end');
+    a.woozy = true;
+    const frames = new Set();
+    const sway = new Set();
+    step(a, 1000, () => {
+      frames.add(a.frameName);
+      sway.add(a._shiverX());
+    });
+    assert.deepEqual([...frames].sort(), ['blink', 'half']);
+    assert.deepEqual([...sway].sort(), [-1, 1]);
+    a.held = true;
+    assert.equal(a.frameName, 'cheer1');
+  });
+
   test('a host that draws the body tilted can draw the shadow apart: draw() leaves it out, drawShadow() is only it', async () => {
     const a = await pet('moth', 2);
     Object.assign(a, { sheet: 'SHEET', shadowImg: 'SHADOW' });

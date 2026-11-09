@@ -41,6 +41,7 @@ const POPOVER_STAYS = new Set(['openShare', 'openSettings']);
 // Settings window controls.
 const SETTINGS_ACTIONS = [
   'toggleSpeechBubbles',
+  'togglePlayful',
   'toggleVacation',
   'toggleOpenAtLogin',
   'toggleCloudSync',
@@ -112,7 +113,8 @@ function registerIpc(actions) {
     petWindow.startDrag({ offsetX: Number(offsetX), offsetY: Number(offsetY) }),
   );
   on('pet:drag-shift', (px) => petWindow.dragShift(px));
-  on('pet:drag-end', () => petWindow.stopDrag());
+  on('pet:drag-alive', () => petWindow.dragAlive());
+  on('pet:drag-end', (options) => petWindow.stopDrag({ throwable: options?.throwable !== false }));
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());
   // ---- everyday UI ----

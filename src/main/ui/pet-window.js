@@ -61,6 +61,9 @@ function create() {
   win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   // Clicks pass through by default; the renderer turns this off while hovering the pet.
   win.setIgnoreMouseEvents(true, { forward: true });
+  // The page went away while the pet was held (a reload, a crash): nobody will say that the drag is over.
+  win.webContents.on('did-start-loading', () => dragging && stopDrag({ throwable: false }));
+  win.webContents.on('render-process-gone', () => dragging && stopDrag({ throwable: false }));
   win.once('ready-to-show', () => win.showInactive());
   win.on('closed', () => (win = null));
 }
@@ -116,26 +119,24 @@ const TRAIL_MAX = 12; // cursor samples kept: about 200 ms at 60 per second, mor
 let trail = []; // where the cursor was while dragging: [{ t, x, y }]
 
 // A pet held by the feet hangs below the cursor, where the window has no room: the renderer asks for the window to be
-// lowered and draws the pet higher in it by the same amount, so the feet stay at the cursor. Both ease at the same
-// pace, up and back down. Keep in sync with LOWER_RISE_S and LOWER_FALL_S in renderer/pet/pet-view.js.
-const LOWER_RISE_S = 0.05;
-const LOWER_FALL_S = 0.18;
+// lowered and draws the pet higher in it by the same amount, so the feet stay at the cursor (see Lowering).
 const LOWER_MAX = 400; // px
-let lowered = 0; // px the window is lower than where the cursor holds it
-let loweredTarget = 0;
+const lowering = new throwing.Lowering();
 let dragging = false;
+// The page says every so often that it still holds the pet (`dragAlive`). If it goes quiet (it reloaded, it hung, it
+// lost the pointer) nobody will say that the drag is over, and the window would follow the cursor for ever.
+const ALIVE_MS = 1500;
+let lastAlive = 0;
 let anchor = { x: 0, y: 0 }; // where the window is, not counting the lowering
-
-/** `lowered` one step (`seconds`) closer to its target. */
-function easeLowered(seconds) {
-  const k = 1 - Math.exp(-seconds / (loweredTarget > lowered ? LOWER_RISE_S : LOWER_FALL_S));
-  lowered += (loweredTarget - lowered) * k;
-  if (Math.abs(loweredTarget - lowered) < 0.25) lowered = loweredTarget;
-}
 
 /** The renderer says how far down the window must go to hold the pet by its feet (0: back to normal). */
 function dragShift(px) {
-  if (dragging) loweredTarget = Math.max(0, Math.min(Number(px) || 0, LOWER_MAX));
+  if (dragging) lowering.target = Math.max(0, Math.min(Number(px) || 0, LOWER_MAX));
+}
+
+/** The page still holds the pet. */
+function dragAlive() {
+  lastAlive = Date.now();
 }
 
 /** While dragging, the window follows the cursor keeping the grab offset. */
@@ -143,40 +144,50 @@ function startDrag({ offsetX, offsetY }) {
   dragHooks.start?.();
   trail = [];
   dragging = true;
-  loweredTarget = 0;
-  const heldLowered = lowered; // a drag that starts while the window is still coming back up goes on from there
+  lastAlive = Date.now();
+  lowering.target = 0;
+  const heldLowered = lowering.value; // a drag that starts while the window is still coming back up goes on from there
   let last = Date.now();
   followCursor((p) => {
     const now = Date.now();
-    easeLowered((now - last) / 1000);
+    if (now - lastAlive > ALIVE_MS) return stopDrag({ throwable: false }); // the page is gone: let go of the pet
+    lowering.step((now - last) / 1000);
     last = now;
     trail = [...trail.slice(1 - TRAIL_MAX), { t: now, x: p.x, y: p.y }];
     anchor = { x: p.x - offsetX, y: p.y - offsetY - heldLowered };
-    win.setPosition(Math.round(anchor.x), Math.round(anchor.y + lowered));
+    win.setPosition(Math.round(anchor.x), Math.round(anchor.y + lowering.value));
     dragHooks.move?.(win.getBounds());
   });
 }
 
-/** Let go: the window comes back up, and if the hand was still moving fast the pet slides on (see pet-throw.js). */
-function stopDrag() {
+/**
+ * Let go: the window comes back up, and if the hand was still moving fast the pet slides on (see pet-throw.js).
+ * `throwable` false (the reactions are off, or Reduce Motion): it stays where it was let go.
+ */
+function stopDrag({ throwable = true } = {}) {
   stopFollowing();
   dragging = false;
-  loweredTarget = 0;
-  const velocity = isOpen() ? throwing.releaseVelocity(trail, Date.now()) : null;
+  lowering.target = 0;
+  const velocity = isOpen() && throwable ? throwing.releaseVelocity(trail, Date.now()) : null;
   trail = [];
   dragHooks.end?.();
-  if (velocity || lowered > 0) settle(velocity);
+  if (velocity || lowering.value > 0) settle(velocity);
   else saveBounds();
 }
 
 /**
  * After the drag: the window comes back up (if it was lowered) and slides on with the speed of the hand, slowing down.
- * It can cross to another screen, and it stops at the edges of all of them. The popover follows. A new drag stops it.
+ * It can cross to another screen, it bounces off the walls and the top of the screen (the renderer squashes the pet
+ * for each hard hit) and it lands on the bottom. The popover follows. A new drag stops it.
  */
 function settle(velocity) {
   const { width, height } = win.getBounds();
   const motion = velocity && new throwing.Slide(velocity);
   const areas = screen.getAllDisplays().map((display) => display.workArea);
+  const hit = (axis, keep) => {
+    const speed = motion.bounce(axis, keep);
+    if (speed >= throwing.THROW.bumpMin) send('pet:bump', { axis, speed });
+  };
   let last = Date.now();
   followTimer = setInterval(() => {
     if (!isOpen()) return stopFollowing();
@@ -184,18 +195,32 @@ function settle(velocity) {
     const seconds = Math.min((now - last) / 1000, 0.05);
     last = now;
     if (motion) {
-      const next = throwing.limitMove(anchor, motion.step(seconds), { width, height }, areas);
-      motion.stop({ x: next.hitX, y: next.hitY });
+      const move = motion.step(seconds);
+      const next = throwing.limitMove(anchor, move, { width, height }, areas);
+      if (next.hitX) hit('x', throwing.THROW.bounce);
+      if (next.hitY) hit('y', move.dy > 0 ? 0 : throwing.THROW.bounce); // the bottom is the floor: no bounce
       anchor = { x: next.x, y: next.y };
     }
-    easeLowered(seconds);
-    win.setPosition(Math.round(anchor.x), Math.round(anchor.y + lowered));
+    lowering.step(seconds);
+    win.setPosition(Math.round(anchor.x), Math.round(anchor.y + lowering.value));
     dragHooks.move?.(win.getBounds());
-    if ((!motion || motion.over) && lowered === 0) {
+    if ((!motion || motion.over) && lowering.value === 0) {
       stopFollowing();
       saveBounds();
+      tellPointer();
     }
   }, 1000 / 60);
+}
+
+/**
+ * The window moved from under a still cursor: the page gets the cursor in its own coordinates, to see again whether
+ * it is on the pet (it hears no mouse move for that).
+ */
+function tellPointer() {
+  if (!isOpen()) return;
+  const { x, y } = screen.getCursorScreenPoint();
+  const bounds = win.getBounds();
+  send('pet:pointer', { x: x - bounds.x, y: y - bounds.y });
 }
 
 /**
@@ -231,6 +256,7 @@ module.exports = {
   startDrag,
   stopDrag,
   dragShift,
+  dragAlive,
   ensureOnScreen,
   size,
   setSize,

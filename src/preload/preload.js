@@ -40,14 +40,17 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     refresh: invoke('pet:refresh'),
     setClickThrough: send('pet:click-through'), // boolean
     dragStart: send('pet:drag-start'), // { offsetX, offsetY }
+    dragAlive: send('pet:drag-alive'), // every 250 ms while the pet is held: if it stops, the main process lets go of it
     dragShift: send('pet:drag-shift'), // px: held by the feet, the window goes lower so the body hangs below the cursor
-    dragEnd: send('pet:drag-end'),
+    dragEnd: send('pet:drag-end'), // { throwable }: false and the pet stays where it was let go (no slide)
     openMenu: send('pet:menu'),
     // ---- everyday UI ----
-    prefs: invoke('pet:prefs'), // -> { speechBubbles }
+    prefs: invoke('pet:prefs'), // -> { speechBubbles, playful }
     onPrefs: subscribe('pet:prefs'),
     openPopover: send('pet:popover'), // creature rect in window coords { x, y, width, height }: toggles the PR popover
     onPopoverRequest: subscribe('pet:popover-request'), // the menu asks for the rect to anchor on
+    onBump: subscribe('pet:bump'), // { axis: 'x' | 'y', speed }: the pet slid into an edge of the screen and bounced
+    onPointer: subscribe('pet:pointer'), // { x, y }: the cursor in window coords, after the window moved from under it
     onPopoverOpen: subscribe('pet:popover-open'), // boolean: the popover hangs from the creature (or not any more)
     // ---- end everyday UI ----
     size: invoke('pet:size'), // sprite size in px
@@ -93,13 +96,13 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, openAtLogin,
+    // -> { login, repoCount, speechBubbles, playful, openAtLogin,
     //      pause: { active, backOn, since } (on vacation),
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'toggleVacation'
+    // 'toggleSpeechBubbles' | 'togglePlayful' | 'toggleVacation'
     // | 'toggleOpenAtLogin'
     // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'

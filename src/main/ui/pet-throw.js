@@ -8,6 +8,8 @@ const THROW = {
   maxSpeed: 6000, // px/s: a faster hand (or a glitch of the cursor) throws it no harder than this
   fade: 0.16, // s for the speed to fall to 1/e: it slides about speed x fade px. Keep in sync with SQUISH.slideFade
   stopSpeed: 25, // px/s: below this the slide is over
+  bounce: 0.4, // the share of its speed the pet keeps when it hits a wall or the top of the screen
+  bumpMin: 250, // px/s: a harder hit than this squashes the pet (softer ones are just a touch)
   edge: 48, // px on each side of the pet's feet that must be on a screen (the window itself is mostly empty)
   feetGap: 12, // px from the bottom of the window to the feet of the pet
   headRoom: 160, // px above the feet that must be on a screen too: it is not thrown out of the top
@@ -59,10 +61,35 @@ class Slide {
     return move;
   }
 
-  /** The window met an edge: it stops on that axis (and goes on along the other one). */
-  stop({ x = false, y = false }) {
-    if (x) this.#vx = 0;
-    if (y) this.#vy = 0;
+  /**
+   * The window met an edge going along `axis`: it comes back with `keep` of its speed (0: it stops, like a pet that
+   * lands on the floor). Returns how hard it hit, in px/s.
+   */
+  bounce(axis, keep) {
+    const speed = axis === 'x' ? this.#vx : this.#vy;
+    if (axis === 'x') this.#vx = -speed * keep;
+    else this.#vy = -speed * keep;
+    return Math.abs(speed);
+  }
+}
+
+/**
+ * How far down the window has been lowered so that a pet held by the feet has room to hang below the cursor. It eases
+ * to `target`, quickly when it goes down and more slowly when it comes back up (the pet takes a moment to right
+ * itself). The renderer eases the same way and draws the pet higher in the window by the same amount: keep
+ * `rise` and `fall` in sync with LOWER_RISE_S and LOWER_FALL_S in renderer/pet/pet-view.js.
+ */
+class Lowering {
+  value = 0;
+  target = 0;
+  rise = 0.05; // s
+  fall = 0.18; // s
+
+  step(seconds) {
+    this.value +=
+      (this.target - this.value) * (1 - Math.exp(-seconds / (this.target > this.value ? this.rise : this.fall)));
+    if (Math.abs(this.target - this.value) < 0.25) this.value = this.target;
+    return this.value;
   }
 }
 
@@ -116,4 +143,4 @@ function limitMove(pos, { dx, dy }, size, areas) {
   return { ...next, hitX: Math.abs(next.x - (pos.x + dx)) > 0.01, hitY: Math.abs(next.y - (pos.y + dy)) > 0.01 };
 }
 
-module.exports = { THROW, releaseVelocity, Slide, overhang, limitMove };
+module.exports = { THROW, releaseVelocity, Slide, Lowering, overhang, limitMove };

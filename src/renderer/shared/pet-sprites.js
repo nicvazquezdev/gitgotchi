@@ -34,12 +34,17 @@ function loadImage(file) {
   return images.get(file);
 }
 
+const WOOZY_FRAMES = ['half', 'blink']; // dizzy: the eyes half shut, then shut
+const WOOZY_FRAME_MS = 240;
+const WOOZY_SWAY_MS = 110; // and it sways a pixel to each side
+
 /**
  * The animator, plus the rules of the app:
  * - Hearts and sparkles are a reaction, not a state. The pack makes a happy pet throw them all the time, but a pet
  *   can be happy for days, so they only come in a burst after `rejoice(ms)` (the happy pose itself stays).
  * - Held by the user: the arms-up pose, and `hop` rows off the ground (a click's hop, being held up). How the body
  *   squashes and swings is in pet-squish.js; pet-view.js feeds the result in here.
+ * - Dizzy (`woozy`): the eyes half shut and a pixel of sway. Dust (`dust`, `skidDust`) when it lands and skids.
  * - "Calm" mode: no effects and no cheer, just the idle loop of the mood's pose.
  */
 export class DesktopPet extends PetAnimator {
@@ -48,6 +53,7 @@ export class DesktopPet extends PetAnimator {
   held = false;
   hop = 0; // whole rows above the ground; the shadow shrinks with them
   shadowApart = false; // the host draws the shadow itself (see `drawShadow`)
+  woozy = false; // dizzy
 
   setMood(mood) {
     super.setMood(mood);
@@ -72,7 +78,42 @@ export class DesktopPet extends PetAnimator {
   }
 
   get frameName() {
-    return this.held ? 'cheer1' : super.frameName;
+    if (this.held) return 'cheer1';
+    if (this.woozy) return WOOZY_FRAMES[Math.floor(this.t / WOOZY_FRAME_MS) % WOOZY_FRAMES.length];
+    return super.frameName;
+  }
+
+  _shiverX() {
+    if (this.woozy) return Math.floor(this.t / WOOZY_SWAY_MS) % 2 === 0 ? 1 : -1;
+    return super._shiverX();
+  }
+
+  /**
+   * Dust at both sides of the feet: it landed. `strong`: a second round right after, for a hard landing. The pack
+   * gives none to a floater (it never touches the ground), but one that is thrown and lands gets it too.
+   */
+  dust(strong = false) {
+    if (this.calm) return;
+    this._spawnPuffs(this.t);
+    if (strong) this._spawnPuffs(this.t + 90);
+  }
+
+  /** One puff behind the feet of a pet that skids; `direction`: where it goes (1 right, -1 left). */
+  skidDust(direction) {
+    if (this.calm) return;
+    const e = this.stage.shadowEllipse;
+    const cx = this.flip ? this.stage.size - e.cx : e.cx;
+    const side = direction > 0 ? -1 : 1;
+    this.parts.push({
+      kind: 'puff',
+      fx: 'puff',
+      x: this.x + Math.floor(cx + side * e.rx),
+      y: Math.floor(e.cy),
+      side,
+      mirror: side > 0,
+      born: this.t,
+      life: this.fx.puff.frames * this.T.puff.frame,
+    });
   }
 
   get lift() {

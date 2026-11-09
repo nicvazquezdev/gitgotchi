@@ -205,6 +205,107 @@ describe('how the pet answers the hand', () => {
     assert.ok(s.gaze < 0.02 && Math.abs(s.stretch) < 0.01 && !s.busy, 'the popover closed: it relaxes');
   });
 
+  test('each landing is reported once, with how hard it was, for the dust', async () => {
+    const { Squish } = await load();
+    const s = new Squish();
+    assert.equal(s.takeLanding(), 0);
+    s.pop();
+    step(s, 800);
+    const impact = s.takeLanding();
+    assert.ok(impact > 25 && impact < 60, `a hop lands at about ${impact} rows per second`);
+    assert.equal(s.takeLanding(), 0, 'and it is reported once');
+    s.pickUp();
+    step(s, 400);
+    s.drop();
+    step(s, 800);
+    assert.ok(s.takeLanding() > 25, 'a drop lands too');
+  });
+
+  test('hitting a wall squeezes it tall and thin and turns the slide around; the top squashes it flat', async () => {
+    const { Squish } = await load();
+    const wall = new Squish();
+    wall.pickUp();
+    for (let i = 0; i < 20; i++) {
+      wall.drag(30, 16); // 1875 px/s to the right
+      wall.update(16);
+    }
+    wall.drop();
+    assert.ok(wall.slideSpeed > 0, 'it slides to the right');
+    wall.bump('x', 1500);
+    assert.ok(wall.slideSpeed < 0, 'and comes back');
+    let tall = 0;
+    step(wall, 400, () => (tall = Math.max(tall, wall.stretch)));
+    assert.ok(tall > 0.1, `squeezed tall and thin: ${tall}`);
+
+    const top = new Squish();
+    top.bump('y', 1500);
+    let flat = 0;
+    step(top, 400, () => (flat = Math.min(flat, top.stretch)));
+    assert.ok(flat < -0.1, `squashed flat: ${flat}`);
+
+    const soft = new Squish();
+    soft.bump('x', 20);
+    step(soft, 100);
+    assert.ok(soft.stretch < 0.1, 'a touch hardly shows');
+  });
+
+  test('it slides at the speed of the hand and the slide fades out, and while it does it is busy', async () => {
+    const { Squish } = await load();
+    const s = new Squish();
+    s.pickUp();
+    for (let i = 0; i < 20; i++) {
+      s.drag(-20, 16);
+      s.update(16);
+    }
+    s.drop();
+    assert.ok(s.slideSpeed < -500 && s.busy, `sliding left at ${s.slideSpeed}`);
+    step(s, 1500);
+    assert.ok(Math.abs(s.slideSpeed) < 20 && !s.busy, 'it fades and the pet is free again');
+  });
+
+  test('swung and turned over again and again it gets dizzy; a little play does not, and it wears off', async () => {
+    const { Squish } = await load();
+    const shake = (s, ms, dx) => {
+      for (let t = 0; t < ms; t += 16) {
+        s.drag(Math.sin(t / 60) * dx, 16); // back and forth every ~0.4 s
+        s.update(16);
+      }
+    };
+    const gentle = new Squish();
+    gentle.pickUp();
+    shake(gentle, 1500, 4);
+    assert.equal(gentle.dizzy, 0, 'a gentle swing is not enough');
+
+    const wild = new Squish();
+    wild.pickUp();
+    shake(wild, 4000, 40);
+    assert.ok(wild.dizzy > 0.5, `shaken hard it is dizzy: ${wild.dizzy}`);
+    wild.drop();
+    step(wild, 600);
+    assert.ok(wild.dizzy > 0.5 && wild.busy, 'and it stays dizzy after it is let go');
+    let sway = 0;
+    step(wild, 1000, () => (sway = Math.max(sway, Math.abs(wild.skid))));
+    assert.ok(sway > 0.02, `it sways: ${sway}`);
+    step(wild, 3000);
+    assert.equal(wild.dizzy, 0, 'it wears off');
+
+    const flips = new Squish();
+    for (let i = 0; i < 6; i++) {
+      flips.pickUp({ x: 0.01, y: -0.4 }); // by the feet: upside down
+      step(flips, 300);
+      flips.drop();
+      step(flips, 200);
+    }
+    assert.ok(flips.dizzy > 0, 'turned over again and again it is dizzy too');
+
+    const once = new Squish();
+    once.pickUp({ x: 0.01, y: -0.4 });
+    step(once, 1500);
+    once.drop();
+    step(once, 1500);
+    assert.equal(once.dizzy, 0, 'turned over once it is not');
+  });
+
   test('calm mode: no reaction at all, and a reaction in progress ends', async () => {
     const { Squish } = await load();
     const s = new Squish();

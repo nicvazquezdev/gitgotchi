@@ -24,6 +24,12 @@ const LOOK_TILT = 0.2; // radians: how far a creature that faces a side tips its
 // pace, up and back down (the fall is slower: the pet takes a moment to right itself). Keep in sync with pet-window.js.
 const LOWER_RISE_S = 0.05;
 const LOWER_FALL_S = 0.18;
+// Dust: where it lands (rows per second of speed at touchdown) and while it skids (px per second, a puff every so often).
+const DUST_MIN = 12;
+const DUST_STRONG = 30;
+const SKID_DUST_MIN = 250;
+const SKID_DUST_EVERY_MS = 70;
+const CARESS_MS = 2600; // hearts and a happy pose, then it is itself again
 
 export class PetView {
   /**
@@ -40,6 +46,8 @@ export class PetView {
     this.pet = null;
     this.stroller = new Stroller();
     this.squish = new Squish(); // how the body answers the hand: pet.js tells it about the press, click and drag
+    this.playful = true; // the Playful pet setting: off, the pet does not answer the hand at all
+    this.nextSkidDust = 0; // a performance.now() time
     this.calm = false; // Do not disturb or Reduce Motion: only the idle loop
     this.still = false; // the user holds or points at the pet
     this.mood = 'neutral';
@@ -87,11 +95,27 @@ export class PetView {
   setCalm(calm) {
     if (calm === this.calm) return;
     this.calm = calm;
-    this.squish.calm = calm;
+    this.squish.calm = calm || !this.playful;
     if (this.pet) {
       this.pet.calm = calm;
       if (calm) this.stroller.stop(this.pet);
     }
+  }
+
+  /** The Playful pet setting: with it off the pet does not squash, hang, slide or get dizzy (it can still be dragged). */
+  setPlayful(playful) {
+    this.playful = playful;
+    this.squish.calm = this.calm || !playful;
+  }
+
+  /** A caress: hearts and a happy pose for a few seconds, and then it is itself again. */
+  caress() {
+    const { pet } = this;
+    if (!pet || this.calm || !this.playful) return;
+    pet.setMood('happy');
+    pet.rejoice(CARESS_MS);
+    this.wantsHappy = false;
+    this.happyUntil = performance.now() + CARESS_MS + 1200; // the last hearts take a moment to fade
   }
 
   /** `still`: the user is holding or pointing at the pet, so it does not walk away from them. */
@@ -154,6 +178,14 @@ export class PetView {
     const seconds = dt / 1000 / (lower.target > lower.value ? LOWER_RISE_S : LOWER_FALL_S);
     lower.value += (lower.target - lower.value) * (1 - Math.exp(-seconds));
     if (Math.abs(lower.target - lower.value) < 0.25) lower.value = lower.target;
+    const impact = this.squish.takeLanding();
+    if (impact >= DUST_MIN) pet.dust(impact >= DUST_STRONG);
+    const sliding = this.squish.slideSpeed;
+    if (Math.abs(sliding) >= SKID_DUST_MIN && this.squish.air === 0 && now >= this.nextSkidDust) {
+      pet.skidDust(Math.sign(sliding));
+      this.nextSkidDust = now + SKID_DUST_EVERY_MS;
+    }
+    pet.woozy = this.squish.dizzy > 0.05 && !this.squish.held;
     pet.held = this.squish.held;
     pet.hop = Math.round(this.squish.air);
     this.stroller.update(dt, pet, { calm: this.calm, still: this.still || this.squish.busy });

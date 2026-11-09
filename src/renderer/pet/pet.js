@@ -1,6 +1,7 @@
 import { $, h, replayClass } from '../shared/dom.js';
 import { PetView, PX_PER_SCALE } from './pet-view.js';
 import { medal } from '../shared/pixel-art.js';
+import { Caress } from '../shared/pet-caress.js';
 
 const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
@@ -19,12 +20,18 @@ const view = new PetView(canvas, {
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const paused = () => Boolean(status?.pause?.active);
 const calm = () => reducedMotion.matches || paused();
-const syncCalm = () => view.setCalm(calm());
+// Playful pet (Settings): off, or in a calm moment, the pet does not answer the hand at all.
+const playful = () => prefs.playful !== false && !calm();
+const syncCalm = () => {
+  view.setCalm(calm());
+  view.setPlayful(prefs.playful !== false);
+};
 reducedMotion.addEventListener('change', syncCalm);
 
 let status = null;
-let prefs = { speechBubbles: true };
+let prefs = { speechBubbles: true, playful: true };
 let drag = null;
+let aliveTimer = null; // tells the main process every so often that the pet is still held
 let spoken = null; // the line being said right now: { title, sub, dot }
 let momentTimer = null; // a moment (a level, a trophy) is on screen: it takes the place of the speech bubble
 let bubbleTimer = null;
@@ -215,7 +222,16 @@ function setHover(active) {
 }
 
 // With click-through on, Electron still forwards mouse moves, so hover keeps working.
-document.addEventListener('mousemove', (e) => !drag && setHover(isOverPet(e) || isOverBubble(e)));
+const caress = new Caress();
+document.addEventListener('mousemove', (e) => {
+  if (drag) return;
+  const overPet = isOverPet(e);
+  setHover(overPet || isOverBubble(e));
+  // Back and forth over the pet, without pressing: a caress.
+  if (overPet && playful()) {
+    if (caress.move(e.clientX, e.timeStamp)) view.caress();
+  } else caress.reset();
+});
 document.addEventListener('mouseleave', () => !drag && setHover(false));
 
 canvas.addEventListener('pointerdown', (e) => {
@@ -232,6 +248,8 @@ canvas.addEventListener('pointerdown', (e) => {
   view.squish.press();
   syncStill();
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
+  clearInterval(aliveTimer);
+  aliveTimer = setInterval(() => api.dragAlive(), 250);
 });
 
 canvas.addEventListener('pointermove', (e) => {
@@ -248,20 +266,28 @@ canvas.addEventListener('pointermove', (e) => {
   drag.lastTime = e.timeStamp;
 });
 
-canvas.addEventListener('pointerup', (e) => {
+/** The press is over: the pointer went up, or it was taken away (`cancelled`: not a click, nothing to open). */
+function endDrag(e, { cancelled = false } = {}) {
   if (!drag) return;
-  api.dragEnd();
+  clearInterval(aliveTimer);
+  api.dragEnd({ throwable: playful() }); // the window slides on only when the pet is playful
   view.release(); // the window goes back up
-  const wasClick = !drag.moved;
+  const wasClick = !drag.moved && !cancelled;
   drag = null;
   document.body.classList.remove('dragging');
+  caress.reset();
   if (wasClick) {
     view.squish.pop(); // boing
     reactToClick();
   } else view.squish.drop();
   setHover(isOverPet(e) || isOverBubble(e));
   syncStill();
-});
+}
+
+canvas.addEventListener('pointerup', (e) => endDrag(e));
+// The browser can take the pointer away (a system gesture, the capture lost): without this the pet would stay pressed.
+canvas.addEventListener('pointercancel', (e) => endDrag(e, { cancelled: true }));
+canvas.addEventListener('lostpointercapture', (e) => endDrag(e, { cancelled: true }));
 
 $('#bubble').addEventListener('click', () => status && openPopover());
 
@@ -302,6 +328,14 @@ api.onPrefs((next) => {
   prefs = next;
   syncCalm();
   renderBubble();
+});
+// The pet slid into an edge of the screen: it is squashed, and bounces off.
+api.onBump(({ axis, speed }) => view.squish.bump(axis, speed));
+// The window moved from under a still cursor (a slide ended): is the cursor on the pet now?
+api.onPointer(({ x, y }) => {
+  if (drag) return;
+  const at = { clientX: x, clientY: y };
+  setHover(isOverPet(at) || isOverBubble(at));
 });
 api.onPopoverRequest(() => status && openPopover());
 api.onPopoverOpen((open) => {
