@@ -6,6 +6,8 @@ const { IS_MAC } = require('../config');
 
 // Clicking the anchor blurs (hides) the window first; ignore the click that follows right after.
 const REOPEN_GUARD_MS = 250;
+// Pressing the pet blurs the popover before the page says that a drag begins: hide a moment later, unless held.
+const BLUR_GRACE_MS = 60;
 const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 900; // the popover with its shell is taller than a plain card
 
@@ -20,6 +22,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   let height = size.height;
   let hiddenAt = 0;
   let placed = null;
+  let held = false; // the anchor is being dragged: losing the focus does not close the window
   let getState = () => null;
 
   const isOpen = () => Boolean(win && !win.isDestroyed());
@@ -43,7 +46,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     });
     win.setAlwaysOnTop(true, level, 1); // relative level 1: above the pet window, which sits on the same level
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    win.on('blur', hide);
+    win.on('blur', () => setTimeout(() => !held && hide(), BLUR_GRACE_MS));
     win.webContents.on('before-input-event', (event, input) => {
       if (input.type === 'keyDown' && input.key === 'Escape') {
         event.preventDefault();
@@ -62,6 +65,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
 
   /** Opens (or moves) the window at `rect`: `{x, y, width, height}`, zero-size for a point. */
   function show(rect) {
+    held = false;
     anchor = rect;
     if (!isOpen()) create();
     place();
@@ -85,6 +89,28 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     else if (Date.now() - hiddenAt > REOPEN_GUARD_MS) show(rect);
   }
 
+  /**
+   * The anchor moved (the pet is dragged): the window goes with it. The page only hears about it when the shape
+   * changes (the popover flips to the other side, the tail moves), not on every step.
+   */
+  function follow(rect) {
+    if (!isVisible()) return;
+    const shapeOf = ({ x, y, width, height, ...rest }) => JSON.stringify(rest);
+    const before = placed && shapeOf(placed);
+    anchor = rect;
+    place();
+    if (shapeOf(placed) !== before) send();
+  }
+
+  /**
+   * While `on`, the window stays open without the focus (the anchor is being dragged). When it ends the window gets
+   * the focus back, so that a click elsewhere closes it again.
+   */
+  function hold(on) {
+    held = on;
+    if (!on && isVisible()) win.focus();
+  }
+
   /** Pushes the current state to the page (no-op while closed). */
   function send() {
     if (isOpen()) win.webContents.send(channel, getState());
@@ -102,6 +128,8 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     /** @param {() => object} stateProvider  what the page shows (sent on every open and update) */
     init: (stateProvider) => (getState = stateProvider),
     show,
+    follow,
+    hold,
     hide,
     toggle,
     send,

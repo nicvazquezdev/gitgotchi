@@ -88,6 +88,12 @@ function setClickThrough(enabled) {
 // ---------- Drag: the window follows the cursor from the main process ----------
 
 let followTimer = null;
+let dragHooks = {};
+
+/** Who else cares about the drag: `start()`, `move(bounds)` after every step and `end()` (the popover follows). */
+function setDragHooks(hooks) {
+  dragHooks = hooks;
+}
 
 function followCursor(onMove) {
   stopFollowing();
@@ -107,12 +113,17 @@ function saveBounds() {
 
 /** While dragging, the window follows the cursor keeping the grab offset. */
 function startDrag({ offsetX, offsetY }) {
-  followCursor((p) => win.setPosition(Math.round(p.x - offsetX), Math.round(p.y - offsetY)));
+  dragHooks.start?.();
+  followCursor((p) => {
+    win.setPosition(Math.round(p.x - offsetX), Math.round(p.y - offsetY));
+    dragHooks.move?.(win.getBounds());
+  });
 }
 
 function stopDrag() {
   stopFollowing();
   saveBounds();
+  dragHooks.end?.();
 }
 
 /**
@@ -144,6 +155,7 @@ module.exports = {
   isVisible,
   send,
   setClickThrough,
+  setDragHooks,
   startDrag,
   stopDrag,
   ensureOnScreen,

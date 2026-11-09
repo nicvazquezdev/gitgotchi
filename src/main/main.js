@@ -118,12 +118,14 @@ const actions = {
   toggleNotifications: () => togglePref('notifications'),
   toggleMenuBarCount: () => togglePref('menuBarCount'),
   // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
-  openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : popoverWindow.show(trayAnchor())),
+  openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
     actions.refreshReviews();
     const win = petWindow.window;
-    popoverWindow.toggle(win && petWindow.isVisible() ? toScreenRect(win.getBounds(), rect) : trayAnchor());
+    const onPet = win && petWindow.isVisible();
+    popoverPetRect = onPet ? rect : null;
+    popoverWindow.toggle(onPet ? toScreenRect(win.getBounds(), rect) : trayAnchor());
   },
   // The review queue is also fetched when a window that shows it opens (not more than every few seconds).
   refreshReviews: () => petService.refreshReviews({ maxAgeMs: LIVE.REVIEW_QUEUE_OPEN_REFRESH_MS }),
@@ -159,6 +161,19 @@ const actions = {
 
 const trayAnchor = () => tray.getBounds();
 
+// The popover hangs from the creature (its rect in the pet window's coordinates) or from the menu bar icon (null).
+// From the creature it goes along when the pet is dragged.
+let popoverPetRect = null;
+const showPopoverAtTray = () => {
+  popoverPetRect = null;
+  popoverWindow.show(trayAnchor());
+};
+petWindow.setDragHooks({
+  start: () => popoverWindow.hold(true),
+  move: (bounds) => popoverPetRect && popoverWindow.follow(toScreenRect(bounds, popoverPetRect)),
+  end: () => popoverWindow.hold(false),
+});
+
 function togglePref(key) {
   prefs.toggle(key);
   panelWindow.send();
@@ -177,7 +192,7 @@ function refreshTray() {
 const notifier = createNotifier({
   isEnabled: () => prefs.notifications() && !prefs.doNotDisturb() && !petService.isOnTimeOff(),
   openPullRequest: (url) => openGithub(url),
-  openPopover: () => popoverWindow.show(trayAnchor()),
+  openPopover: showPopoverAtTray,
 });
 
 // ---------- Events ----------
