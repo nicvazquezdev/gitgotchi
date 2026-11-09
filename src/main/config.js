@@ -34,7 +34,7 @@ module.exports = {
   POPOVER_WINDOW: { width: 440, height: 400 },
   // Share and settings windows; the native traffic lights overlay the page's top.
   SHARE_WINDOW: { width: 560, height: 480 },
-  SETTINGS_WINDOW: { width: 480, height: 600 },
+  SETTINGS_WINDOW: { width: 480, height: 680 },
   // Default size is also the minimum: below it the steps don't fit.
   ONBOARDING_WINDOW: { width: 560, height: 700, minWidth: 560, minHeight: 700 },
 
@@ -64,6 +64,7 @@ module.exports = {
   GITHUB: {
     HOST: 'github.com', // Only github.com accounts are listed (GitHub Enterprise hosts are not supported yet)
     API: 'https://api.github.com',
+    RELEASES_URL: 'https://github.com/nicvazquezdev/gitgotchi/releases/latest', // where an update is got by hand
     USER_AGENT: 'gitgotchi-desktop',
     // Where to look for `gh`: apps launched from Finder or a desktop launcher don't inherit the shell PATH.
     GH_PATHS: [

@@ -29,3 +29,18 @@ test('before the first setup it only offers the setup and quit', () => {
   assert.deepEqual(labels(template), ['Set up Gitgotchi…', 'Quit Gitgotchi']);
   assert.equal(template.at(-1).click(), 'quit');
 });
+
+test('has a row for the update only when there is news', () => {
+  const withUpdate = { ...state, update: { menuLabel: 'Update to 0.2.0…' } };
+  const template = trayMenuTemplate(withUpdate, { ...actions, applyUpdate: () => 'applyUpdate' });
+  assert.deepEqual(labels(template), [
+    'Vacation…',
+    'Hide pet',
+    'Pet card',
+    'Settings…',
+    'Update to 0.2.0…',
+    'Quit Gitgotchi',
+  ]);
+  assert.equal(template.find((item) => item.label === 'Update to 0.2.0…').click(), 'applyUpdate');
+  assert.equal(labels(trayMenuTemplate({ ...state, update: { menuLabel: null } }, actions)).length, 5);
+});

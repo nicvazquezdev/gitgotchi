@@ -4,6 +4,7 @@ import { $, h } from '../shared/dom.js';
 import { plural, timeAgo } from '../shared/format.js';
 import { icon } from '../shared/ui.js';
 import { tomorrowOf, vacationUntilText } from '../shared/vacation-text.js';
+import { updateRow } from '../shared/update-text.js';
 
 const api = window.gitgotchi.settings;
 const REFRESH_LABEL_MS = 30 * 1000; // keeps "Last saved N min ago" current
@@ -144,6 +145,28 @@ function accountRow() {
   };
 }
 
+/** The version, and what to do about updates (the news only comes to the menu when there is some). */
+function updatesRow() {
+  const label = h('span', { class: 'label' });
+  const hint = h('p', { class: 'hint' });
+  const button = h('button', { class: 'btn sm', type: 'button' });
+  let actionName = null;
+  button.addEventListener('click', () => actionName && api.action(actionName));
+  return {
+    el: h('div', { class: 'setting' }, h('div', { class: 'setting-text' }, label, hint), button),
+    update({ update }) {
+      const { hint: message, action, busy = false, error = false } = updateRow(update);
+      label.textContent = `Gitgotchi ${update?.version ?? ''}`.trim();
+      hint.textContent = message;
+      hint.classList.toggle('busy', busy);
+      hint.classList.toggle('error', error);
+      actionName = action?.name ?? null;
+      button.textContent = action?.label ?? '';
+      button.hidden = !action;
+    },
+  };
+}
+
 /** What the backup is doing right now, in the order the steps run when it is turned on. */
 const BACKUP_STEPS = {
   checking: () => 'Checking your GitHub account…',
@@ -213,6 +236,7 @@ const rows = {
     checked: openAtLogin,
     hint: 'Starts Gitgotchi when you log in.',
   })),
+  updates: updatesRow(),
 };
 
 const app = $('#app');
@@ -220,7 +244,7 @@ app.hidden = true; // until the first state arrives
 app.append(
   group(rows.size, rows.bubbles, rows.playful),
   group(rows.vacation, rows.vacationReturn),
-  group(rows.account, rows.backup, rows.openAtLogin),
+  group(rows.account, rows.backup, rows.openAtLogin, rows.updates),
 );
 
 let state = null;

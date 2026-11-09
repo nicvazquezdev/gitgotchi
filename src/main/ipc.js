@@ -29,7 +29,16 @@ function on(channel, fn) {
 
 // ---- everyday UI (the menu, the card) ----
 // Menu rows. Actions in KEEP_OPEN update the menu in place; the rest close it first.
-const PANEL_ACTIONS = ['sync', 'togglePet', 'startVacation', 'resume', 'openCard', 'openSettings', 'quit'];
+const PANEL_ACTIONS = [
+  'sync',
+  'togglePet',
+  'startVacation',
+  'resume',
+  'openCard',
+  'openSettings',
+  'applyUpdate',
+  'quit',
+];
 const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
 const POPOVER_ACTIONS = ['openShare', 'openSettings', 'resume'];
@@ -46,6 +55,8 @@ const SETTINGS_ACTIONS = [
   'toggleCloudSync',
   'openSaveRepo',
   'openSetup',
+  'checkForUpdates',
+  'applyUpdate',
 ];
 
 /**

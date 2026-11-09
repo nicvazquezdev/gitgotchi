@@ -10,6 +10,7 @@ const {
   TICK_INTERVAL_MS,
   CLOUD,
   LIVE,
+  GITHUB,
 } = require('./config');
 
 const session = require('./services/session');
@@ -30,8 +31,18 @@ const { registerIpc } = require('./ipc');
 const loginItem = require('./login-item');
 const { startLive } = require('./live');
 const cloud = require('./cloud/cloud-sync');
+const { createUpdater } = require('./services/updater');
 
 let tray = null;
+
+// Updates (see services/updater.js): the Windows installer and a Linux AppImage replace themselves; the rest tell where to get the new version.
+const updater = createUpdater({
+  getAutoUpdater: () => require('electron-updater').autoUpdater,
+  version: app.getVersion(),
+  packaged: app.isPackaged,
+  canInstall: IS_WIN || (IS_LINUX && Boolean(process.env.APPIMAGE)),
+  openReleases: () => openGithub(GITHUB.RELEASES_URL),
+});
 
 // macOS reopens the windows of an app that was killed or quit while it was starting, and asks "The last time you
 // opened … it unexpectedly quit while reopening windows". This app builds its own windows and restarts a lot in
@@ -129,6 +140,7 @@ const actions = {
     configured: petService.isConfigured(),
     connected: session.isConnected(),
     petVisible: petWindow.isVisible(),
+    update: updater.state(),
   }),
   settingsState: () => {
     const { user, repos } = store.get();
@@ -140,11 +152,14 @@ const actions = {
       pause: petService.timeOff(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
+      update: updater.state(),
       petSize: petWindow.size(),
       sizeRange: PET_SIZE_RANGE,
       defaultPetSize: DEFAULT_PET_SIZE,
     };
   },
+  checkForUpdates: () => updater.check(),
+  applyUpdate: () => updater.apply(),
   quit: () => app.quit(),
 };
 
@@ -199,6 +214,12 @@ petService.on('levelUp', (level, info) => petWindow.send('pet:level-up', { level
 petService.on('companion', (companion) => petWindow.send('pet:companion', companion));
 petService.on('achievements', (list) => petWindow.send('pet:achievements', list));
 
+updater.on('change', () => {
+  panelWindow.send();
+  settingsWindow.send();
+  refreshTrayMenu();
+});
+
 // --- cloud save (optional) ---
 petService.on('status', () => cloud.schedulePush());
 petService.on('configured', () => cloud.schedulePush({ now: true }));
@@ -247,6 +268,7 @@ app.whenReady().then(() => {
   }
 
   petService.startPolling();
+  updater.start();
   // --- live reactions (local pushes + PR watcher) ---
   startLive({ petService, powerMonitor });
   // --- end live reactions ---

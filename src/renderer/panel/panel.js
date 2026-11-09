@@ -33,7 +33,7 @@ function vacationItem({ pause }) {
 function render(next = state) {
   state = next;
   if (!state) return;
-  const { status, configured, petVisible } = state;
+  const { status, configured, petVisible, update } = state;
   const ready = configured && status;
   app.replaceChildren(
     ...(ready
@@ -43,6 +43,7 @@ function render(next = state) {
           divider(),
           item('Pet card', { onclick: act('openCard') }),
           item('Settings…', { onclick: act('openSettings') }),
+          ...(update?.menuLabel ? [item(update.menuLabel, { onclick: act('applyUpdate') })] : []),
         ]
       : [item('Set up Gitgotchi…', { onclick: act('openSettings') })]),
     divider(),
