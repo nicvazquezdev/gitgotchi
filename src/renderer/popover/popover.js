@@ -216,25 +216,6 @@ const shell = () =>
     layer('belly-c'),
   );
 
-// ---------- Fit ----------
-
-const BODY_MIN = 140; // px: the body never gets shorter than the growth line and a bit
-
-/**
- * The shell makes the popover tall. When the screen has less `room` than the card needs, the body gives way (it
- * scrolls): everything else keeps its size.
- */
-function fitBody(room) {
-  const body = $('.card-body');
-  if (!body) return;
-  body.style.maxHeight = ''; // back to the natural cap of the stylesheet
-  if (room == null) return;
-  const other = app.getBoundingClientRect().height - body.getBoundingClientRect().height;
-  const natural = Number.parseFloat(getComputedStyle(body).maxHeight);
-  const fits = Math.floor(room - other);
-  if (fits < natural) body.style.maxHeight = `${Math.max(BODY_MIN, fits)}px`;
-}
-
 // ---------- Render ----------
 
 /** What has the focus (a tab, a card, a name field), to give it back after the card is drawn again. */
@@ -253,7 +234,7 @@ function restoreFocus(key) {
 function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
   const focus = focusOn ?? focusKey();
   latest = state;
-  const { status, placement = 'above', tailX = 180, room } = state;
+  const { status, placement = 'above', tailX = 180 } = state;
   if (status) syncPortrait(status);
   const mood = status?.pause?.active ? 'paused' : (status?.mood ?? 'neutral'); // what the eyes of the shell show
 
@@ -270,7 +251,6 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
   const scroll = resetScroll ? 0 : ($('.card-body')?.scrollTop ?? 0);
   app.className = `wrap ${placement}`;
   app.replaceChildren(h('div', { class: 'rig', 'data-mood': mood }, shell(), card), tail);
-  fitBody(room);
   const body = $('.card-body');
   if (body) body.scrollTop = scroll;
   restoreFocus(focus);

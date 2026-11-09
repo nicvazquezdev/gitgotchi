@@ -36,10 +36,15 @@ test('popoverBounds is clamped vertically when it fits neither above nor below',
   assert.ok(b.y >= workArea.y && b.y + b.height <= workArea.y + workArea.height);
 });
 
-test('popoverBounds reports the room: the larger of the spaces above and below the pet', () => {
-  assert.equal(popoverBounds({ anchor: pet, size, workArea }).room, 700 - 2 - (25 + 8)); // above is larger
-  const top = { ...pet, y: 100 };
-  assert.equal(popoverBounds({ anchor: top, size, workArea }).room, 25 + 875 - 8 - (100 + 128 + 2)); // below is
+test('popoverBounds keeps its height; when it fits neither side it takes the side with more space', () => {
+  const tall = { width: 360, height: 800 };
+  const upper = popoverBounds({ anchor: { ...pet, y: 200 }, size: tall, workArea }); // more room below
+  assert.equal(upper.placement, 'below');
+  assert.equal(upper.height, 800);
+  const lower = popoverBounds({ anchor: { ...pet, y: 600 }, size: tall, workArea }); // more room above
+  assert.equal(lower.placement, 'above');
+  assert.equal(lower.height, 800);
+  assert.equal(popoverBounds({ anchor: { ...pet, y: 200 }, size, workArea }).height, 500);
 });
 
 test('toScreenRect offsets a window-relative rect by the window origin', () => {
