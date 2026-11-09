@@ -1,4 +1,4 @@
-// Pet page window: the pet, its growth and its week; the pets; the trophies; and the rules of XP in a sheet.
+// Collection window: the pets, the trophies and the XP you earned (what and why), with the rules of XP in a sheet.
 const { createAppWindow } = require('./app-window');
 const { PROFILE_WINDOW } = require('../config');
 
@@ -16,7 +16,7 @@ module.exports = {
   /** Opens the window; `view` picks where it starts (a window that is already open goes there). */
   open: (view) => {
     requested = VIEWS.includes(view) ? view : null;
-    if (!profile.open()) profile.send('profile:view', requested ?? 'home');
+    if (!profile.open()) profile.send('profile:view', requested ?? 'pets');
   },
   /** The view asked for by the last open, once: the page reads it when it starts. */
   takeView: () => {

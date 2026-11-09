@@ -119,7 +119,7 @@ const actions = {
   },
   // --- everyday UI: menu bar dropdown, the card, pet bubble ---
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
-  // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
+  // The pet window knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
     const win = petWindow.window;

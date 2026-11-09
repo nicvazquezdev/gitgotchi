@@ -4,7 +4,7 @@ const store = require('./store');
 
 const speechBubbles = () => store.get().speechBubbles !== false;
 
-/** What the pet page needs to decide whether to show bubbles. */
+/** What the pet window needs to decide whether to show bubbles. */
 const petPrefs = () => ({ speechBubbles: speechBubbles() });
 
 /** Flips a boolean setting ('speechBubbles'). */

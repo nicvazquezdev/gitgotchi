@@ -1,4 +1,4 @@
-/* The pet page: a hero (the pet on its night) and one column that reads top to bottom. */
+/* The collection window: tabs (Pets, Trophies, XP) over one column that reads top to bottom. */
 body {
   background: var(--bg-subtle);
   overflow: hidden;
@@ -14,95 +14,21 @@ body {
   overflow-y: auto;
 }
 
-/* ---------- Bar of a view you went into: back, its name, how many ---------- */
+/* ---------- Title bar and tabs ---------- */
 .window > .titlebar {
   height: 44px;
 }
-.titlebar .back {
+.titlebar .share {
   position: absolute;
-  left: 84px;
-  top: 6px;
-}
-.titlebar .right {
-  position: absolute;
-  right: 18px;
-  display: flex;
-  align-items: center;
-  height: 100%;
-  color: var(--text-3);
-  font-size: 13px;
-  font-weight: 500;
-}
-
-/* ---------- Hero ---------- */
-.hero {
-  --sun-size: 38%;
-  --sun-top: 22%;
-  --floor-h: 28%;
-  position: relative;
-  height: 228px; /* the 44px bar sits over the top, under it the biggest sprite (170px) and its 14px of floor */
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  -webkit-app-region: drag; /* the window can be dragged by its hero */
-  user-select: none;
-}
-.hero::after {
-  background:
-    url('../../../assets/ui/grid-floor.svg') center top / max(100%, 880px) 100% no-repeat,
-    linear-gradient(#8a1d6c 0 14px, #6e1866 14px 38px, #561460 38px);
-}
-.hero > canvas {
-  margin-bottom: 14px;
-}
-.hero-actions {
-  position: absolute;
-  top: 8px;
-  right: 12px;
-  z-index: 4;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  -webkit-app-region: no-drag;
-}
-.hero-actions .icon-btn {
+  right: 14px;
   color: var(--text);
 }
-.glass {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 11px;
-  border: 0;
-  background: rgba(10, 3, 24, 0.62);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-  clip-path: var(--cut-3);
-  color: var(--text);
-  font: 600 12px var(--font-ui);
-  cursor: pointer;
-}
-.glass:hover {
-  background: rgba(10, 3, 24, 0.82);
-}
-.glass .n {
-  color: var(--text-3);
-  font-weight: 500;
+.window > .tabs {
+  flex: none;
+  margin: 12px 24px 0;
 }
 
-/* ---------- Who it is, and how far ---------- */
-.page {
-  padding: 18px 24px 16px;
-}
-.id-row {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-}
-.id-who {
-  min-width: 0;
-  flex: 1;
-}
+/* ---------- The name of a pet with its pencil (the Pets view) ---------- */
 .name-line {
   display: flex;
   align-items: center;
@@ -112,10 +38,6 @@ body {
   width: 28px;
   height: 28px;
   color: var(--text-3);
-}
-.id-name {
-  font-size: 30px;
-  line-height: 34px;
 }
 .name-input {
   flex: 1;
@@ -129,173 +51,6 @@ body {
   box-shadow: inset 0 0 0 2px var(--select);
   color: var(--text);
   font: 600 18px var(--font-pixel);
-}
-.id-sub {
-  margin-top: 2px;
-  font-size: 13px;
-  color: var(--text-2);
-}
-.lvl {
-  text-align: right;
-}
-.lvl small {
-  display: block;
-  font: 600 11px/12px var(--font-ui);
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-.lvl b {
-  display: block;
-  font: 600 46px/38px var(--font-pixel);
-  color: var(--accent-text);
-}
-.page .xp-bar {
-  margin-top: 14px;
-}
-.caption {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-top: 8px;
-  font-size: 13px;
-  color: var(--text-3);
-}
-.caption .num {
-  margin-right: 3px;
-  font: 400 20px/14px var(--font-num);
-  color: var(--accent-text);
-}
-.caption .today {
-  color: var(--text-2);
-}
-.problem {
-  margin: 8px 0 0;
-  font-size: 13px;
-  color: var(--danger);
-}
-
-/* ---------- Sections ---------- */
-.sect {
-  margin-top: 24px;
-}
-.sect-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-.sect-head .fig {
-  font: 400 26px/1 var(--font-num);
-  color: var(--accent-text);
-}
-
-/* The line of forms: reached, the one it is in (framed), and the ones still hidden. */
-.growth {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-}
-.stage {
-  width: 96px;
-  text-align: center;
-}
-.stage .portrait,
-.stage .night {
-  --sun-size: 60%;
-  --sun-top: 8%;
-  --floor-h: 30%;
-  height: 68px;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-.stage.now .portrait {
-  --frame: var(--select);
-}
-.stage .portrait > .inner img,
-.stage .night > img {
-  margin-bottom: 6px;
-}
-.stage.locked img {
-  opacity: 0.85;
-}
-.stage .nm {
-  margin-top: 7px;
-  font-size: 13px;
-  font-weight: 600;
-}
-.stage .nm.dim {
-  font-weight: 500;
-  color: var(--text-3);
-}
-.stage.now .nm {
-  color: var(--select);
-}
-.arrow {
-  align-self: flex-start;
-  margin-top: 26px;
-  color: var(--text-4);
-}
-
-/* The week: one bar per day, today in the accent. */
-.week {
-  display: flex;
-  align-items: flex-end;
-  gap: 10px;
-  height: 44px;
-}
-.week .day {
-  flex: 1;
-  display: flex;
-  align-items: flex-end;
-  height: 100%;
-}
-.week .bar {
-  width: 100%;
-  min-height: 4px;
-  background: #7a2d86;
-  clip-path: var(--cut-3);
-}
-.week .bar.today {
-  background: var(--accent);
-}
-.week .bar.none {
-  background: var(--track);
-}
-.week-days {
-  display: flex;
-  gap: 10px;
-  margin-top: 6px;
-}
-.week-days small {
-  flex: 1;
-  text-align: center;
-  font-size: 11px;
-  color: var(--text-3);
-}
-.week-days small.today {
-  color: var(--text);
-  font-weight: 600;
-}
-.streak {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 10px;
-  font-size: 13px;
-  color: var(--text-2);
-}
-.streak .pa-i {
-  fill: var(--neon-amber);
-}
-.page-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 14px;
-  border-top: 1px solid var(--divider-soft);
 }
 
 /* ---------- How XP works: a sheet over the page ---------- */

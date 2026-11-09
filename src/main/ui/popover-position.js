@@ -31,7 +31,7 @@ function popoverBounds({ anchor, size, workArea, gap = 2, margin = 8, tailInset 
   };
 }
 
-/** Screen rect of a rect given in a window's own coordinates (what the pet page reports). */
+/** Screen rect of a rect given in a window's own coordinates (what the pet window reports). */
 function toScreenRect(windowBounds, rect) {
   return { x: windowBounds.x + rect.x, y: windowBounds.y + rect.y, width: rect.width, height: rect.height };
 }

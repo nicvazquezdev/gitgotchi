@@ -1,5 +1,5 @@
 // The name of a pet with a pencil to change it, in place: the name becomes a field with a check and a cross.
-// The pet page and the pets view both use it; only one is on screen at a time, so the state is the module's.
+// Only the Pets view uses it, so the state is the module's.
 import { h } from '../shared/dom.js';
 import { icon } from '../shared/ui.js';
 

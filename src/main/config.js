@@ -27,8 +27,8 @@ module.exports = {
   // The menu and the card: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 216, height: 200 },
   POPOVER_WINDOW: { width: 440, height: 400 },
-  // Pet page, settings and evolution windows; the native traffic lights overlay the page's top.
-  PROFILE_WINDOW: { width: 520, height: 760 },
+  // Collection, settings and evolution windows; the native traffic lights overlay the page's top.
+  PROFILE_WINDOW: { width: 520, height: 720 },
   SETTINGS_WINDOW: { width: 480, height: 600 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the steps don't fit.
