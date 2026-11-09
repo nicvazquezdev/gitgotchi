@@ -95,9 +95,9 @@ const BASELINE = { windowDays: 28, minHistoryDays: 7, defaultWeekly: 120, floorW
 // (game/daily-goal.js).
 const DAILY_GOAL = { workdays: 5 };
 
-// Mood rules (see engine.moodFor). Three moods. Order: anxious, happy, else neutral.
+// Mood rules (see engine.moodFor). Two moods: happy, else neutral. The pet is never anxious: how long a PR has
+// waited for review does not change how it feels.
 const MOOD = {
-  anxiousAfterDays: 2, // anxious: at least one open PR has waited for review this long
   happyMergeHours: 48, // happy: a PR merged within this time
   strongWeekRatio: 1.25, // happy: week XP / baseline at least this
 };

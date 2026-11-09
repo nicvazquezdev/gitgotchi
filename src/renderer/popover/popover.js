@@ -9,8 +9,7 @@ import { PetView } from '../pet/pet-view.js';
 const api = window.gitgotchi.popover;
 const app = $('#app');
 
-const NOTICE_ICONS = { anxious: 'clock', happy: 'smile' }; // the moods that come with a reason on the card
-const STALE_AFTER_DAYS = 2; // a PR that has waited this long stands out (same threshold as the anxious mood)
+const NOTICE_ICONS = { happy: 'smile' }; // the moods that come with a reason on the card
 const TABS = ['review', 'mine'];
 
 const days = (n) => (n > 0 ? plural(n, 'day') : 'today');
@@ -115,28 +114,14 @@ function header(status) {
   );
 }
 
-/**
- * Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. An anxious pet is
- * worried about a PR, so its notice opens the one that has waited longest (`waiting` is oldest first).
- */
-function moodNotice({ mood, moodLabel, moodReason, prs }) {
+/** Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. */
+function moodNotice({ mood, moodLabel, moodReason }) {
   if (!NOTICE_ICONS[mood] || !moodReason) return null;
-  const text = [
+  return h(
+    'div',
+    { class: `notice ${mood}` },
     icon(NOTICE_ICONS[mood], { stroke: 2.2 }),
     h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
-  ];
-  const oldest = mood === 'anxious' ? prs?.waiting?.[0] : null;
-  if (!oldest) return h('div', { class: `notice ${mood}` }, ...text);
-  return h(
-    'button',
-    {
-      class: `notice ${mood} link`,
-      type: 'button',
-      title: `Open the PR that has waited longest: ${oldest.title}`,
-      onclick: () => api.openPullRequest(oldest.url),
-    },
-    ...text,
-    icon('external', { size: 14 }),
   );
 }
 
@@ -344,7 +329,7 @@ function reviewTab(queue) {
         badge: queueBadge(pr),
         meta: metaLine(pr, pr.author, pr.via && `via ${teamName(pr)}`, !known && `opened ${ago(pr.ageDays)}`),
         end: known ? shortAge(pr.waitingDays) : null,
-        endClass: pr.waitingDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',
+        endClass: 'quiet',
         endTitle: known ? `Asked ${ago(pr.waitingDays)}${pr.via ? ` through ${pr.via}` : ''}` : undefined,
       });
     }),

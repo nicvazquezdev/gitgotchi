@@ -216,11 +216,6 @@ body {
   --mood-fg: var(--success);
   --mood-ring: color-mix(in srgb, var(--success) 40%, transparent);
 }
-.mood.anxious {
-  --mood-bg: var(--warning-bg);
-  --mood-fg: var(--warning-icon);
-  --mood-ring: var(--warning-ring);
-}
 .mood-icon {
   flex: none;
   display: grid;

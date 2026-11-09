@@ -175,23 +175,16 @@ function diffDays(oldDays, newDays) {
 
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-const MOOD_LABELS = { happy: 'Happy', neutral: 'Neutral', anxious: 'Anxious' };
+const MOOD_LABELS = { happy: 'Happy', neutral: 'Neutral' };
 
 /**
- * Mood and why. Three moods, in this order: anxious (PRs waiting for review), happy (merged recently or a strong
- * week), else neutral.
- * A day of time off is always neutral: nothing is expected of the person, so nothing worries the pet.
- * @param {{ waiting: { ageDays: number }[], mergedRecently: number, ratio: number, off?: boolean }} input
- * @returns {{ mood: 'anxious' | 'happy' | 'neutral', moodLabel: string, moodReason: string | null }}
+ * Mood and why. Two moods: happy (merged recently or a strong week), else neutral. The pet is never anxious: a PR
+ * that waits for review does not change how it feels.
+ * @param {{ mergedRecently: number, ratio: number }} input
+ * @returns {{ mood: 'happy' | 'neutral', moodLabel: string, moodReason: string | null }}
  */
-function moodFor({ waiting, mergedRecently, ratio, off = false }) {
+function moodFor({ mergedRecently, ratio }) {
   const result = (mood, reason = null) => ({ mood, moodLabel: MOOD_LABELS[mood], moodReason: reason });
-  if (off) return result('neutral', 'On time off');
-  const stale = waiting.filter((pr) => pr.ageDays >= MOOD.anxiousAfterDays);
-  if (stale.length > 0) {
-    const days = Math.max(...stale.map((pr) => pr.ageDays));
-    return result('anxious', `${plural(stale.length, 'PR')} waiting for ${days} days`);
-  }
   if (mergedRecently > 0) return result('happy', `${plural(mergedRecently, 'PR')} merged recently`);
   if (ratio >= MOOD.strongWeekRatio) return result('happy', 'A strong week');
   return result('neutral');
@@ -252,7 +245,7 @@ function computeStatus({ pets = {}, activePet, achievements, activity, repos = [
     xp: progress.xp,
     levelXp: progress.levelXp,
     levelXpNeeded: progress.levelXpNeeded,
-    ...moodFor({ waiting: prs.waiting, mergedRecently, ratio: weekRatioXp / baseline, off: isOff(today) }),
+    ...moodFor({ mergedRecently, ratio: weekRatioXp / baseline }),
     timeOff: timeOffView(timeOff, today),
     // Today's XP against a typical working day (no goal on a weekend or a day of time off).
     daily: dailyGoalView({ baseline, xp: dayXp(sinceStart[today]), rest: isWeekend(today) || isOff(today) }),

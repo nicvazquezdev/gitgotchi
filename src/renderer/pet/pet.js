@@ -25,7 +25,6 @@ reducedMotion.addEventListener('change', syncCalm);
 const LINES = {
   happy: ['What a week! 🔥', 'Yum, fresh pushes!', 'I feel huge today', 'Keep it up!'],
   neutral: ['All quiet here', 'One more PR?', "I'm a little hungry…", 'A push would be nice'],
-  anxious: ['Someone needs a review…', 'That PR has been waiting a while', 'A review would calm me down'],
 };
 
 let status = null;

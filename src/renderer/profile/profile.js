@@ -31,10 +31,9 @@ function portrait({ species, stage, mood }) {
 const MOOD_VIEW = {
   happy: { icon: 'smile', fallback: 'Things are going well' },
   neutral: { icon: 'neutral', fallback: 'Nothing needs your attention' },
-  anxious: { icon: 'alert', fallback: 'A PR needs a review' },
 };
 
-/** How the pet feels and why: a tinted card per mood (green happy, amber anxious, quiet neutral). */
+/** How the pet feels and why: a tinted card per mood (green happy, quiet neutral). */
 function moodCard({ name, mood, moodLabel, moodReason }) {
   const view = MOOD_VIEW[mood] ?? MOOD_VIEW.neutral;
   return h(

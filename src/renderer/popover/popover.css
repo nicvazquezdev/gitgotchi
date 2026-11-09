@@ -607,22 +607,6 @@ body {
 .card > .notice {
   margin: 0 16px 12px;
 }
-/* A notice that opens something is a button: it does not stretch like a div, and the card gives it its margin. */
-.notice.link {
-  width: calc(100% - 32px);
-  border: 0;
-  font: inherit;
-  font-size: 13px;
-  text-align: left;
-  cursor: pointer;
-}
-.notice.link > span {
-  flex: 1;
-}
-.notice.link:hover,
-.notice.link:focus-visible {
-  box-shadow: inset 0 0 0 1px var(--notice-edge, var(--warning-icon));
-}
 
 /* ---------- Today: the daily goal ---------- */
 .today {
@@ -766,11 +750,6 @@ body {
 .pr-end.quiet {
   font-size: 12px;
   color: var(--text-3);
-}
-.pr-end.stale {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--warning-text);
 }
 .pr-open {
   display: none;

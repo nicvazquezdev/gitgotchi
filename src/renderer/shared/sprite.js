@@ -17,7 +17,6 @@ const SHADOW = [
 const MOTIONS = {
   happy: { steps: [0, 1, 2, 1], ms: 250 },
   neutral: { steps: [0, 0, 1, 1], ms: 450 },
-  anxious: { steps: [0, 1], ms: 200 }, // fidgety
 };
 const FLOAT = { steps: [0, 1, 2, 1], ms: 450 };
 

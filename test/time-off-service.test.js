@@ -45,7 +45,6 @@ test('starting time off is saved from today, tells everyone, and the status says
   assert.equal(petService.isOnTimeOff(), true);
   assert.equal(statuses.length, 1);
   assert.deepEqual(statuses[0].timeOff, { active: true, since: TODAY, backOn: null });
-  assert.equal(statuses[0].moodReason, 'On time off');
 });
 
 test('starting it again, or ending what is not on, changes nothing and tells nobody', () => {

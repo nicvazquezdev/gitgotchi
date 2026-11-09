@@ -443,19 +443,11 @@ describe('PR lists', () => {
 });
 
 describe('time off', () => {
-  const waiting = [pr({ createdAt: daysAgo(5) })]; // a PR that would make the pet anxious
-  const withTimeOff = (timeOff, acts = activity({}, { prs: waiting })) =>
+  const withTimeOff = (timeOff, acts = activity()) =>
     computeStatus({ ...stateOf(acts, pet(undefined)), timeOff }, NOON);
 
-  test('the pet is not anxious on a day of time off, and says why', () => {
-    assert.equal(withTimeOff([]).mood, 'anxious');
-    const away = withTimeOff([{ from: toDay(daysAgo(2)), to: null }]);
-    assert.deepEqual([away.mood, away.moodLabel, away.moodReason], ['neutral', 'Neutral', 'On time off']);
-  });
-
-  test('once it is over, the mood is back', () => {
+  test('once it is over, the status says it is not on', () => {
     const over = withTimeOff([{ from: toDay(daysAgo(10)), to: toDay(daysAgo(3)) }]);
-    assert.equal(over.mood, 'anxious');
     assert.deepEqual(over.timeOff, { active: false, since: null, backOn: null });
   });
 
@@ -485,22 +477,10 @@ describe('mood', () => {
   });
   const moodOf = (acts, now = NOON) => status(acts, {}, now);
 
-  test('anxious when a PR has waited MOOD.anxiousAfterDays, with a reason', () => {
-    const fresh = moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(MOOD.anxiousAfterDays - 1) })] }));
-    assert.notEqual(fresh.mood, 'anxious');
-    const s = moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(3) }), pr({ createdAt: daysAgo(2) }), pr()] }));
-    assert.equal(s.mood, 'anxious');
-    assert.equal(s.moodLabel, 'Anxious');
-    assert.equal(s.moodReason, '2 PRs waiting for 3 days');
-    assert.equal(moodOf(activity({}, { prs: [pr({ createdAt: daysAgo(2) })] })).moodReason, '1 PR waiting for 2 days');
-  });
-
-  test('approved and draft PRs do not make the pet anxious', () => {
-    const prs = [
-      pr({ createdAt: daysAgo(5), reviewDecision: 'APPROVED' }),
-      pr({ createdAt: daysAgo(5), isDraft: true }),
-    ];
-    assert.notEqual(moodOf(activity({}, { prs })).mood, 'anxious');
+  test('the pet is never anxious: a PR that has waited for days changes nothing', () => {
+    const waiting = [pr({ createdAt: daysAgo(30) }), pr({ createdAt: daysAgo(9) })];
+    const s = moodOf(activity({}, { prs: waiting }));
+    assert.deepEqual([s.mood, s.moodLabel, s.moodReason], ['neutral', 'Neutral', null]);
   });
 
   test('happy after a recent merge, and after a strong week', () => {
@@ -514,12 +494,6 @@ describe('mood', () => {
 
     const strong = { ...regular(70), [toDay(daysAgo(1))]: day({ reviews: 10 }) }; // baseline 70/wk -> week 100+
     assert.deepEqual([moodOf(activity(strong)).mood, moodOf(activity(strong)).moodReason], ['happy', 'A strong week']);
-  });
-
-  test('anxious wins over happy', () => {
-    const merged = pr({ state: 'MERGED', mergedAt: hoursAgo(1) });
-    const waiting = pr({ createdAt: daysAgo(4) });
-    assert.equal(moodOf(activity({}, { prs: [merged, waiting] })).mood, 'anxious');
   });
 
   test('neutral otherwise, with no reason (quiet weeks and nights are not moods)', () => {
