@@ -43,6 +43,9 @@ let pendingEvolution = null;
 const actions = {
   openProfile: (view) => profileWindow.open(view),
   openXp: () => profileWindow.open('xp'),
+  // The card hangs from the pet (it answers with the rect to anchor on, see `togglePopover`), or from the menu bar icon
+  // when the pet is hidden.
+  openCard: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
   celebrateEvolution: ({ index }) => {
     pendingEvolution = { fromIndex: pendingEvolution?.fromIndex ?? index - 1, toIndex: index };
     actions.flushEvolution();

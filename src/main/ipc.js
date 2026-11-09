@@ -38,6 +38,7 @@ const PANEL_ACTIONS = [
   'pauseTomorrow',
   'pauseVacation',
   'resume',
+  'openCard',
   'openProfile',
   'openSettings',
   'quit',
