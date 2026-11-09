@@ -1,4 +1,4 @@
-const { test, beforeEach } = require('node:test');
+const { test, beforeEach, afterEach, mock } = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { emptyActivity } = require('../src/main/game/engine');
@@ -50,6 +50,12 @@ const asked = (number, requestedAt, over = {}) => ({
 const reviewed = (number, at) => ({ kind: 'reviews', repo: 'a/b', day: toDay(at), number, at });
 
 let petService;
+
+// The clock is fixed at noon: "half an hour ago" must be the same day as now, whatever time the tests run.
+beforeEach(() => {
+  mock.timers.enable({ apis: ['Date'], now: new Date(2026, 5, 15, 12) });
+});
+afterEach(() => mock.timers.reset());
 
 beforeEach(() => {
   state = {
