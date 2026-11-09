@@ -33,7 +33,8 @@
     "test": "node --test",
     "shots": "electron scripts/shots.js",
     "shots:check": "electron scripts/visual-check.js",
-    "shots:update": "electron scripts/visual-check.js --update"
+    "shots:update": "electron scripts/visual-check.js --update",
+    "smoke": "electron scripts/smoke.js"
   },
   "devDependencies": {
     "electron": "^45.2.3",
