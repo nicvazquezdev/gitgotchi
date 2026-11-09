@@ -1,6 +1,6 @@
-// The card of the pet: its header (level, one bar and what is left) and two tabs. "To review" is the queue of PRs that
-// wait for the user's review; "My PRs" is the user's own (waiting, approved, merged today). Rows open the PR in the
-// browser. The card lives inside a little creature (the shell) whose eyes show how the pet feels.
+// The card of the pet: its header (level, one bar and what is left) and two tabs. "My PRs" is the user's own (waiting,
+// approved, merged today) and opens first; "To review" is the queue of PRs that wait for the user's review. Rows open
+// the PR in the browser. The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
 import { timeAgo } from '../shared/format.js';
 import { icon, xpBar } from '../shared/ui.js';
@@ -10,7 +10,7 @@ import { PetView } from '../pet/pet-view.js';
 const api = window.gitgotchi.popover;
 const app = $('#app');
 
-const TABS = ['review', 'mine'];
+const TABS = ['mine', 'review'];
 
 const shortAge = (n) => (n > 0 ? `${n}d` : 'today');
 const ago = (n) => (n > 0 ? `${n}d ago` : 'today');
@@ -50,15 +50,12 @@ function syncPortrait(status) {
   portrait.setCreature(species.id, stage.index).catch((err) => console.error(err));
 }
 
-// The last state received, and the tab the user picked (null: the default, see `currentTab`).
+// The last state received, and the tab the user picked (null: the default, My PRs).
 let latest = {};
 let picked = null;
 
-/** To review when something waits for the user (it is the part they can act on), else My PRs. */
-function currentTab({ status } = latest) {
-  if (picked) return picked;
-  return status?.reviewQueue?.length ? 'review' : 'mine';
-}
+/** The popover always opens on My PRs; the count on To review says when something waits for the user. */
+const currentTab = () => picked ?? 'mine';
 
 // ---------- Header ----------
 
@@ -135,7 +132,7 @@ function tabs(status) {
   // `null`: the queue has not been fetched yet, so there is no number to show.
   const counts = { review: status.reviewQueue?.length ?? null, mine: mine.waiting.length + mine.approved.length };
   const labels = { review: 'To review', mine: 'My PRs' };
-  const active = currentTab({ status });
+  const active = currentTab();
 
   const select = (tab) => {
     picked = tab;
@@ -346,7 +343,7 @@ function fitList(room) {
 function render(state = latest, { resetScroll = false } = {}) {
   latest = state;
   const { status, placement = 'above', tailX = 180, room } = state;
-  const tab = currentTab(state);
+  const tab = currentTab();
   if (status) syncPortrait(status);
   const mood = status?.pause?.active ? 'paused' : (status?.mood ?? 'neutral'); // what the eyes of the shell show
 

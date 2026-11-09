@@ -31,7 +31,7 @@ const CASES = [
   { name: 'profile-pets-dark', page: 'profile', flags: ['--tab', 'pets'] },
   { name: 'profile-pets-benched-dark', page: 'profile', flags: ['--tab', 'pets/koi'] },
   { name: 'profile-pets-locked-dark', page: 'profile', flags: ['--tab', 'pets/ram'] },
-  { name: 'popover-review-dark', page: 'popover', flags: [] },
+  { name: 'popover-review-dark', page: 'popover', flags: ['--click', '#tab-review'] },
   { name: 'popover-mine-dark', page: 'popover', flags: ['--mine'] },
   { name: 'popover-time-off-dark', page: 'popover', flags: ['--time-off'] },
   { name: 'popover-happy-dark', page: 'popover', flags: ['--happy'] },

@@ -22,7 +22,7 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagVal
 app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-shots-profile'));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
-const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
+const mine = process.argv.includes('--mine'); // popover: nothing waits for the user's review (no count on "To review")
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
 const conflicts = process.argv.includes('--conflicts'); // popover: two of the PRs have merge conflicts
