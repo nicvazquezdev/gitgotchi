@@ -7,6 +7,7 @@ const { pet: api } = window.gitgotchi;
 const canvas = $('#pet');
 const root = document.documentElement.style;
 const DRAG_THRESHOLD_PX = 4;
+const CHARGE_MS = 1300; // an evolution: the old form flashes white for this long (keep in sync with `charge` in pet.css)
 
 // The canvas sets its own size in whole native pixels; the stage (and the CSS that places the bubble) follows it.
 const view = new PetView(canvas, {
@@ -37,24 +38,34 @@ let momentTimer = null; // a moment (a level, a trophy) is on screen: it takes t
 let bubbleTimer = null;
 let popoverOpen = false; // the popover hangs from the creature: it takes the place of the speech bubble
 let loading = Promise.resolve(); // the creature on screen is being swapped for another one
+let evolvesTo = null; // stage index the pet has just reached: `pet:evolved` comes right before the status that shows it
+let evolving = false; // the evolution is playing: the pet stands still
 
 /** The creature for the current stage, e.g. { name: 'Chispín', size: 36, ... }. */
 const creature = () => status.species.stages[status.stage.index];
 
 // ---------- Render ----------
 
-function setStatus(next) {
-  if (!next) return;
-  const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
-  const gained = status && status.species.id === next.species.id ? next.xp - status.xp : 0;
-  status = next;
-  syncCalm(); // a vacation starts or ends
-  // The pet on the desktop is always in its normal state: how it feels shows in the eyes of the card's shell.
-  if (creatureChanged) {
-    loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
-  }
+/** Puts the creature of the current status on screen. */
+function showCreature() {
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
+  // The pet on the desktop is always in its normal state: how it feels shows in the eyes of the card's shell.
+  return view.setCreature(status.species.id, status.stage.index);
+}
+
+function setStatus(next) {
+  if (!next) return;
+  const sameSpecies = status && status.species.id === next.species.id;
+  const creatureChanged = !status || !sameSpecies || status.stage.index !== next.stage.index;
+  const gained = sameSpecies ? next.xp - status.xp : 0;
+  status = next;
+  syncCalm(); // a vacation starts or ends
+  if (creatureChanged) {
+    const evolved = sameSpecies && status.stage.index === evolvesTo;
+    evolvesTo = null;
+    loading = (evolved ? evolve() : showCreature()).catch((err) => console.error(err));
+  }
   $('#alert').hidden = !status.error;
   if (gained > 0 && !paused()) floatXp(gained);
   renderBubble();
@@ -118,13 +129,58 @@ function showMoment({ text, icon, tier = 'special' }, ms = 4000) {
   moment.hidden = false;
   replayClass(moment, 'moment');
   clearTimeout(momentTimer);
-  momentTimer = setTimeout(() => {
-    momentTimer = null;
-    moment.hidden = true;
-    renderBubble();
-  }, ms);
+  momentTimer = setTimeout(hideMoment, ms);
   renderBubble();
 }
+
+function hideMoment() {
+  clearTimeout(momentTimer);
+  momentTimer = null;
+  $('#moment').hidden = true;
+  renderBubble();
+}
+
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/** The charge and the emergence scale and shake about the creature's feet, wherever it stands. */
+function anchorAnimation() {
+  const b = view.bounds();
+  if (b) canvas.style.setProperty('--origin-x', `${b.x + b.width / 2 - canvas.getBoundingClientRect().left}px`);
+}
+
+/**
+ * The pet has grown into its next form, right where it stands: the old one charges up and flashes white, the new one
+ * comes out of the light in a burst of sparkles and cheers. On a vacation, or with Reduce Motion, it just changes.
+ */
+async function evolve() {
+  const show = !calm();
+  evolving = show;
+  try {
+    if (show) {
+      syncStill();
+      canvas.classList.remove('jump', 'hop', 'wiggle', 'swap'); // an animation left on would win over the new ones
+      anchorAnimation();
+      replayClass(canvas, 'charge');
+      await wait(CHARGE_MS);
+    }
+    await showCreature();
+    if (show) {
+      canvas.classList.remove('charge');
+      anchorAnimation(); // the new form may be bigger
+      burst('sparkle', { around: true });
+      replayClass(canvas, 'emerge');
+      view.celebrate();
+    }
+  } finally {
+    canvas.classList.remove('charge'); // not on a form that failed to load: it would stay white
+    evolving = false;
+    syncStill();
+  }
+  hideMoment(); // "Level N" gives way to what just happened
+  say(`${status.name} evolved into ${creature().name}!`, { dot: 'approved', ms: 6000 });
+}
+// The emergence is done: left on, it would win over the animations that come after it.
+canvas.addEventListener('animationend', (e) => e.animationName === 'emerge' && canvas.classList.remove('emerge'));
 
 /** Opens the PR popover above the creature (a second click closes it). */
 function openPopover() {
@@ -155,11 +211,14 @@ const REACTIONS = [
 const FX_COLORS = ['var(--accent)', 'var(--dot-waiting)', 'var(--dot-approved)', 'var(--accent-text)', 'var(--fx-red)'];
 let fxTimer = null;
 
-function burst(style) {
-  const count = 6;
+/** Particles out of the creature: over its head, or (`around`) all around it. */
+function burst(style, { around = false } = {}) {
+  const count = around ? 14 : 6;
+  const center = view.bounds();
+  if (center) $('#fx').style.left = `${center.x + center.width / 2}px`; // where it stands, not the middle of the window
   const particles = Array.from({ length: count }, (_, i) => {
-    const angle = (i / count) * Math.PI + Math.PI; // upper half-circle
-    const dist = 11 + (i % 3) * 4; // sprite pixels
+    const angle = around ? (i / count) * 2 * Math.PI : (i / count) * Math.PI + Math.PI; // a circle, or its upper half
+    const dist = (around ? 16 : 11) + (i % 3) * 4; // sprite pixels
     const particle = h('i', { class: `particle ${style}`, style: { background: FX_COLORS[i % FX_COLORS.length] } });
     // Custom properties need setProperty (Object.assign on style ignores them).
     particle.style.setProperty('--x', Math.round(Math.cos(angle) * dist));
@@ -212,7 +271,7 @@ const isOverBubble = (e) => {
 };
 
 // The pet stands still while the pointer is on it or it is being dragged.
-const syncStill = () => view.setStill(document.body.classList.contains('hover') || Boolean(drag));
+const syncStill = () => view.setStill(document.body.classList.contains('hover') || Boolean(drag) || evolving);
 
 function setHover(active) {
   if (document.body.classList.contains('hover') === active) return;
@@ -301,10 +360,7 @@ canvas.addEventListener('contextmenu', (e) => {
 
 api.onSize(setSize);
 api.onStatus(setStatus);
-api.onEvolved(() => {
-  replayClass(canvas, 'evolve');
-  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}!`, { ms: 6000 });
-});
+api.onEvolved(({ index }) => (evolvesTo = index)); // the status with the new form follows right away: see `setStatus`
 api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
 // A new level: a hop, sparkles and the pill (if it also evolves, the evolution that follows takes over).
