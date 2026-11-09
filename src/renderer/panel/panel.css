@@ -58,21 +58,3 @@ body {
 .item[aria-expanded='true'] svg {
   transform: rotate(90deg);
 }
-
-/* The three lengths of a pause, unfolded under it. */
-.lengths {
-  margin: 2px 0 4px 12px;
-  padding-left: 6px;
-  border-left: 2px solid var(--divider);
-}
-.lengths .item {
-  height: 30px;
-  color: var(--text-2);
-}
-.lengths .item:hover {
-  color: var(--text);
-}
-
-.menu > .notice {
-  margin: 4px 4px 2px;
-}

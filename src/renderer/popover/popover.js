@@ -3,7 +3,7 @@
 // The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
 import { icon, xpBar } from '../shared/ui.js';
-import { pauseUntilText } from '../shared/pause-text.js';
+import { vacationUntilText } from '../shared/vacation-text.js';
 import { PetView } from '../pet/pet-view.js';
 import { growth, week } from './overview.js';
 import { petsPage, leavePets } from './pets-view.js';
@@ -173,8 +173,8 @@ function header(status) {
   );
 }
 
-/** While paused, the card says until when and offers the way back. */
-function pauseBanner(pause) {
+/** On vacation, the card says until when and offers the way back. */
+function vacationBanner(pause) {
   if (!pause?.active) return null;
   return h(
     'div',
@@ -183,10 +183,10 @@ function pauseBanner(pause) {
     h(
       'span',
       { class: 'banner-text' },
-      h('b', {}, `Paused ${pauseUntilText(pause)}`),
+      h('b', {}, `On vacation ${vacationUntilText(pause)}`),
       h('span', { class: 'meta' }, 'Streak safe'),
     ),
-    h('button', { class: 'link', type: 'button', onclick: () => api.action('resume') }, 'Resume'),
+    h('button', { class: 'link', type: 'button', onclick: () => api.action('resume') }, "I'm back"),
   );
 }
 
@@ -261,7 +261,7 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
     'div',
     { class: 'card' },
     ...(status
-      ? [header(status), pauseBanner(status.pause), h('div', { class: 'card-body' }, content(status)), tabs()]
+      ? [header(status), vacationBanner(status.pause), h('div', { class: 'card-body' }, content(status)), tabs()]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 

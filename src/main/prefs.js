@@ -1,5 +1,5 @@
-// Device-level UI settings kept in the store: pet speech bubbles. (Being quiet for a while is a pause, see
-// game/pause.js and the pet service.)
+// Device-level UI settings kept in the store: pet speech bubbles. (Being away is a vacation, see game/time-off.js and
+// the pet service.)
 const store = require('./store');
 
 const speechBubbles = () => store.get().speechBubbles !== false;

@@ -1,14 +1,13 @@
-// The menu: the few things nobody needs every day (pause, hide the pet, the card, settings, quit). It opens from a
-// right-click on the pet or on the menu bar icon, or from the dots of the card. The card is the home of everything else.
+// The menu: the few things nobody needs every day (vacation, hide the pet, the card, settings, quit). It opens from a
+// right-click on the pet or on the menu bar icon. The card is the home of everything else.
 import { $, h } from '../shared/dom.js';
 import { icon } from '../shared/ui.js';
-import { pauseUntilText } from '../shared/pause-text.js';
+import { vacationUntilText } from '../shared/vacation-text.js';
 
 const api = window.gitgotchi.panel;
 const app = $('#app');
 
 let state = null;
-let lengthsOpen = false; // the three lengths of a pause are unfolded
 
 const divider = () => h('hr', { class: 'divider' });
 
@@ -23,33 +22,12 @@ const item = (label, { onclick, end, className = '', ...attributes } = {}) =>
 const hint = (text) => h('span', { class: 'hint' }, text);
 const act = (name) => () => api.action(name);
 
-/** Pause: the three lengths unfold under it. While something is paused, the row is the way back. */
-function pauseItems({ pause }) {
+/** Vacation: starts one (Settings opens to pick the day back). While on vacation, the row is the way back. */
+function vacationItem({ pause }) {
   if (pause.active) {
-    return [item('Resume', { onclick: act('resume'), end: hint(`Paused ${pauseUntilText(pause)}`) })];
+    return item("I'm back", { onclick: act('resume'), end: hint(`On vacation ${vacationUntilText(pause)}`) });
   }
-  const toggle = () => {
-    lengthsOpen = !lengthsOpen;
-    render();
-  };
-  return [
-    item('Pause', {
-      onclick: toggle,
-      end: icon('chevron', { size: 12, stroke: 2.5 }),
-      'aria-expanded': String(lengthsOpen),
-    }),
-    ...(lengthsOpen
-      ? [
-          h(
-            'div',
-            { class: 'lengths' },
-            item('For 1 hour', { onclick: act('pauseHour') }),
-            item('Until tomorrow', { onclick: act('pauseTomorrow') }),
-            item('Vacation…', { onclick: act('pauseVacation') }),
-          ),
-        ]
-      : []),
-  ];
+  return item('Vacation…', { onclick: act('startVacation') });
 }
 
 function render(next = state) {
@@ -60,7 +38,7 @@ function render(next = state) {
   app.replaceChildren(
     ...(ready
       ? [
-          ...pauseItems(status),
+          vacationItem(status),
           item(petVisible ? 'Hide pet' : 'Show pet', { onclick: act('togglePet') }),
           divider(),
           item('Pet card', { onclick: act('openCard') }),

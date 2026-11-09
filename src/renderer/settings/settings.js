@@ -3,7 +3,7 @@
 import { $, h } from '../shared/dom.js';
 import { plural, timeAgo } from '../shared/format.js';
 import { icon } from '../shared/ui.js';
-import { pauseKind, pauseUntilText, tomorrowOf } from '../shared/pause-text.js';
+import { tomorrowOf, vacationUntilText } from '../shared/vacation-text.js';
 
 const api = window.gitgotchi.settings;
 const REFRESH_LABEL_MS = 30 * 1000; // keeps "Last saved N min ago" current
@@ -103,36 +103,10 @@ function sizeRow() {
   };
 }
 
-/** How long the pet is quiet: off, an hour, until tomorrow or a vacation (the same lengths as the menu). */
-function pauseRow() {
-  const ACTIONS = { off: 'resume', hour: 'pauseHour', tomorrow: 'pauseTomorrow', vacation: 'pauseVacation' };
-  const LABELS = { off: 'Off', hour: 'For 1 hour', tomorrow: 'Until tomorrow', vacation: 'Vacation' };
-  const select = h(
-    'select',
-    { id: 'pause-length', 'aria-describedby': 'pause-hint', onchange: () => api.action(ACTIONS[select.value]) },
-    Object.entries(LABELS).map(([value, label]) => h('option', { value }, label)),
-  );
-  const hint = h('p', { class: 'hint', id: 'pause-hint' });
-  return {
-    el: h(
-      'div',
-      { class: 'setting' },
-      h('div', { class: 'setting-text' }, h('label', { htmlFor: select.id }, 'Pause'), hint),
-      h('span', { class: 'select' }, select, icon('down', { size: 14, stroke: 2.5 })),
-    ),
-    update({ pause }) {
-      select.value = pauseKind(pause);
-      hint.textContent = pause.active
-        ? `Paused ${pauseUntilText(pause)}. Your streak is safe.`
-        : 'Quiet the pet and keep your streak safe.';
-    },
-  };
-}
-
-/** The day the person is back from a vacation; only shown during one. Empty: it lasts until they resume. */
+/** The day the person is back from a vacation; only shown during one. Empty: it lasts until they are back. */
 function returnRow() {
-  const input = h('input', { id: 'pause-return', class: 'date', type: 'date' });
-  input.addEventListener('change', () => api.setPauseReturn(input.value || null));
+  const input = h('input', { id: 'vacation-return', class: 'date', type: 'date' });
+  input.addEventListener('change', () => api.setVacationReturn(input.value || null));
   const el = h(
     'div',
     { class: 'setting' },
@@ -140,14 +114,14 @@ function returnRow() {
       'div',
       { class: 'setting-text' },
       h('label', { htmlFor: input.id }, 'Back on'),
-      h('p', { class: 'hint' }, 'The first day that counts again. Without a date, the pause lasts until you resume.'),
+      h('p', { class: 'hint' }, 'The first day that counts again. Without a date, it lasts until you are back.'),
     ),
     input,
   );
   return {
     el,
     update({ pause }) {
-      el.hidden = pauseKind(pause) !== 'vacation';
+      el.hidden = !pause.active;
       input.min = tomorrowOf();
       if (document.activeElement !== input) input.value = pause.backOn ?? ''; // do not move it under the person's hands
     },
@@ -218,10 +192,15 @@ const rows = {
   size: sizeRow(),
   bubbles: switchRow('Speech bubbles', 'toggleSpeechBubbles', ({ speechBubbles, pause }) => ({
     checked: speechBubbles,
-    hint: pause.active ? 'Hidden for now: the pet is paused.' : 'Short messages above the pet.',
+    hint: pause.active ? 'Hidden for now: you are on vacation.' : 'Short messages above the pet.',
   })),
-  pause: pauseRow(),
-  pauseReturn: returnRow(),
+  vacation: switchRow('Vacation', 'toggleVacation', ({ pause }) => ({
+    checked: pause.active,
+    hint: pause.active
+      ? `On vacation ${vacationUntilText(pause)}. Your streak is safe.`
+      : 'Days off keep your streak safe, and the pet rests.',
+  })),
+  vacationReturn: returnRow(),
   account: accountRow(),
   backup: switchRow('Back up pet', 'toggleCloudSync', backupHint),
   openAtLogin: switchRow('Open at login', 'toggleOpenAtLogin', ({ openAtLogin }) => ({
@@ -234,7 +213,7 @@ const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
   group(rows.size, rows.bubbles),
-  group(rows.pause, rows.pauseReturn),
+  group(rows.vacation, rows.vacationReturn),
   group(rows.account, rows.backup, rows.openAtLogin),
 );
 

@@ -35,8 +35,8 @@ if (IS_MAC) {
 // ---------- App actions ----------
 
 // --- Share & evolution windows ---
-// An evolution that happens during a pause waits here ({ fromIndex, toIndex }, merged if several pile up)
-// and is shown by `flushEvolution`: on the next status update after the pause ends, or when the menu opens.
+// An evolution that happens during a vacation waits here ({ fromIndex, toIndex }, merged if several pile up)
+// and is shown by `flushEvolution`: on the next status update after the vacation ends, or when the menu opens.
 let pendingEvolution = null;
 
 const actions = {
@@ -49,7 +49,7 @@ const actions = {
     actions.flushEvolution();
   },
   flushEvolution: () => {
-    if (!pendingEvolution || petService.isPaused()) return;
+    if (!pendingEvolution || petService.isOnTimeOff()) return;
     evolutionWindow.open(pendingEvolution);
     pendingEvolution = null;
   },
@@ -77,17 +77,17 @@ const actions = {
     petWindow.close();
     actions.openSetup();
   },
-  // --- pause (see game/pause.js): the menu and Settings share these; the status that follows updates every window ---
-  pauseHour: () => petService.startPause('hour'),
-  pauseTomorrow: () => petService.startPause('tomorrow'),
+  // --- vacation (see game/time-off.js): the menu, the card and Settings share these; the status that follows updates
+  // every window ---
   // A vacation starts with no set return; Settings is where the person picks the day they are back.
-  pauseVacation: () => {
-    petService.startPause('vacation');
+  startVacation: () => {
+    petService.startTimeOff();
     actions.openSettings();
   },
-  resume: () => petService.resume(),
-  setPauseReturn: (day) => petService.setTimeOffReturn(day),
-  // --- end pause ---
+  toggleVacation: () => (petService.isOnTimeOff() ? petService.endTimeOff() : petService.startTimeOff()),
+  resume: () => petService.endTimeOff(),
+  setVacationReturn: (day) => petService.setTimeOffReturn(day),
+  // --- end vacation ---
   toggleOpenAtLogin: () => {
     loginItem.setEnabled(!loginItem.isEnabled());
     settingsWindow.send();
@@ -137,7 +137,7 @@ const actions = {
       login: user?.login ?? null,
       repoCount: repos.length,
       speechBubbles: prefs.speechBubbles(),
-      pause: petService.pause(),
+      pause: petService.timeOff(),
       openAtLogin: loginItem.isEnabled(),
       cloud: cloud.status(),
       petSize: petWindow.size(),

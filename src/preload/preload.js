@@ -76,7 +76,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   panel: {
     state: invoke('panel:state'), // -> { status, configured, connected, petVisible }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openCard'
+    // 'sync' | 'togglePet' | 'startVacation' | 'resume' | 'openCard'
     // | 'openSettings' | 'quit'
     action: send('panel:action'),
     setHeight: send('panel:height'), // content height in px
@@ -92,17 +92,17 @@ contextBridge.exposeInMainWorld('gitgotchi', {
 
   settings: {
     // -> { login, repoCount, speechBubbles, openAtLogin,
-    //      pause: { active, until, backOn, since },
+    //      pause: { active, backOn, since } (on vacation),
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume'
+    // 'toggleSpeechBubbles' | 'toggleVacation'
     // | 'toggleOpenAtLogin'
     // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'
     action: send('settings:action'),
     setSize: send('settings:size'), // { size, commit }: live while dragging, commit on release
-    setPauseReturn: send('settings:pause-return'), // 'YYYY-MM-DD' (the first day that counts again), or null
+    setVacationReturn: send('settings:vacation-return'), // 'YYYY-MM-DD' (the first day that counts again), or null
   },
 });

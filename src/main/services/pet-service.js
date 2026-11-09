@@ -19,7 +19,6 @@ const { commitKey, pendingPushes } = require('../game/commits');
 const { unlockedOf } = require('../game/achievements');
 const { rememberRequests, fastReviewsIn } = require('../game/review-speed');
 const timeOffRules = require('../game/time-off');
-const pauseRules = require('../game/pause');
 const { fromDay, toDay } = require('../dates');
 const { SYNC_INTERVAL_MS, LIVE } = require('../config');
 const { addCredits, subtractCredits } = require('../live/credits');
@@ -31,7 +30,6 @@ class PetService extends EventEmitter {
   #poll = { etag: null, interval: null };
   // Reactions only after a baseline sync in this session, so old activity never triggers them.
   #baselined = false;
-  #pauseTimer = null;
   // Live reactions the Events diff has not reported yet (see live/credits.js).
   #credits = [];
   #reviewsAt = 0;
@@ -89,55 +87,6 @@ class PetService extends EventEmitter {
     if (JSON.stringify(next) === JSON.stringify(current)) return;
     store.update({ timeOff: next });
     this.notify(); // the streak and the reminders follow right away
-  }
-
-  /** What is paused: `{ active, until, backOn, since }` (see game/pause.js). */
-  pause() {
-    const { pausedUntil, timeOff } = store.get();
-    return pauseRules.pauseView({ pausedUntil, timeOff: timeOff ?? [], today: toDay(new Date()), now: Date.now() });
-  }
-
-  isPaused() {
-    return this.pause().active;
-  }
-
-  /**
-   * Pauses for an hour, until tomorrow, or for a vacation (time off with no set return: the person picks the day
-   * later). A new pause replaces the one that was on.
-   */
-  startPause(kind) {
-    const { timeOff = [] } = store.get();
-    const today = toDay(new Date());
-    const next = {
-      hour: { timeOff: timeOffRules.endTimeOff(timeOff, today), pausedUntil: Date.now() + pauseRules.HOUR_MS },
-      tomorrow: { timeOff: pauseRules.untilTomorrow(timeOff, today), pausedUntil: null },
-      vacation: { timeOff: timeOffRules.startTimeOff(timeOff, today), pausedUntil: null },
-    }[kind];
-    if (next) this.#applyPause(next);
-  }
-
-  /** The person is back: whatever is paused ends. */
-  resume() {
-    const { timeOff = [] } = store.get();
-    this.#applyPause({ timeOff: timeOffRules.endTimeOff(timeOff, toDay(new Date())), pausedUntil: null });
-  }
-
-  #applyPause(patch) {
-    const state = store.get();
-    const current = { timeOff: state.timeOff ?? [], pausedUntil: state.pausedUntil ?? null };
-    if (Object.keys(patch).every((key) => JSON.stringify(patch[key]) === JSON.stringify(current[key]))) return;
-    store.update(patch);
-    this.#schedulePauseEnd();
-    this.notify();
-  }
-
-  /** An hour pause ends by itself: tell everyone when it does (a restart picks it up again). */
-  #schedulePauseEnd() {
-    clearTimeout(this.#pauseTimer);
-    const { pausedUntil } = store.get();
-    if (pausedUntil == null || pausedUntil <= Date.now()) return;
-    this.#pauseTimer = setTimeout(() => this.notify(), pausedUntil - Date.now() + 100);
-    this.#pauseTimer.unref?.();
   }
 
   async listRepos() {
@@ -223,7 +172,6 @@ class PetService extends EventEmitter {
 
   /** The one sync loop: syncs every SYNC_INTERVAL_MS, or GitHub's X-Poll-Interval if that is longer. */
   startPolling() {
-    this.#schedulePauseEnd(); // an hour pause that was on when the app closed still ends on time
     const loop = async () => {
       await this.sync();
       setTimeout(loop, Math.max(SYNC_INTERVAL_MS, (this.#poll.interval ?? 0) * 1000));

@@ -15,7 +15,7 @@ const view = new PetView(canvas, {
     root.setProperty('--stage-h', `${height}px`);
   },
 });
-// Reduce Motion (macOS accessibility) and a pause: the pet only idles (no walks, cheers or particles).
+// Reduce Motion (macOS accessibility) and a vacation: the pet only idles (no walks, cheers or particles).
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const paused = () => Boolean(status?.pause?.active);
 const calm = () => reducedMotion.matches || paused();
@@ -41,7 +41,7 @@ function setStatus(next) {
   const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
   const gained = status && status.species.id === next.species.id ? next.xp - status.xp : 0;
   status = next;
-  syncCalm(); // a pause starts or ends
+  syncCalm(); // a vacation starts or ends
   // The pet on the desktop is always in its normal state: how it feels shows in the eyes of the card's shell.
   if (creatureChanged) {
     loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
@@ -60,7 +60,7 @@ function setSize(px) {
 
 // ---------- Bubble ----------
 // A card with a dot and one line (and sometimes a second one). It only speaks for a moment, to react to what just
-// happened (a merge, an approval, a hatch). Off with Speech bubbles or during a pause.
+// happened (a merge, an approval, a hatch). Off with Speech bubbles or during a vacation.
 
 const quiet = () => !prefs.speechBubbles || paused();
 

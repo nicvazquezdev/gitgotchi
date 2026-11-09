@@ -19,7 +19,6 @@ const defaults = () => ({
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
   speechBubbles: true, // device setting: show the pet's speech bubbles
-  pausedUntil: null, // device setting: quiet (no bubbles or popups) until this time, in ms (game/pause.js)
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
   cloudSync: false, // optional cloud save in the user's GitHub account (device setting)
   cloudSaved: false, // a save exists in the user's GitHub account (written or found by this app)
@@ -51,13 +50,12 @@ function update(patch) {
 
 /** Clears everything except the device settings (pet position and size, menu toggles). */
 function reset() {
-  const { position, petSize, speechBubbles, pausedUntil, openAtLoginDefaulted } = get();
+  const { position, petSize, speechBubbles, openAtLoginDefaulted } = get();
   update({
     ...defaults(),
     position,
     petSize,
     speechBubbles,
-    pausedUntil,
     openAtLoginDefaulted,
   });
 }

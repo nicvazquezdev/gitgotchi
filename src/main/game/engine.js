@@ -7,8 +7,7 @@ const { mergePullRequests, prunePullRequests, pullRequestDays } = require('./pul
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
-const { isOffDay } = require('./time-off');
-const { pauseView } = require('./pause');
+const { isOffDay, timeOffView } = require('./time-off');
 const { xpLog } = require('./xp-log');
 
 const DAY_MS = 86400000;
@@ -202,10 +201,7 @@ function weekTotal(days, today) {
  * this week) and, around it, what belongs to the person and not to one pet: mood, streaks, the XP log and achievements
  * (all counted from the day the first pet hatched), plus the whole `collection`. `repos`: the selected repos.
  */
-function computeStatus(
-  { pets = {}, activePet, achievements, activity, repos = [], timeOff = [], pausedUntil = null },
-  now = new Date(),
-) {
+function computeStatus({ pets = {}, activePet, achievements, activity, repos = [], timeOff = [] }, now = new Date()) {
   const pet = pets[activePet];
   if (!pet) return null;
 
@@ -237,7 +233,7 @@ function computeStatus(
     levelXp: progress.levelXp,
     levelXpNeeded: progress.levelXpNeeded,
     ...moodFor({ mergedRecently, ratio: weekRatioXp / baseline }),
-    pause: pauseView({ pausedUntil, timeOff, today, now: now.getTime() }),
+    pause: timeOffView(timeOff, today), // on vacation: { active, since, backOn }
     // What the active pet earned: today, in the last 7 days and on each of them (the bars of its week).
     todayXp: pet.earned?.[today] ?? 0,
     weekXp: recentXp(pet, today),

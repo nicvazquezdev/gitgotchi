@@ -30,17 +30,7 @@ function on(channel, fn) {
 
 // ---- everyday UI (the menu, the card) ----
 // Menu rows. Actions in KEEP_OPEN update the menu in place; the rest close it first.
-const PANEL_ACTIONS = [
-  'sync',
-  'togglePet',
-  'pauseHour',
-  'pauseTomorrow',
-  'pauseVacation',
-  'resume',
-  'openCard',
-  'openSettings',
-  'quit',
-];
+const PANEL_ACTIONS = ['sync', 'togglePet', 'startVacation', 'resume', 'openCard', 'openSettings', 'quit'];
 const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
 const POPOVER_ACTIONS = ['openShare', 'openSettings', 'resume'];
@@ -51,10 +41,7 @@ const POPOVER_STAYS = new Set(['openShare', 'openSettings']);
 // Settings window controls.
 const SETTINGS_ACTIONS = [
   'toggleSpeechBubbles',
-  'pauseHour',
-  'pauseTomorrow',
-  'pauseVacation',
-  'resume',
+  'toggleVacation',
   'toggleOpenAtLogin',
   'toggleCloudSync',
   'openSaveRepo',
@@ -173,7 +160,7 @@ function registerIpc(actions) {
   on('settings:action', (name) => SETTINGS_ACTIONS.includes(name) && actions[name]());
   on('settings:size', ({ size, commit } = {}) => actions.setPetSize(Number(size), Boolean(commit)));
   // The day the person is back from a vacation ('YYYY-MM-DD'), or null for none; the service checks it is a real day.
-  on('settings:pause-return', (day) => actions.setPauseReturn(typeof day === 'string' ? day : null));
+  on('settings:vacation-return', (day) => actions.setVacationReturn(typeof day === 'string' ? day : null));
 }
 
 module.exports = { registerIpc };

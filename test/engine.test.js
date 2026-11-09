@@ -398,34 +398,23 @@ describe('today', () => {
   });
 });
 
-describe('pause', () => {
-  test('an hour pause is on until its time, and the status says when it ends', () => {
-    const until = NOON.getTime() + 3600000;
-    const on = computeStatus({ ...stateOf(activity(), pet(undefined)), pausedUntil: until }, NOON);
-    assert.deepEqual(on.pause, { active: true, until, backOn: null, since: null });
-    const over = computeStatus({ ...stateOf(activity(), pet(undefined)), pausedUntil: until }, new Date(until + 1));
-    assert.equal(over.pause.active, false);
-  });
-});
-
 describe('time off', () => {
   const withTimeOff = (timeOff, acts = activity()) =>
     computeStatus({ ...stateOf(acts, pet(undefined)), timeOff }, NOON);
 
-  test('once it is over, the status says nothing is paused', () => {
+  test('once it is over, the status says the person is not on vacation', () => {
     const over = withTimeOff([{ from: toDay(daysAgo(10)), to: toDay(daysAgo(3)) }]);
-    assert.deepEqual(over.pause, { active: false, until: null, backOn: null, since: null });
+    assert.deepEqual(over.pause, { active: false, since: null, backOn: null });
   });
 
   test('the status says whether time off is on, since when and when it ends', () => {
     const view = withTimeOff([{ from: toDay(daysAgo(2)), to: toDay(addDays(toDay(NOON), 3)) }]).pause;
     assert.deepEqual(view, {
       active: true,
-      until: null,
       since: toDay(daysAgo(2)),
       backOn: toDay(addDays(toDay(NOON), 4)),
     });
-    assert.deepEqual(status(activity()).pause, { active: false, until: null, backOn: null, since: null });
+    assert.deepEqual(status(activity()).pause, { active: false, since: null, backOn: null });
   });
 
   test('the streak and the streak achievements wait through the time off', () => {
