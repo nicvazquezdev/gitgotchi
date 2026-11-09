@@ -39,6 +39,14 @@ function recentXp(pet, today, days = WEEK_DAYS) {
   return Object.entries(pet.earned ?? {}).reduce((sum, [day, xp]) => (day >= from && day <= today ? sum + xp : sum), 0);
 }
 
+/** The XP a pet earned on each of the last `days` days up to `today`, oldest first (the bars of its week). */
+function recentDays(pet, today, days = WEEK_DAYS) {
+  return Array.from({ length: days }, (_, i) => {
+    const day = addDays(today, i - (days - 1));
+    return { day, score: pet.earned?.[day] ?? 0 };
+  });
+}
+
 /** The day the first pet hatched ('' without pets): the activity of the person counts from here. */
 function startDay(pets) {
   const days = Object.values(pets ?? {}).map((pet) => toDay(pet.bornAt));
@@ -180,6 +188,7 @@ module.exports = {
   newPet,
   petXp,
   recentXp,
+  recentDays,
   startDay,
   earnedSince,
   fromSinglePet,

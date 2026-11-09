@@ -1,8 +1,8 @@
 // Pure game rules: no I/O, easy to test.
 const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
-const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
-const { startDay, progressOf, collectionView, petFacts } = require('./collection');
+const { stats, emptyDay, dayXp } = require('./stats');
+const { startDay, progressOf, collectionView, petFacts, recentXp, recentDays } = require('./collection');
 const { mergePullRequests, prunePullRequests, pullRequestDays } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
@@ -191,27 +191,16 @@ function moodFor({ mergedRecently, ratio }) {
   return result('neutral');
 }
 
-/** XP and counts per kind for the last 7 days, from `since` on (the pet's birth day: what it did not earn is not shown). */
-function weekSummary(days, today, since = '') {
-  const weekStart = addDays(today, -6) > since ? addDays(today, -6) : since;
-  const counts = () => Object.fromEntries(KINDS.map((kind) => [kind, 0]));
-  const week = { ...counts(), xp: counts(), total: 0 };
-  for (const [day, d] of Object.entries(days)) {
-    if (day < weekStart || day > today) continue;
-    const xp = dayXpByKind(d);
-    for (const kind of KINDS) {
-      week[kind] += d[kind] || 0;
-      week.xp[kind] += xp[kind];
-    }
-    week.total += dayXp(d);
-  }
-  return week;
+/** XP of the person in the last 7 days, whichever pet earned it (the mood compares it with the baseline). */
+function weekTotal(days, today) {
+  const weekStart = addDays(today, -6);
+  return Object.entries(days).reduce((sum, [day, d]) => (day >= weekStart && day <= today ? sum + dayXp(d) : sum), 0);
 }
 
 /**
- * Derived status consumed by the UI: the active pet (name, species, stage, level and XP) and, around it, what belongs
- * to the person and not to one pet: mood, PRs, the week, streaks and achievements (all counted from the day the first
- * pet hatched), plus the whole `collection`. `repos`: the selected repos (the PR list is filtered by them).
+ * Derived status consumed by the UI: the active pet (name, species, stage, level, XP, and what it earned today and
+ * this week) and, around it, what belongs to the person and not to one pet: mood, streaks, the XP log and achievements
+ * (all counted from the day the first pet hatched), plus the whole `collection`. `repos`: the selected repos.
  */
 function computeStatus(
   { pets = {}, activePet, achievements, activity, repos = [], timeOff = [], pausedUntil = null },
@@ -226,8 +215,7 @@ function computeStatus(
   const isOff = (day) => isOffDay(timeOff, day, today); // time off: like a weekend, it breaks nothing
 
   const sinceStart = Object.fromEntries(Object.entries(days).filter(([day]) => day >= start));
-  const week = weekSummary(days, today, start); // what the person did since the first pet hatched
-  const weekRatioXp = weekSummary(days, today).total; // the mood compares the whole week with the baseline
+  const weekRatioXp = weekTotal(days, today); // the mood compares the person's whole week with the baseline
   const baseline = computeBaseline(days, today);
 
   // Level and stage follow the baseline, but what was reached is never lost.
@@ -250,8 +238,10 @@ function computeStatus(
     levelXpNeeded: progress.levelXpNeeded,
     ...moodFor({ mergedRecently, ratio: weekRatioXp / baseline }),
     pause: pauseView({ pausedUntil, timeOff, today, now: now.getTime() }),
-    todayXp: dayXp(sinceStart[today]),
-    week,
+    // What the active pet earned: today, in the last 7 days and on each of them (the bars of its week).
+    todayXp: pet.earned?.[today] ?? 0,
+    weekXp: recentXp(pet, today),
+    history: recentDays(pet, today),
     xpLog: xpLog(sinceStart, now),
     baseline,
     lastSyncedAt: activity.lastSyncedAt,

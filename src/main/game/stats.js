@@ -1,8 +1,6 @@
-// Pure activity stats (XP per day, streaks and recent history): no I/O.
+// Pure activity stats (XP per day and streaks): no I/O.
 const { WEIGHTS, DAILY_CAPS, KINDS } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
-
-const HISTORY_DAYS = 7;
 
 /**
  * One ledger day: a count per kind, plus `prsXp` (the XP of the PRs opened that day, which depends on their size) and
@@ -60,13 +58,13 @@ function streakLengths(activeDays, isOff = never) {
 }
 
 /**
- * Streak, best streak and last 7 days of XP.
+ * Streak and best streak.
  * Weekends and time off never break a streak (see `streakLengths`). Today without activity yet does not break it
  * either: counting starts from the last active day, as long as no working day went by in between.
  * @param {{ [day: string]: object }} days
  * @param {Date} now
  * @param {(day: string) => boolean} [isOff]  whether a day was time off
- * @returns {{ streak: number, bestStreak: number, history: { day: string, score: number }[] }}
+ * @returns {{ streak: number, bestStreak: number }}
  */
 function stats(days, now = new Date(), isOff = never) {
   const today = toDay(now);
@@ -79,12 +77,7 @@ function stats(days, now = new Date(), isOff = never) {
   const streak = last && onlyRestBetween(last, today, isOff) ? lengths.get(last) : 0;
   const bestStreak = Math.max(0, ...lengths.values());
 
-  const history = Array.from({ length: HISTORY_DAYS }, (_, i) => {
-    const day = addDays(today, i - (HISTORY_DAYS - 1));
-    return { day, score: dayXp(days[day]) };
-  });
-
-  return { streak, bestStreak, history };
+  return { streak, bestStreak };
 }
 
 module.exports = { stats, streakLengths, isWeekend, emptyDay, dayXp, dayXpByKind };

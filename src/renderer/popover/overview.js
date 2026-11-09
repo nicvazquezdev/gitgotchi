@@ -44,8 +44,8 @@ export function growth({ species, stage }, levels) {
 const weekday = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' });
 const BAR_MAX = 44; // px: the tallest day
 
-/** XP of each of the last 7 days as bars, the week's total and the streak. */
-export function week({ week: summary, history, streak }) {
+/** XP the active pet earned on each of the last 7 days as bars, its total for the week and the streak. */
+export function week({ weekXp, history, streak }) {
   const top = Math.max(1, ...history.map((d) => d.score));
   return section(
     'This week',
@@ -76,6 +76,6 @@ export function week({ week: summary, history, streak }) {
         streak > 0 ? `${streak}-day streak` : 'No streak yet. Ship something today.',
       ),
     ],
-    h('span', { class: 'fig' }, `+${summary.total} XP`),
+    h('span', { class: 'fig' }, `+${weekXp} XP`),
   );
 }

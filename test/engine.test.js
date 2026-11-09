@@ -300,52 +300,64 @@ describe('computeStatus', () => {
       '2026-06-15': day({ commits: cap + 25, issues: 2 }), // the real count is kept; XP stops at the cap
       '2026-06-14': day({ commits: 3 }),
     };
-    const { week, xp } = status(activity(days));
-    assert.equal(week.commits, cap + 25 + 3);
-    assert.deepEqual(week.xp, {
-      prs: 0,
-      reviews: 0,
-      merges: 0,
-      commits: (cap + 3) * WEIGHTS.commits,
-      issues: 2 * WEIGHTS.issues,
-    });
+    const { xp } = status(activity(days));
     assert.equal(xp, (cap + 3) * WEIGHTS.commits + 2 * WEIGHTS.issues);
   });
 
-  test('week covers only the last 7 days, with counts and XP per kind', () => {
+  test('the week is what the active pet earned in the last 7 days, day by day, with the empty days at 0', () => {
     const days = {
       '2026-06-08': day({ reviews: 10 }), // 7 days ago: out
       '2026-06-09': day({ reviews: 1, prs: 1, prsXp: 10 }), // 6 days ago: in
       '2026-06-15': day({ merges: 2 }),
       '2026-06-16': day({ reviews: 50 }), // future: out
     };
-    const { week } = status(activity(days));
-    assert.deepEqual(week, {
-      prs: 1,
-      reviews: 1,
-      merges: 2,
-      commits: 0,
-      issues: 0,
-      xp: { prs: 10, reviews: WEIGHTS.reviews, merges: 2 * WEIGHTS.merges, commits: 0, issues: 0 },
-      total: 10 + WEIGHTS.reviews + 2 * WEIGHTS.merges,
-    });
+    const s = status(activity(days));
+    assert.equal(s.weekXp, 10 + WEIGHTS.reviews + 2 * WEIGHTS.merges);
+    assert.deepEqual(
+      s.history.map((d) => d.day),
+      ['2026-06-09', '2026-06-10', '2026-06-11', '2026-06-12', '2026-06-13', '2026-06-14', '2026-06-15'],
+    );
+    assert.deepEqual(
+      s.history.map((d) => d.score),
+      [10 + WEIGHTS.reviews, 0, 0, 0, 0, 0, 2 * WEIGHTS.merges],
+    );
   });
 
-  test('week only counts what happened since the first pet hatched, so it never exceeds the total XP', () => {
+  test('the week and today follow the pet that is active, not everything the person did', () => {
+    const days = { '2026-06-14': day({ reviews: 3 }), '2026-06-15': day({ merges: 1 }) };
+    const old = pet(new Date(2026, 0, 1), { species: 'koi', name: 'Finn', earned: { '2026-06-14': 30 } });
+    const fresh = pet(new Date(2026, 5, 15), { species: 'phoenix', name: 'Pixel', earned: { '2026-06-15': 15 } });
+    const state = (activePet) => ({
+      pets: { koi: old, phoenix: fresh },
+      activePet,
+      activity: activity(days),
+      repos: ['a/b'],
+    });
+    const koi = computeStatus(state('koi'), NOON);
+    assert.deepEqual([koi.weekXp, koi.todayXp], [30, 0]);
+    assert.deepEqual(
+      koi.history.map((d) => d.score),
+      [0, 0, 0, 0, 0, 30, 0],
+    );
+    const phoenix = computeStatus(state('phoenix'), NOON);
+    assert.deepEqual([phoenix.weekXp, phoenix.todayXp], [15, 15]);
+    assert.equal(phoenix.history.at(-1).score, 15);
+  });
+
+  test('the week never exceeds the pet XP, and does not count what happened before it hatched', () => {
     const days = {
       '2026-06-10': day({ reviews: 20 }), // before the pet was born
       '2026-06-14': day({ reviews: 2 }),
     };
     const born = computeStatus(stateOf(activity(days), pet(new Date(2026, 5, 13)), []), NOON);
-    assert.equal(born.week.reviews, 2);
-    assert.equal(born.week.total, 2 * WEIGHTS.reviews);
-    assert.equal(born.week.total, born.xp);
+    assert.equal(born.weekXp, 2 * WEIGHTS.reviews);
+    assert.equal(born.weekXp, born.xp);
   });
 
   test('old-shaped days (pushes, comments) give no XP and do not crash', () => {
     const s = status(activity({ '2026-06-15': { pushes: 9, comments: 9, prs: 3, merges: 0, reviews: 0 } }));
     assert.equal(s.xp, 0);
-    assert.equal(s.week.total, 0);
+    assert.equal(s.weekXp, 0);
   });
 
   test('exposes level progress, stages and the status contract', () => {
@@ -355,7 +367,17 @@ describe('computeStatus', () => {
     assert.ok(s.level >= 1 && s.levelXp >= 0 && s.levelXp <= s.levelXpNeeded);
     assert.equal(s.stage.id, 'baby');
     assert.deepEqual(s.nextStage, { id: 'kid', name: 'Kid', index: 1, level: 5 });
-    for (const key of ['moodLabel', 'moodReason', 'xpLog', 'streak', 'bestStreak', 'history', 'baseline', 'species'])
+    for (const key of [
+      'moodLabel',
+      'moodReason',
+      'xpLog',
+      'weekXp',
+      'streak',
+      'bestStreak',
+      'history',
+      'baseline',
+      'species',
+    ])
       assert.ok(key in s, key);
   });
 
@@ -368,7 +390,7 @@ describe('computeStatus', () => {
 });
 
 describe('today', () => {
-  test('todayXp is what the person earned today, since the pet hatched', () => {
+  test('todayXp is what the active pet earned today', () => {
     const today = toDay(NOON);
     const days = { [today]: day({ reviews: 2, merges: 1 }), [addDays(today, -1)]: day({ reviews: 5 }) };
     assert.equal(status(activity(days)).todayXp, 2 * WEIGHTS.reviews + WEIGHTS.merges);

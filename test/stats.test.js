@@ -9,8 +9,6 @@ test('no history', () => {
   const s = run({}, '2026-03-10');
   assert.equal(s.streak, 0);
   assert.equal(s.bestStreak, 0);
-  assert.equal(s.history.length, 7);
-  assert.ok(s.history.every((d) => d.score === 0));
 });
 
 test('streak counts consecutive days ending today', () => {
@@ -61,17 +59,6 @@ test('best streak looks at the whole history', () => {
   const s = run(days, '2026-03-10');
   assert.equal(s.bestStreak, 4);
   assert.equal(s.streak, 1);
-});
-
-test('history is the last 7 days, oldest first, missing days padded with 0', () => {
-  const s = run({ '2026-03-04': push(2), '2026-03-10': push() }, '2026-03-10');
-  assert.deepEqual(
-    s.history.map((d) => d.day),
-    ['2026-03-04', '2026-03-05', '2026-03-06', '2026-03-07', '2026-03-08', '2026-03-09', '2026-03-10'],
-  );
-  const scores = s.history.map((d) => d.score);
-  assert.ok(scores[0] > scores[6] && scores[6] > 0);
-  assert.deepEqual(scores.slice(1, 6), [0, 0, 0, 0, 0]);
 });
 
 // 2026-03-06 is a Friday, 07 Saturday, 08 Sunday, 09 Monday, 10 Tuesday.
