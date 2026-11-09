@@ -2,8 +2,9 @@
 // "My PRs" is the user's own PRs (waiting, approved, merged today). Rows open the PR in the browser.
 import { $, h } from '../shared/dom.js';
 import { plural, timeAgo, dayLabel } from '../shared/format.js';
-import { icon, xpBar, portraitImg } from '../shared/ui.js';
+import { icon, xpBar } from '../shared/ui.js';
 import { ring } from '../shared/pixel-art.js';
+import { PetView } from '../pet/pet-view.js';
 
 const api = window.gitgotchi.popover;
 const app = $('#app');
@@ -17,6 +18,31 @@ const shortAge = (n) => (n > 0 ? `${n}d` : 'today');
 const ago = (n) => (n > 0 ? `${n}d ago` : 'today');
 /** 'acme/code' -> 'code' when the team is in the same organization as the repo (it is the usual case). */
 const teamName = (pr) => (pr.via?.startsWith(`${pr.fullRepo.split('/')[0]}/`) ? pr.via.split('/')[1] : pr.via);
+
+// ---------- Portrait: the pet playing its mood ----------
+
+// One canvas for the life of the page: the card is rebuilt on every state, and a new animator each time would restart
+// the sweat and the shivers. The pet is not on the desktop in this mood (there it is always normal), so this is where
+// it shows: the mood's pose and effects, standing in place, at the same size as the desktop's smallest scale.
+const PORTRAIT_INNER = 60; // CSS px inside the frame (see .portrait: 64 px less its 2 px border)
+const portraitCanvas = h('canvas', { class: 'sprite', role: 'img' });
+const portrait = new PetView(portraitCanvas, { getWidth: () => PORTRAIT_INNER });
+portrait.setScale(1);
+portrait.setStill(true);
+const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+const syncCalm = () => portrait.setCalm(reducedMotion.matches); // the pose, without sweat or shivers
+syncCalm();
+reducedMotion.addEventListener('change', syncCalm);
+
+let portraitCreature = null;
+function syncPortrait({ species, stage, mood, moodLabel }) {
+  if (portrait.mood !== mood) portrait.setMood(mood); // it restarts the mood's effects: only when it changes
+  portraitCanvas.ariaLabel = `${species.stages[stage.index].name}, ${moodLabel.toLowerCase()}`;
+  const creature = `${species.id}:${stage.index}`;
+  if (creature === portraitCreature) return;
+  portraitCreature = creature;
+  portrait.setCreature(species.id, stage.index).catch((err) => console.error(err));
+}
 
 // The last state received, and the tab the user picked (null: the default, see `currentTab`).
 let latest = {};
@@ -37,7 +63,7 @@ function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
     h(
       'div',
       { class: 'portrait pixel-cut' },
-      h('div', { class: 'inner pixel-cut', style: { background: species.tint } }, portraitImg({ species, stage })),
+      h('div', { class: 'inner pixel-cut', style: { background: species.tint } }, portraitCanvas),
     ),
     h(
       'div',
@@ -79,6 +105,7 @@ function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
   );
 }
 
+/** Why the pet looks the way it does (only for the moods that need an explanation), under the portrait. */
 const moodNotice = ({ mood, moodLabel, moodReason }) =>
   NOTICE_MOODS.includes(mood) && moodReason
     ? h(
@@ -340,6 +367,7 @@ function render(state = latest, { resetScroll = false } = {}) {
   latest = state;
   const { status, placement = 'above', tailX = 180 } = state;
   const tab = currentTab(state);
+  if (status) syncPortrait(status);
 
   const card = h(
     'div',
@@ -347,6 +375,7 @@ function render(state = latest, { resetScroll = false } = {}) {
     ...(status
       ? [
           header(status),
+          moodNotice(status),
           todayRow(status),
           tabs(status),
           h(
@@ -354,7 +383,7 @@ function render(state = latest, { resetScroll = false } = {}) {
             { class: 'list', id: 'panel', role: 'tabpanel', 'aria-labelledby': `tab-${tab}` },
             tab === 'review'
               ? reviewTab(status.reviewQueue ?? null)
-              : [moodNotice(status), minePrsTab(status.prs ?? { waiting: [], approved: [], mergedToday: [] })],
+              : minePrsTab(status.prs ?? { waiting: [], approved: [], mergedToday: [] }),
           ),
           footer(),
         ]

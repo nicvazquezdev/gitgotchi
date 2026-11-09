@@ -89,7 +89,7 @@ body {
 }
 
 .card > .notice {
-  margin: 0 16px;
+  margin: 0 16px 12px;
 }
 
 /* ---------- Today: the daily goal ---------- */
@@ -177,9 +177,6 @@ body {
 }
 .prs {
   padding: 4px 8px;
-}
-.list > .notice {
-  margin: 4px 16px 0;
 }
 .list-note {
   padding: 4px 8px 6px;
