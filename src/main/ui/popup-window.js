@@ -109,15 +109,17 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   }
 
   /**
-   * The anchor moved (the pet is dragged): the window goes with it. The page is told only when it flips to the other
-   * side of the pet (its shell turns), so a drag does not draw it again on every step.
+   * The anchor moved (the pet is dragged): the window goes with it. Against a screen edge `aim` (where the notch of
+   * the shell points) changes with almost every step, and drawing the page again for each makes it flicker. So only
+   * a flip to the other side of the pet sends the state; the notch slides on its own channel.
    */
   function follow(rect) {
     if (!isVisible()) return;
-    const before = placed?.placement;
+    const before = placed;
     anchor = rect;
     place();
-    if (placed.placement !== before) send();
+    if (placed.placement !== before?.placement) send();
+    else if (placed.aim !== before?.aim) win.webContents.send(`${channel}:aim`, placed.aim);
   }
 
   /**

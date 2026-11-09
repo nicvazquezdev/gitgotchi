@@ -82,8 +82,9 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   },
 
   popover: {
-    state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below' }
+    state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', aim }
     onState: subscribe('popover:state'),
+    onAim: subscribe('popover:state:aim'), // aim: the pet is dragged and the notch slides (the page is not drawn again)
     action: send('popover:action'), // 'openShare' | 'openSettings' | 'resume'
     setHeight: send('popover:height'),
   },

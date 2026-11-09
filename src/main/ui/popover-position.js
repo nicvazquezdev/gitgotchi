@@ -5,11 +5,14 @@ const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
  * Popover bounds centered on `anchor` (the pet's rect on screen): above it, or below when there is no room,
  * clamped inside `workArea`. The height is never shortened: when it fits neither above nor below it goes on the side
  * with more space and covers the pet as little as it can.
+ * `aim` is where the notch of the shell points, from the popover's left edge: at the pet's center, however far the
+ * popover had to move to fit on screen (but never past `aimInset`: the notch stays on the flat of the body).
  * @param {{anchor: {x:number,y:number,width:number,height:number}, size: {width:number,height:number},
- *          workArea: {x:number,y:number,width:number,height:number}, gap?: number, margin?: number}} args
- * @returns {{x:number,y:number,width:number,height:number,placement:'above'|'below'}}
+ *          workArea: {x:number,y:number,width:number,height:number}, gap?: number, margin?: number,
+ *          aimInset?: number}} args
+ * @returns {{x:number,y:number,width:number,height:number,placement:'above'|'below',aim:number}}
  */
-function popoverBounds({ anchor, size, workArea, gap = 10, margin = 8 }) {
+function popoverBounds({ anchor, size, workArea, gap = 10, margin = 8, aimInset = 64 }) {
   const { width, height } = size;
   const above = anchor.y - gap - height;
   const spaceAbove = anchor.y - gap - (workArea.y + margin);
@@ -27,6 +30,7 @@ function popoverBounds({ anchor, size, workArea, gap = 10, margin = 8 }) {
     width,
     height,
     placement,
+    aim: Math.round(clamp(centerX - x, aimInset, width - aimInset)),
   };
 }
 

@@ -483,23 +483,24 @@ body {
 .eye.r {
   left: 238px;
 }
-/* The belly: a small notch at the bottom edge of the body. */
+/* The belly: a small notch at the bottom edge of the body. It points at the pet: --aim is where the pet is, from the
+   left edge of the rig (the middle unless the popover had to move to fit on screen; popover.js sets it). */
 .belly-a {
-  left: 212px;
+  left: calc(var(--aim, 220px) - 8px);
   bottom: 14px;
   width: 16px;
   height: 6px;
   background: var(--ink);
 }
 .belly-b {
-  left: 216px;
+  left: calc(var(--aim, 220px) - 4px);
   bottom: 8px;
   width: 8px;
   height: 6px;
   background: var(--ink);
 }
 .belly-c {
-  left: 216px;
+  left: calc(var(--aim, 220px) - 4px);
   bottom: 16px;
   width: 8px;
   height: 6px;

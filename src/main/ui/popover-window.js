@@ -11,9 +11,12 @@ const popup = createPopup({
   boundsFor: popoverBounds,
 });
 
-/** The page also gets the side of the pet it hangs on: `{ placement: 'above' | 'below' }`. */
+/** The page also gets the side of the pet it hangs on and where its notch points: `{ placement: 'above' | 'below', aim }`. */
 function init(stateProvider) {
-  popup.init(() => ({ ...stateProvider(), placement: popup.placement()?.placement }));
+  popup.init(() => {
+    const { placement, aim } = popup.placement() ?? {};
+    return { ...stateProvider(), placement, aim };
+  });
 }
 
 module.exports = { ...popup, init };

@@ -218,6 +218,9 @@ const shell = () =>
 
 // ---------- Render ----------
 
+/** The notch of the shell points at the pet: `aim` px from the left edge, on the 4 px grid of the pixel art. */
+const aimNotch = (aim) => aim != null && app.style.setProperty('--aim', `${Math.round(aim / 4) * 4}px`);
+
 /** What has the focus (a tab, a card, a name field), to give it back after the card is drawn again. */
 const focusKey = () => document.activeElement?.dataset?.key ?? null;
 function restoreFocus(key) {
@@ -234,7 +237,8 @@ function restoreFocus(key) {
 function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
   const focus = focusOn ?? focusKey();
   latest = state;
-  const { status, placement = 'above' } = state;
+  const { status, placement = 'above', aim } = state;
+  aimNotch(aim);
   if (status) syncPortrait(status);
   const mood = status?.pause?.active ? 'paused' : (status?.mood ?? 'neutral'); // what the eyes of the shell show
 
@@ -268,4 +272,6 @@ document.addEventListener('visibilitychange', () => {
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);
 
 api.onState((state) => render(state));
+// While the pet is dragged against a screen edge only the notch moves: slide it, do not draw the whole page again.
+api.onAim(aimNotch);
 api.state().then((state) => render(state));

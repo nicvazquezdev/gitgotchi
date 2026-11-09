@@ -27,6 +27,28 @@ test('popoverBounds stays inside the work area', () => {
   assert.equal(popoverBounds({ anchor: { ...pet, x: -60 }, size, workArea }).x, 8);
 });
 
+test('popoverBounds aims the notch at the pet, wherever the popover had to move to fit', () => {
+  assert.equal(popoverBounds({ anchor: pet, size, workArea }).aim, size.width / 2); // centered on the pet
+  const edge = { x: 1240, y: 700, width: 128, height: 128 }; // pushed left to fit: the pet is right of the middle
+  const b = popoverBounds({ anchor: edge, size, workArea });
+  assert.ok(b.aim > size.width / 2);
+  assert.equal(b.aim, edge.x + 64 - b.x);
+  const left = popoverBounds({ anchor: { ...pet, x: 40 }, size, workArea }); // pushed right: the pet is left of it
+  assert.ok(left.aim < size.width / 2);
+  assert.equal(left.aim, 40 + 64 - left.x);
+  const below = popoverBounds({ anchor: { ...edge, y: 200 }, size, workArea });
+  assert.equal(below.placement, 'below');
+  assert.equal(below.aim, edge.x + 64 - below.x);
+});
+
+test('popoverBounds keeps the notch on the flat of the shell, even when the pet is past it', () => {
+  const far = { x: 1400, y: 700, width: 128, height: 128 }; // its center is beyond the popover's right inset
+  assert.equal(popoverBounds({ anchor: far, size, workArea }).aim, size.width - 64);
+  const off = popoverBounds({ anchor: { ...pet, x: -200 }, size, workArea });
+  assert.equal(off.aim, 64);
+  assert.equal(popoverBounds({ anchor: far, size, workArea, aimInset: 20 }).aim, size.width - 20);
+});
+
 test('popoverBounds is clamped vertically when it fits neither above nor below', () => {
   const anchor = { x: 500, y: 450, width: 128, height: 128 };
   const b = popoverBounds({ anchor, size: { width: 360, height: 800 }, workArea });
