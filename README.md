@@ -12,12 +12,14 @@
 <p align="center">
   <img src="https://img.shields.io/badge/Electron-45-47848F?style=flat-square&logo=electron&logoColor=white" alt="Electron 45" />
   <img src="https://img.shields.io/badge/needs-GitHub%20CLI-181717?style=flat-square&logo=github&logoColor=white" alt="Needs the GitHub CLI" />
+  <img src="https://img.shields.io/badge/macOS%20%C2%B7%20Windows%20%C2%B7%20Linux-555?style=flat-square" alt="macOS, Windows and Linux" />
+  <img src="https://img.shields.io/badge/license-MIT-blue?style=flat-square" alt="MIT license" />
   <img src="https://img.shields.io/badge/pixel%20art-synthwave-ff3ea5?style=flat-square" alt="Pixel art, synthwave" />
 </p>
 
 <p align="center">
   <a href="#features">Features</a> ·
-  <a href="#quick-start">Quick start</a> ·
+  <a href="#install">Install</a> ·
   <a href="#using-it">Using it</a> ·
   <a href="#how-it-works">How it works</a> ·
   <a href="#development">Development</a>
@@ -38,11 +40,42 @@
 - 📤 **A share card.** Copy your pet as an image. It has no repos, no PR titles and no username.
 - 🔒 **Private.** It reuses your `gh` login and never reads your code. The optional backup keeps ids, not repo names.
 
-## Quick start
+## Install
 
 Requires the [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). The app reuses that login.
 
+Download the installer for your system from the [latest release](https://github.com/nicvazquezdev/gitgotchi/releases/latest):
+
+| System  | Download                                                                      |
+| ------- | ----------------------------------------------------------------------------- |
+| macOS   | the `.dmg`: `arm64` for Apple Silicon (M1 and later), `x64` for Intel         |
+| Windows | the `.exe`                                                                    |
+| Linux   | the `.AppImage` (any distribution) or the `.deb` (Debian, Ubuntu and similar) |
+
+<details>
+<summary><b>The first time you open it</b></summary>
+
+<br />
+
+The installers are not signed with a paid certificate, so each system asks before it opens the app.
+
+- **macOS:** drag Gitgotchi to Applications and open it. When macOS says it cannot verify the app, go to _System Settings → Privacy & Security_, scroll down and pick **Open Anyway**. (On macOS 14 and earlier: right-click the app → _Open_.) If macOS says the app "is damaged", run `xattr -dr com.apple.quarantine /Applications/Gitgotchi.app` and open it again. The build has an ad-hoc signature, which is what Apple Silicon needs to run it at all.
+- **Windows:** SmartScreen shows "Windows protected your PC": pick **More info → Run anyway**. It installs for your user, with no admin rights.
+- **Linux:** for the AppImage, run `chmod +x Gitgotchi-*.AppImage` and open it. For the `.deb`, run `sudo apt install ./Gitgotchi-*.deb`. On Ubuntu 23.10 and later the AppImage can fail with a sandbox error (AppArmor limits user namespaces): use the `.deb`, or start the AppImage with `--no-sandbox`.
+
+The pet is a transparent window that stays on top, so on Linux it needs a desktop with a compositor (GNOME, KDE and the like have one). GNOME shows no tray icons unless the AppIndicator extension is on; the pet and its right-click menu work without it.
+
+</details>
+
+Gitgotchi is made and used every day on macOS. The Windows and Linux builds are newer: they pass the same tests and boot in CI on each system, but they have had less use. If something looks off, please [open an issue](https://github.com/nicvazquezdev/gitgotchi/issues/new/choose).
+
+**Updates.** The app looks for a new release a minute after it opens and every six hours. On Windows and with the Linux AppImage it downloads the new version and installs it when you quit, or from _Settings → Restart to update_. On macOS and with the `.deb` it only tells you that one is out (a row in _Settings_ and an item in the menu, no notifications) and opens the release page. macOS can only update an app by itself when it has an Apple Developer ID signature.
+
+### Run it from source
+
 ```sh
+git clone https://github.com/nicvazquezdev/gitgotchi.git
+cd gitgotchi
 npm install
 npm run dev   # auto-reloads on changes
 ```
@@ -55,7 +88,7 @@ The first launch has three steps: your GitHub account, the repos that earn XP, a
 ## Using it
 
 - **Drag** the pet anywhere. **Click** it to open its card: _Home_ (growth, XP this week, streak), _Pets_, _Trophies_ and _XP log_ (what you earned each day, and why).
-- The **menu bar icon** (a click or a right-click) and a right-click on the pet open the menu: _Vacation…_, _Hide pet_, _Pet card_ (the card, also when the pet is hidden), _Settings…_ and _Quit_.
+- The **menu bar icon** (the system tray on Windows and Linux; a click or a right-click, and on Linux a native menu) and a right-click on the pet open the menu: _Vacation…_, _Hide pet_, _Pet card_ (the card, also when the pet is hidden), _Settings…_ and _Quit_.
 - In the card, the **share** icon opens a small window with your pet's card to copy as an image, and the **gear** opens Settings. Neither closes the card.
 
 <details>
@@ -86,7 +119,8 @@ _Settings…_ in the menu:
 - Vacation.
 - The account and repos (_Change…_ reopens the setup: two steps when you already have pets, since pets are managed in the collection).
 - _Back up pet to GitHub_.
-- _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
+- _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`, on Windows a login item, on Linux an autostart entry in `~/.config/autostart/`).
+- The version, and a way to look for updates.
 
 </details>
 
@@ -232,6 +266,7 @@ src/
     game/achievements.js    achievement progress (pure)
     services/session.js     GitHub connection via `gh`
     services/pet-service.js sync, setup and pet events
+    services/updater.js     looks for new releases (electron-updater)
     ui/                     windows and tray
   preload/preload.js        safe API exposed to pages
   renderer/
@@ -250,7 +285,7 @@ src/
 
 <br />
 
-Eight creature lines with four stages each live in `assets/pets/`: the static rest poses (`<id>_<k>.png`, plus `_happy` and `_anxious`), `sprites.json` (names, sizes and shadow ellipses), and for the animations `sheets/` (14 frames × 3 moods per stage, with the shadow as its own layer; the app never plays the anxious row), `fx/` (hearts, sparkles, sweat drops, dust and each line's ambient particle) and `animations.json` (timings, lift per frame, facing and effect anchors). English copy per line is in `src/main/game/catalog.js`.
+Eight creature lines with four stages each live in `assets/pets/` (the pixel art was made by the author with Claude): the static rest poses (`<id>_<k>.png`, plus `_happy` and `_anxious`), `sprites.json` (names, sizes and shadow ellipses), and for the animations `sheets/` (14 frames × 3 moods per stage, with the shadow as its own layer; the app never plays the anxious row), `fx/` (hearts, sparkles, sweat drops, dust and each line's ambient particle) and `animations.json` (timings, lift per frame, facing and effect anchors). English copy per line is in `src/main/game/catalog.js`.
 
 The desktop pet is animated by `src/renderer/shared/pet-animator.js`, copied verbatim from the pack's reference player (do not edit it; update it from a newer pack). `pet/pet-view.js` draws it on a canvas at a whole-number scale with nearest-neighbor filtering and decides when it moves: an idle loop with blinks; a short stroll every 20–60 s; a cheer when a PR of yours is merged or approved (or you earn an achievement), followed by a burst of hearts and sparkles for a few seconds and a spell of being happy. Otherwise the pet on the desktop is always in its normal state: how it feels, and why, shows in the card: the portrait plays the mood (a happy pose) and the eyes of its shell show it (cyan, mint when happy, dim on vacation). A happy pet is otherwise quiet: it can stay happy for days, so hearts are a reaction and not a state. On vacation or with macOS _Reduce motion_ the pet only idles. The profile and onboarding use the static poses.
 
@@ -260,7 +295,17 @@ The desktop pet is animated by `src/renderer/shared/pet-animator.js`, copied ver
 
 - `npm run dev`: run with live reload (UI changes reload the windows, main process changes restart the app)
 - `npm start`: run the app
+- `npm run smoke`: boots the whole app (tray, IPC, every window) on a throwaway profile and fails on any error. CI runs it on macOS, Windows and Linux
+- `npm run pack` / `npm run dist`: the unpacked app / the installers for this system, in `dist/` (see `electron-builder.yml`; how a release is cut is in [CONTRIBUTING](CONTRIBUTING.md#releasing-maintainers))
 - `npm run format` / `npm run lint`: Prettier
 - `npm run shots [-- share popover panel settings pet] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--happy] [--fresh] [--complete] [--click selector]`: renders the windows with sample data (four pets, one fully grown) to PNG files (path printed) and flags cards that overflow. Use it to check a UI change by eye. The pictures in `docs/images/` use the same sample data: take them again after a UI change
 - `npm run shots:check [case ...]`: visual tests. Renders the card (and its tabs), the share window, the menu, settings and the setup (with a fixed clock, no animation and no animated sprites) and compares each with the screenshot saved in `test/visual/`. A window that changed, grew, shrank or overflows fails, and `test/visual/__failures__/` gets the actual and a diff image (changes in red). If the change is on purpose, `npm run shots:update` saves the new screenshots: look at them before committing (the pet window is not covered: it is random and has its own tests). It needs Electron, so CI does not run it, and the references are made on macOS (another system may need its own)
 - `npm test`: unit tests (Node built-in runner, files in `test/`)
+
+## Contributing
+
+Bug reports, ideas and pull requests are welcome: see [CONTRIBUTING](CONTRIBUTING.md). For a vulnerability, see [SECURITY](SECURITY.md). What changed in each version is in the [changelog](CHANGELOG.md).
+
+## License
+
+[MIT](LICENSE). The pixel art in `assets/` was made by the author with Claude.
