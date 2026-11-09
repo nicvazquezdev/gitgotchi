@@ -1,5 +1,5 @@
-// Pure rules for the user's pull requests: size, XP, the stored list and the UI views.
-const { PR_SIZES, WEIGHTS, PR_KEEP_MERGED_DAYS } = require('./catalog');
+// Pure rules for the user's pull requests: size, XP and the stored list.
+const { PR_SIZES, PR_KEEP_MERGED_DAYS } = require('./catalog');
 const { toDay } = require('../dates');
 const { emptyDay } = require('./stats');
 
@@ -69,71 +69,10 @@ function pullRequestDays(prs) {
   return days;
 }
 
-/**
- * What a PR needs from its author, most urgent first: changes requested, merge conflicts (they must be fixed to merge
- * at all, and the checks may be out of date), failing checks, then (when nothing is wrong) approved, checks still
- * running, or simply waiting for a review.
- * @returns {{ kind: 'changes' | 'conflicts' | 'failing' | 'ready' | 'running' | 'review', label: string }}
- */
-function statusOf({ reviewDecision, ci, mergeable }) {
-  if (reviewDecision === 'CHANGES_REQUESTED') return { kind: 'changes', label: 'Changes requested' };
-  if (mergeable === 'CONFLICTING') return { kind: 'conflicts', label: 'Merge conflicts' };
-  if (ci === 'FAILURE' || ci === 'ERROR') return { kind: 'failing', label: 'Checks failing' };
-  if (reviewDecision === 'APPROVED') return { kind: 'ready', label: 'Ready to merge' };
-  if (ci === 'PENDING' || ci === 'EXPECTED') return { kind: 'running', label: 'Checks running' };
-  return { kind: 'review', label: 'Needs review' };
-}
-
-/** Short repo name: 'webflow/app-web' -> 'app-web'. */
-const shortRepo = (fullName) => fullName.split('/').pop();
-
-/** UI shape of a PR. `xp`: what it gave when opened, or the merge bonus for a merged PR. */
-function toView(pr, now) {
-  const merged = pr.state === 'MERGED';
-  return {
-    id: pr.id,
-    title: pr.title,
-    number: pr.number,
-    repo: shortRepo(pr.repo),
-    fullRepo: pr.repo,
-    url: pr.url,
-    size: sizeOf(pr.lines).id,
-    sizeName: sizeOf(pr.lines).name,
-    status: merged ? null : statusOf(pr),
-    xp: merged ? WEIGHTS.merges : openXp(pr.lines),
-    ageDays: Math.max(0, Math.floor((now.getTime() - new Date(pr.createdAt).getTime()) / DAY_MS)),
-    createdAt: pr.createdAt,
-    mergedAt: pr.mergedAt,
-  };
-}
-
-/**
- * Splits the stored PRs for the UI.
- * waiting: open, not draft, not approved (oldest first). approved: open and approved (oldest first).
- * mergedToday: merged since local midnight (newest first).
- */
-function classify(prs, now = new Date()) {
-  const today = toDay(now);
-  const byAge = (a, b) => a.createdAt.localeCompare(b.createdAt);
-  const open = prs.filter((pr) => pr.state === 'OPEN' && !pr.isDraft).sort(byAge);
-  const isApproved = (pr) => pr.reviewDecision === 'APPROVED';
-  const view = (pr) => toView(pr, now);
-  return {
-    waiting: open.filter((pr) => !isApproved(pr)).map(view),
-    approved: open.filter(isApproved).map(view),
-    mergedToday: prs
-      .filter((pr) => pr.state === 'MERGED' && toDay(pr.mergedAt) === today)
-      .sort((a, b) => b.mergedAt.localeCompare(a.mergedAt))
-      .map(view),
-  };
-}
-
 module.exports = {
   sizeOf,
-  statusOf,
   openXp,
   mergePullRequests,
   prunePullRequests,
   pullRequestDays,
-  classify,
 };

@@ -3,7 +3,7 @@ const { SPECIES, STAGES, KINDS, BASELINE, MOOD } = require('./catalog');
 const { toDay, fromDay, addDays } = require('../dates');
 const { stats, emptyDay, dayXp, dayXpByKind } = require('./stats');
 const { startDay, progressOf, collectionView, petFacts } = require('./collection');
-const { mergePullRequests, prunePullRequests, pullRequestDays, classify } = require('./pull-requests');
+const { mergePullRequests, prunePullRequests, pullRequestDays } = require('./pull-requests');
 const { mergeCommits, commitDays, pruneByDay } = require('./commits');
 const { mergeFastReviews, fastReviewDays, pruneFastReviews } = require('./review-speed');
 const { achievementProgress, groupAchievements } = require('./achievements');
@@ -236,7 +236,6 @@ function computeStatus(
 
   const selected = new Set(repos.map((r) => r.toLowerCase()));
   const mine = (activity.prs ?? []).filter((pr) => selected.has(pr.repo.toLowerCase()));
-  const prs = classify(mine, now);
   const recentSince = now.getTime() - MOOD.happyMergeHours * 3600000;
   const mergedRecently = mine.filter((pr) => pr.state === 'MERGED' && new Date(pr.mergedAt) >= recentSince).length;
 
@@ -254,7 +253,6 @@ function computeStatus(
     todayXp: dayXp(sinceStart[today]),
     week,
     xpLog: xpLog(sinceStart, now),
-    prs,
     baseline,
     lastSyncedAt: activity.lastSyncedAt,
     ...stats(sinceStart, now, isOff),

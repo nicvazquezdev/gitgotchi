@@ -355,7 +355,7 @@ describe('computeStatus', () => {
     assert.ok(s.level >= 1 && s.levelXp >= 0 && s.levelXp <= s.levelXpNeeded);
     assert.equal(s.stage.id, 'baby');
     assert.deepEqual(s.nextStage, { id: 'kid', name: 'Kid', index: 1, level: 5 });
-    for (const key of ['moodLabel', 'moodReason', 'prs', 'streak', 'bestStreak', 'history', 'baseline', 'species'])
+    for (const key of ['moodLabel', 'moodReason', 'xpLog', 'streak', 'bestStreak', 'history', 'baseline', 'species'])
       assert.ok(key in s, key);
   });
 
@@ -364,81 +364,6 @@ describe('computeStatus', () => {
     assert.equal(s.level, 12);
     assert.equal(s.stage.index, 2);
     assert.equal(status(activity(), { pet: { stageIndex: 2 } }).level, 10); // the stage's own level
-  });
-});
-
-describe('PR status', () => {
-  const { statusOf } = require('../src/main/game/pull-requests');
-  const kind = (p) => statusOf(p).kind;
-
-  test('most urgent first: changes, merge conflicts, failing checks, ready, checks running, else needs review', () => {
-    assert.equal(kind({ reviewDecision: 'CHANGES_REQUESTED', ci: 'FAILURE', mergeable: 'CONFLICTING' }), 'changes');
-    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'FAILURE', mergeable: 'CONFLICTING' }), 'conflicts');
-    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'CONFLICTING' }), 'conflicts');
-    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'MERGEABLE' }), 'ready');
-    assert.equal(
-      kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'UNKNOWN' }),
-      'ready',
-      'not worked out yet',
-    );
-    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'FAILURE' }), 'failing');
-    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'ERROR' }), 'failing');
-    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'PENDING' }), 'ready');
-    assert.equal(kind({ reviewDecision: null, ci: 'PENDING' }), 'running');
-    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'SUCCESS' }), 'review');
-    assert.equal(kind({ reviewDecision: null, ci: null }), 'review');
-  });
-
-  test('the PR view carries the status and the size name; a merged PR has no status', () => {
-    const open = status(activity({}, { prs: [pr({ lines: 30, ci: 'FAILURE' })] })).prs.waiting[0];
-    assert.deepEqual([open.status.kind, open.sizeName], ['failing', 'Small']);
-    const merged = status(activity({}, { prs: [pr({ state: 'MERGED', mergedAt: hoursAgo(1) })] })).prs.mergedToday[0];
-    assert.equal(merged.status, null);
-  });
-});
-
-describe('PR lists', () => {
-  const lists = (prs) => status(activity({}, { prs })).prs;
-
-  test('waiting: open, not draft, not approved, oldest first', () => {
-    const a = pr({ id: 'a', createdAt: daysAgo(1) });
-    const b = pr({ id: 'b', createdAt: daysAgo(4), reviewDecision: 'CHANGES_REQUESTED' });
-    const draft = pr({ id: 'd', isDraft: true });
-    const approved = pr({ id: 'p', reviewDecision: 'APPROVED' });
-    const { waiting, approved: ok } = lists([a, draft, b, approved]);
-    assert.deepEqual(
-      waiting.map((p) => p.id),
-      ['b', 'a'],
-    );
-    assert.deepEqual(
-      ok.map((p) => p.id),
-      ['p'],
-    );
-  });
-
-  test('mergedToday: merged since local midnight, with the merge bonus', () => {
-    const today = pr({ id: 't', state: 'MERGED', mergedAt: new Date(2026, 5, 15, 8).toISOString() });
-    const yesterday = pr({ id: 'y', state: 'MERGED', mergedAt: new Date(2026, 5, 14, 23, 59).toISOString() });
-    const { mergedToday } = lists([today, yesterday]);
-    assert.deepEqual(
-      mergedToday.map((p) => [p.id, p.xp]),
-      [['t', WEIGHTS.merges]],
-    );
-  });
-
-  test('a PR view carries repo, size, XP and age', () => {
-    const prs = [pr({ repo: 'webflow/app-web', lines: 250, createdAt: daysAgo(3) })];
-    const [view] = computeStatus(stateOf(activity({}, { prs }), pet(), ['webflow/app-web']), NOON).prs.waiting;
-    assert.equal(view.repo, 'app-web');
-    assert.equal(view.fullRepo, 'webflow/app-web');
-    assert.equal(view.size, 'M');
-    assert.equal(view.xp, 20);
-    assert.equal(view.ageDays, 3);
-    for (const key of ['id', 'title', 'number', 'url', 'createdAt', 'mergedAt']) assert.ok(key in view, key);
-  });
-
-  test('PRs of repos no longer selected are not shown', () => {
-    assert.deepEqual(lists([pr({ repo: 'other/x' })]).waiting, []);
   });
 });
 
