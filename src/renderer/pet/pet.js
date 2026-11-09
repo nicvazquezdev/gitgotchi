@@ -341,6 +341,7 @@ api.onPrefs((next) => {
 api.onPopoverRequest(() => status && openPopover());
 api.onPopoverOpen((open) => {
   popoverOpen = open;
+  document.body.classList.toggle('popover-open', open);
   if (open) {
     // What the bubble said is in the popover now: it does not come back when the popover closes.
     spoken = null;

@@ -255,8 +255,8 @@ body.dragging .pet {
   pointer-events: none;
   transition: opacity 120ms steps(3);
 }
-/* A bubble or a moment has the place: the pill waits. */
-body.hover:not(.speaking):not(.dragging) .level {
+/* A bubble or a moment has the place: the pill waits. The popover has it too, while it hangs from the creature. */
+body.hover:not(.speaking):not(.dragging):not(.popover-open) .level {
   opacity: 1;
 }
 .mini {
