@@ -44,8 +44,8 @@ export function growth({ species, stage }, levels) {
 const weekday = (day) => new Date(`${day}T12:00:00`).toLocaleDateString('en-US', { weekday: 'short' });
 const BAR_MAX = 44; // px: the tallest day
 
-/** XP the active pet earned on each of the last 7 days as bars, its total for the week and the streak. */
-export function week({ weekXp, history, streak }) {
+/** XP the active pet earned on each of the last 7 days as bars, and its total for the week. */
+export function week({ weekXp, history }) {
   const top = Math.max(1, ...history.map((d) => d.score));
   return section(
     'This week',
@@ -69,13 +69,23 @@ export function week({ weekXp, history, streak }) {
         { class: 'week-days' },
         history.map(({ day }, i) => h('small', { class: i === history.length - 1 ? 'today' : '' }, weekday(day))),
       ),
-      h(
-        'div',
-        { class: 'streak' },
-        glyph('flame', 2),
-        streak > 0 ? `${streak}-day streak` : 'No streak yet. Ship something today.',
-      ),
     ],
     h('span', { class: 'fig' }, `+${weekXp} XP`),
+  );
+}
+
+/** The person's streak, not the pet's: its own tile, because it does not follow the bars above. */
+export function streak({ streak: days }) {
+  const going = days > 0;
+  return h(
+    'div',
+    { class: `streak${going ? '' : ' none'}` },
+    glyph('flame', 3),
+    h(
+      'span',
+      { class: 'streak-text' },
+      h('b', {}, going ? `${days}-day streak` : 'No streak yet'),
+      h('span', { class: 'meta' }, going ? "Weekends and time off don't break it" : 'Your next active day starts one'),
+    ),
   );
 }

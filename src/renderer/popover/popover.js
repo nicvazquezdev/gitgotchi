@@ -5,7 +5,7 @@ import { $, h } from '../shared/dom.js';
 import { icon, xpBar } from '../shared/ui.js';
 import { vacationUntilText } from '../shared/vacation-text.js';
 import { PetView } from '../pet/pet-view.js';
-import { growth, week } from './overview.js';
+import { growth, week, streak } from './overview.js';
 import { petsPage, leavePets } from './pets-view.js';
 import { trophiesPage, leaveTrophies } from './trophies-view.js';
 import { historyPage, leaveHistory } from './history-view.js';
@@ -110,7 +110,7 @@ function content(status) {
   if (tab === 'pets') return petsPage(status, { catalog, api: gitgotchi, pick: hashPick, rerender });
   if (tab === 'trophies') return trophiesPage(status, { rerender });
   if (tab === 'xp') return historyPage(status, { rules: catalog.xpRules, rerender });
-  return [growth(status, catalog.stages), week(status)]; // home
+  return [growth(status, catalog.stages), week(status), streak(status)]; // home
 }
 
 // ---------- Header ----------
