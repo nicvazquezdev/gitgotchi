@@ -23,11 +23,17 @@ const teamName = (pr) => (pr.via?.startsWith(`${pr.fullRepo.split('/')[0]}/`) ? 
 
 // One canvas for the life of the page: the card is rebuilt on every state, and a new animator each time would restart
 // the sweat and the shivers. The pet is not on the desktop in this mood (there it is always normal), so this is where
-// it shows: the mood's pose and effects, standing in place, at the same size as the desktop's smallest scale.
-const PORTRAIT_INNER = 60; // CSS px inside the frame (see .portrait: 64 px less its 2 px border)
+// it shows: the mood's pose and effects, standing in place.
+// The creature is drawn at 2 CSS px per native px and the frame fits it, so it grows with each stage: the creature's
+// rows, plus 2 above for its hop and 2 under the floor line (the canvas is bottom-aligned, the rest is clipped).
+const PORTRAIT_SCALE = 2;
+const PORTRAIT_MARGIN = 4; // native rows
+const FRAME_BORDER = 2; // CSS px, each side (see .portrait)
+const portraitInner = ({ species, stage }) => (species.stages[stage.index].size + PORTRAIT_MARGIN) * PORTRAIT_SCALE;
+let portraitWidth = 0; // CSS px the canvas may use: the frame's inside
 const portraitCanvas = h('canvas', { class: 'sprite', role: 'img' });
-const portrait = new PetView(portraitCanvas, { getWidth: () => PORTRAIT_INNER });
-portrait.setScale(1);
+const portrait = new PetView(portraitCanvas, { getWidth: () => portraitWidth });
+portrait.setScale(PORTRAIT_SCALE);
 portrait.setStill(true);
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const syncCalm = () => portrait.setCalm(reducedMotion.matches); // the pose, without sweat or shivers
@@ -35,12 +41,14 @@ syncCalm();
 reducedMotion.addEventListener('change', syncCalm);
 
 let portraitCreature = null;
-function syncPortrait({ species, stage, mood, moodLabel }) {
+function syncPortrait(status) {
+  const { species, stage, mood, moodLabel } = status;
   if (portrait.mood !== mood) portrait.setMood(mood); // it restarts the mood's effects: only when it changes
   portraitCanvas.ariaLabel = `${species.stages[stage.index].name}, ${moodLabel.toLowerCase()}`;
   const creature = `${species.id}:${stage.index}`;
   if (creature === portraitCreature) return;
   portraitCreature = creature;
+  portraitWidth = portraitInner(status);
   portrait.setCreature(species.id, stage.index).catch((err) => console.error(err));
 }
 
@@ -56,13 +64,15 @@ function currentTab({ status } = latest) {
 
 // ---------- Header ----------
 
-function header({ name, species, stage, level, levelXp, levelXpNeeded }) {
+function header(status) {
+  const { name, species, stage, level, levelXp, levelXpNeeded } = status;
+  const frame = `${portraitInner(status) + 2 * FRAME_BORDER}px`;
   return h(
     'div',
     { class: 'head' },
     h(
       'div',
-      { class: 'portrait pixel-cut' },
+      { class: 'portrait pixel-cut', style: { width: frame, height: frame } },
       h('div', { class: 'inner pixel-cut', style: { background: species.tint } }, portraitCanvas),
     ),
     h(

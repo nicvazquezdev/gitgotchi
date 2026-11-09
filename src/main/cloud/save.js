@@ -11,8 +11,10 @@ const SAVE = {
   app: 'gitgotchi',
   schema: 3, // 1 kept the names of the repos; 2 keeps `repoIds` (see repoId); 3 keeps the collection (`pets`). All are read.
   description: 'Gitgotchi pet save (managed by the Gitgotchi app, safe to delete).',
-  // Commits are signed with an address not linked to any account, so they don't count as contributions.
-  identity: { name: 'Gitgotchi', email: 'gitgotchi@users.noreply.github.com' },
+  // Commits are signed with an address not linked to any account, so they don't count as contributions. It must not be
+  // "<name>@users.noreply.github.com": GitHub reads that as the account <name>, and "gitgotchi" is a real user's.
+  // ".invalid" is reserved (RFC 2606), so no account can ever own it.
+  identity: { name: 'Gitgotchi', email: 'noreply@gitgotchi.invalid' },
 };
 
 /**

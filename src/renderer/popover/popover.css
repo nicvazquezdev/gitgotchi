@@ -49,10 +49,7 @@ body {
   gap: 14px;
   padding: 14px 16px 12px;
 }
-.portrait {
-  width: 64px;
-  height: 64px;
-}
+/* The frame's size comes from the creature (see popover.js). */
 .head-body {
   flex: 1;
   min-width: 0;
