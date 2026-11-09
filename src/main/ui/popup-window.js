@@ -109,19 +109,15 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   }
 
   /**
-   * The anchor moved (the pet is dragged): the window goes with it. At the screen edges `tailX` changes with almost
-   * every step, and drawing the page again for each makes it flicker. So only a flip to the other side sends the
-   * state; the tail slides on its own channel.
+   * The anchor moved (the pet is dragged): the window goes with it. The page is told only when it flips to the other
+   * side of the pet (its shell turns), so a drag does not draw it again on every step.
    */
   function follow(rect) {
     if (!isVisible()) return;
-    const shapeOf = ({ x, y, width, height, tailX, ...rest }) => JSON.stringify(rest);
-    const before = placed && shapeOf(placed);
-    const tailBefore = placed?.tailX;
+    const before = placed?.placement;
     anchor = rect;
     place();
-    if (shapeOf(placed) !== before) send();
-    else if (placed.tailX !== tailBefore) win.webContents.send(`${channel}:tail`, placed.tailX);
+    if (placed.placement !== before) send();
   }
 
   /**
@@ -143,7 +139,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     height = Math.max(MIN_HEIGHT, Math.min(Math.round(next), MAX_HEIGHT));
     if (!isOpen() || !anchor) return;
     place();
-    send(); // the placement (e.g. the popover's tail side) may have changed
+    send(); // the side of the pet (the shell turns) may have changed
   }
 
   return {
@@ -162,7 +158,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     state: () => getState(),
     setHeight,
     isVisible,
-    /** Result of the last placement (`boundsFor`), e.g. the popover's tail side. */
+    /** Result of the last placement (`boundsFor`), e.g. the side of the pet the popover is on. */
     placement: () => placed,
   };
 }

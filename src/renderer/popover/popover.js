@@ -234,7 +234,7 @@ function restoreFocus(key) {
 function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
   const focus = focusOn ?? focusKey();
   latest = state;
-  const { status, placement = 'above', tailX = 180 } = state;
+  const { status, placement = 'above' } = state;
   if (status) syncPortrait(status);
   const mood = status?.pause?.active ? 'paused' : (status?.mood ?? 'neutral'); // what the eyes of the shell show
 
@@ -246,11 +246,9 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 
-  // The tail points at the pet: below the card when the popover is above the pet, above it otherwise.
-  const tail = h('div', { class: 'tail-zone' }, h('i', { class: 'tail', style: { left: `${tailX}px` } }));
   const scroll = resetScroll ? 0 : ($('.card-body')?.scrollTop ?? 0);
-  app.className = `wrap ${placement}`;
-  app.replaceChildren(h('div', { class: 'rig', 'data-mood': mood }, shell(), card), tail);
+  app.className = `wrap ${placement}`; // the notch of the shell points at the pet: down when above it, up when below
+  app.replaceChildren(h('div', { class: 'rig', 'data-mood': mood }, shell(), card));
   const body = $('.card-body');
   if (body) body.scrollTop = scroll;
   restoreFocus(focus);
@@ -266,14 +264,8 @@ document.addEventListener('visibilitychange', () => {
   render(latest, { resetScroll: true });
 });
 
-// The window height follows the content (card plus tail).
+// The window height follows the content (the shell with the card).
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);
 
 api.onState((state) => render(state));
-// While the pet is dragged near a screen edge only the tail moves: slide it, do not draw the whole page again.
-api.onTail((tailX) => {
-  latest = { ...latest, tailX };
-  const tail = $('.tail');
-  if (tail) tail.style.left = `${tailX}px`;
-});
 api.state().then((state) => render(state));

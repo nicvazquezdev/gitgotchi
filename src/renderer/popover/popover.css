@@ -1,4 +1,4 @@
-/* The card. The window is transparent: a little creature (the shell) holds the card, and a stepped tail points at the pet. */
+/* The card. The window is transparent: a little creature (the shell) holds the card. */
 html,
 body {
   background: transparent;
@@ -12,9 +12,6 @@ body {
   user-select: none;
   cursor: default;
 }
-.wrap.below {
-  flex-direction: column-reverse;
-}
 
 .card {
   position: relative;
@@ -24,7 +21,7 @@ body {
 }
 /* ---------- The shell: a little creature around the card (ears, eyes, feet) ---------- */
 /* The rig is 440 wide; the coordinates below are those of the design (its y axis starts 20px above the ears). The
-   card sits inside the body, the body grows with it. The window is transparent: only the shell and the tail are drawn. */
+   card sits inside the body, the body grows with it. The window is transparent: only the shell is drawn. */
 .rig {
   --shell-hi: #7a4ad6;
   --shell: #4a1f9e;
@@ -508,6 +505,20 @@ body {
   height: 6px;
   background: var(--shell-lo);
 }
+/* Below the pet the notch is at the top edge, pointing up at it (the same pieces, mirrored around the outline). */
+.below .belly-a {
+  top: 62px;
+  bottom: auto;
+}
+.below .belly-b {
+  top: 56px;
+  bottom: auto;
+}
+.below .belly-c {
+  top: 64px;
+  bottom: auto;
+  background: var(--shell-hi);
+}
 @media (prefers-reduced-motion: no-preference) {
   .eye {
     animation: blink-eye 4.6s steps(1, end) infinite;
@@ -523,41 +534,6 @@ body {
   95% {
     transform: scaleY(1);
   }
-}
-
-/* Tail: four pixel steps in the frame's pink, centered on the pet. It touches the card edge it comes out of. */
-.tail-zone {
-  position: relative;
-  height: 8px;
-}
-.tail {
-  position: absolute;
-  top: 0;
-  width: 16px;
-  height: 8px;
-  margin-left: -8px;
-  background: var(--neon-pink);
-  clip-path: polygon(
-    0 0,
-    100% 0,
-    100% 2px,
-    87.5% 2px,
-    87.5% 4px,
-    75% 4px,
-    75% 6px,
-    62.5% 6px,
-    62.5% 100%,
-    37.5% 100%,
-    37.5% 6px,
-    25% 6px,
-    25% 4px,
-    12.5% 4px,
-    12.5% 2px,
-    0 2px
-  );
-}
-.below .tail {
-  transform: scaleY(-1);
 }
 
 /* ---------- Mood: the eyes of the shell ---------- */

@@ -6,28 +6,25 @@ const workArea = { x: 0, y: 25, width: 1440, height: 875 };
 const size = { width: 360, height: 500 };
 const pet = { x: 900, y: 700, width: 128, height: 128 };
 
-test('popoverBounds goes above the pet, centered on it, with the tail on the pet', () => {
+const gap = 10;
+
+test('popoverBounds goes above the pet, centered on it', () => {
   const b = popoverBounds({ anchor: pet, size, workArea });
   assert.equal(b.placement, 'above');
-  assert.equal(b.y + b.height + 2, pet.y);
+  assert.equal(b.y + b.height + gap, pet.y);
   assert.equal(b.x + b.width / 2, pet.x + pet.width / 2);
-  assert.equal(b.tailX, 180);
 });
 
 test('popoverBounds flips below the pet when there is no room above', () => {
   const b = popoverBounds({ anchor: { ...pet, y: 200 }, size, workArea });
   assert.equal(b.placement, 'below');
-  assert.equal(b.y, 200 + 128 + 2);
+  assert.equal(b.y, 200 + 128 + gap);
 });
 
-test('popoverBounds stays inside the work area and the tail keeps pointing at the pet', () => {
+test('popoverBounds stays inside the work area', () => {
   const edge = { x: 1340, y: 700, width: 128, height: 128 };
-  const b = popoverBounds({ anchor: edge, size, workArea });
-  assert.equal(b.x + b.width, 1440 - 8);
-  assert.equal(b.tailX, edge.x + 64 - b.x);
-  const left = popoverBounds({ anchor: { ...pet, x: -60 }, size, workArea });
-  assert.equal(left.x, 8);
-  assert.equal(left.tailX, 28); // clamped: the tail never leaves the rounded card
+  assert.equal(popoverBounds({ anchor: edge, size, workArea }).x + size.width, 1440 - 8);
+  assert.equal(popoverBounds({ anchor: { ...pet, x: -60 }, size, workArea }).x, 8);
 });
 
 test('popoverBounds is clamped vertically when it fits neither above nor below', () => {
@@ -41,9 +38,11 @@ test('popoverBounds keeps its height; when it fits neither side it takes the sid
   const upper = popoverBounds({ anchor: { ...pet, y: 200 }, size: tall, workArea }); // more room below
   assert.equal(upper.placement, 'below');
   assert.equal(upper.height, 800);
+  assert.equal(upper.y, workArea.y + workArea.height - 800); // below the pet, pulled up to the bottom of the screen
   const lower = popoverBounds({ anchor: { ...pet, y: 600 }, size: tall, workArea }); // more room above
   assert.equal(lower.placement, 'above');
   assert.equal(lower.height, 800);
+  assert.equal(lower.y, workArea.y); // above the pet, pulled down to the top of the screen
   assert.equal(popoverBounds({ anchor: { ...pet, y: 200 }, size, workArea }).height, 500);
 });
 

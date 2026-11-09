@@ -1,16 +1,15 @@
-// Pure helper: where the PR popover goes relative to the pet, and where its tail points.
+// Pure helper: where the PR popover goes relative to the pet.
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
 /**
  * Popover bounds centered on `anchor` (the pet's rect on screen): above it, or below when there is no room,
- * clamped inside `workArea`. `height` includes the tail, and it is never shortened: when it fits neither above nor
- * below it goes on the side with more space and covers the pet as little as it can.
- * `tailX` is where the tail points, from the popover's left edge.
+ * clamped inside `workArea`. The height is never shortened: when it fits neither above nor below it goes on the side
+ * with more space and covers the pet as little as it can.
  * @param {{anchor: {x:number,y:number,width:number,height:number}, size: {width:number,height:number},
- *          workArea: {x:number,y:number,width:number,height:number}, gap?: number, margin?: number, tailInset?: number}} args
- * @returns {{x:number,y:number,width:number,height:number,placement:'above'|'below',tailX:number}}
+ *          workArea: {x:number,y:number,width:number,height:number}, gap?: number, margin?: number}} args
+ * @returns {{x:number,y:number,width:number,height:number,placement:'above'|'below'}}
  */
-function popoverBounds({ anchor, size, workArea, gap = 2, margin = 8, tailInset = 28 }) {
+function popoverBounds({ anchor, size, workArea, gap = 10, margin = 8 }) {
   const { width, height } = size;
   const above = anchor.y - gap - height;
   const spaceAbove = anchor.y - gap - (workArea.y + margin);
@@ -28,7 +27,6 @@ function popoverBounds({ anchor, size, workArea, gap = 2, margin = 8, tailInset 
     width,
     height,
     placement,
-    tailX: Math.round(clamp(centerX - x, tailInset, width - tailInset)),
   };
 }
 

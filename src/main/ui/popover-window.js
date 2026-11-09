@@ -1,4 +1,4 @@
-// PR popover: opens above the pet (below when there is no room) with its tail pointing at it.
+// PR popover: opens above the pet (below when there is no room).
 const { createPopup } = require('./popup-window');
 const { popoverBounds } = require('./popover-position');
 const { POPOVER_WINDOW } = require('../config');
@@ -11,12 +11,9 @@ const popup = createPopup({
   boundsFor: popoverBounds,
 });
 
-/** The page also gets where the tail goes: `{ placement: 'above' | 'below', tailX }`. */
+/** The page also gets the side of the pet it hangs on: `{ placement: 'above' | 'below' }`. */
 function init(stateProvider) {
-  popup.init(() => {
-    const { placement, tailX } = popup.placement() ?? {};
-    return { ...stateProvider(), placement, tailX };
-  });
+  popup.init(() => ({ ...stateProvider(), placement: popup.placement()?.placement }));
 }
 
 module.exports = { ...popup, init };
