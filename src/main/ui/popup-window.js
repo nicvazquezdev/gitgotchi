@@ -1,6 +1,6 @@
 // Shared factory for the small frameless windows that hang from an anchor (menu bar dropdown, PR popover):
 // transparent (the page draws the rounded card), hidden on blur/Escape, and sized to the page's content.
-const { screen } = require('electron');
+const { app, screen } = require('electron');
 const { createWindow } = require('./create-window');
 const { IS_MAC } = require('../config');
 
@@ -72,6 +72,16 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     win.setBounds({ x, y, width, height: h });
   }
 
+  /**
+   * The window gets the key focus and so does the app. A click on the pet does not activate the app, so the app the
+   * person was working in stays the active one: a click back inside it would change nothing for the system, the window
+   * would never lose the focus and a click outside would not close it.
+   */
+  function takeFocus() {
+    app.focus({ steal: true });
+    win.focus();
+  }
+
   /** Opens (or moves) the window at `rect`: `{x, y, width, height}`, zero-size for a point. */
   function show(rect) {
     held = false;
@@ -81,7 +91,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     send();
     const reveal = () => {
       win.show();
-      win.focus();
+      takeFocus();
     };
     if (win.webContents.isLoading()) win.webContents.once('did-finish-load', reveal);
     else reveal();
@@ -120,7 +130,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
    */
   function hold(on) {
     held = on;
-    if (!on && isVisible()) win.focus();
+    if (!on && isVisible()) takeFocus();
   }
 
   /** Pushes the current state to the page (no-op while closed). */
