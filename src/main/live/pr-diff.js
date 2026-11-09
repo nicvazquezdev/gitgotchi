@@ -8,15 +8,21 @@ const sameRepo = (a, b) => a.toLowerCase() === b.toLowerCase();
 /** The checks states that mean the PR is red (see `ci` in the normalized PRs). */
 const FAILED = new Set(['FAILURE', 'ERROR']);
 
+/** Approved with every check green: nothing is left but to merge it. (No checks at all is not "green".) */
+const isReady = (decision, ci) => decision === 'APPROVED' && ci === 'SUCCESS';
+
 /**
  * `prs`: normalized nodes `{ id, state, reviewDecision, ci, createdAt, mergedAt, repo }`; `repos`: selected
  * `owner/repo` names. Besides `prs` and `merges`, the delta carries three animation-only kinds (they give no XP):
  * `approvals` and `changesRequested`, when the review decision of an open PR just became APPROVED or CHANGES_REQUESTED,
- * and `checksFailed`, when its checks just went red.
+ * `checksFailed`, when its checks just went red, and `readyToMerge`, when it just became approved with green checks
+ * (by an approval, or by the checks turning green after one).
  * `prev`: the previous snapshot or null. Returns the next snapshot, the new activity, and the `moments`: what just
  * happened to one of the user's open PRs that they may want to hear about, with the PR:
- * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed', pr }]`. A PR the app already knew is needed to tell a
- * change from something that was already so; checks count when they go from not failing to failing.
+ * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed' | 'readyToMerge', pr }]`. A PR the app already knew is
+ * needed to tell a change from something that was already so; checks count when they go from not failing to failing.
+ * An approval that comes with green checks is reported as `readyToMerge` only: it says more, and it is one thing to
+ * hear about, not two.
  * The first call (prev = null) only sets the baseline: no activity.
  */
 function diffPullRequests(prev, prs, repos, now = Date.now()) {
@@ -40,18 +46,24 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
       if (before === 'OPEN' || new Date(pr.mergedAt) >= since) bump('merges');
     } else if (pr.state === 'OPEN' && !before && new Date(pr.createdAt) >= since) bump('prs');
 
-    // Feedback on an open PR we already knew: only a change of decision is news.
+    // Feedback on an open PR we already knew: only a change is news.
     const decision = pr.reviewDecision ?? null;
-    if (pr.state === 'OPEN' && pr.id in (prev.decisions ?? {}) && prev.decisions[pr.id] !== decision) {
+    const known = pr.state === 'OPEN' && pr.id in (prev.decisions ?? {}) && pr.id in (prev.checks ?? {});
+    const ready = known && isReady(decision, pr.ci) && !isReady(prev.decisions[pr.id], prev.checks[pr.id]);
+    if (known && prev.decisions[pr.id] !== decision) {
       if (decision === 'APPROVED') {
         bump('approvals');
-        moments.push({ kind: 'approved', pr });
+        if (!ready) moments.push({ kind: 'approved', pr });
       } else if (decision === 'CHANGES_REQUESTED') {
         bump('changesRequested');
         moments.push({ kind: 'changesRequested', pr });
       }
     }
-    if (pr.state === 'OPEN' && pr.id in (prev.checks ?? {}) && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) {
+    if (ready) {
+      bump('readyToMerge');
+      moments.push({ kind: 'readyToMerge', pr });
+    }
+    if (known && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) {
       bump('checksFailed');
       moments.push({ kind: 'checksFailed', pr });
     }

@@ -4,11 +4,11 @@
 // Events: 'status' (status), 'evolved' (stage), 'levelUp' (new level, and `{ name, toNext }`: the XP still needed for
 // the next one; also fires on the level that evolves),
 // 'achievements' (the ones just reached, as `[{ id, name, description, icon, tier, points }]`),
-// 'activity' (new activity per kind, e.g. { merges: 1 }; the live `pushes`, `approvals`, `changesRequested` and
-// `checksFailed` reactions are animation only;
+// 'activity' (new activity per kind, e.g. { merges: 1 }; the live `pushes`, `approvals`, `changesRequested`,
+// `checksFailed` and `readyToMerge` reactions are animation only;
 // `reviewRequests` is not XP: someone asked the user for a review),
 // 'attention' (what the user may want a system notification for: `[{ kind, id, title, repo, number, url, author, via }]`,
-// kind: 'reviewRequested' | 'approved' | 'changesRequested' | 'checksFailed'),
+// kind: 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed'),
 // 'goal' (the daily goal was reached today: `{ xp, goal }`, once a day, never for what was already reached when the
 // app started),
 // 'companion' (the user hatched or switched to a pet: `{ kind: 'hatched' | 'switched', species, name }`),

@@ -22,6 +22,11 @@ const KINDS = {
     many: (n) => `Checks failed on ${n} PRs`,
     silent: false,
   },
+  readyToMerge: {
+    one: 'Ready to merge',
+    many: (n) => `${n} PRs ready to merge`,
+    silent: true,
+  },
   approved: {
     one: 'PR approved',
     many: (n) => `${n} PRs approved`,

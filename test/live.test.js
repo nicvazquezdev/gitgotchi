@@ -152,17 +152,60 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
   const kinds = (result) => result.moments.map((m) => m.kind);
 
   test('an approval, changes requested and failing checks come with the PR', () => {
-    const base = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
-    const approved = diffPullRequests(base, [open({ reviewDecision: 'APPROVED' })], REPOS, NOW + 10_000);
+    const base = diffPullRequests(null, [open({ ci: 'PENDING' })], REPOS, NOW).snapshot;
+    const approved = diffPullRequests(base, [open({ reviewDecision: 'APPROVED', ci: 'PENDING' })], REPOS, NOW + 10_000);
     assert.deepEqual(kinds(approved), ['approved']);
     assert.equal(approved.moments[0].pr.id, '1');
 
-    const changes = diffPullRequests(base, [open({ reviewDecision: 'CHANGES_REQUESTED' })], REPOS, NOW + 10_000);
+    const changes = diffPullRequests(
+      base,
+      [open({ reviewDecision: 'CHANGES_REQUESTED', ci: 'PENDING' })],
+      REPOS,
+      NOW + 10_000,
+    );
     assert.deepEqual(kinds(changes), ['changesRequested']);
 
     const red = diffPullRequests(base, [open({ ci: 'FAILURE' })], REPOS, NOW + 10_000);
     assert.deepEqual(kinds(red), ['checksFailed']);
     assert.deepEqual(red.delta, { checksFailed: 1 }, 'the pet reacts to red checks (animation only, no XP)');
+  });
+
+  test('ready to merge: approved with green checks, whichever of the two comes last', () => {
+    const at = (extra, snapshot, t) => diffPullRequests(snapshot, [open(extra)], REPOS, NOW + t);
+    const base = diffPullRequests(null, [open({ ci: 'PENDING' })], REPOS, NOW).snapshot;
+
+    // Approved first, the checks turn green later: the approval is one thing, being ready is another.
+    let result = at({ reviewDecision: 'APPROVED', ci: 'PENDING' }, base, 10_000);
+    assert.deepEqual(kinds(result), ['approved']);
+    assert.deepEqual(result.delta, { approvals: 1 });
+    result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, result.snapshot, 20_000);
+    assert.deepEqual(kinds(result), ['readyToMerge']);
+    assert.deepEqual(result.delta, { readyToMerge: 1 }, 'animation only: no XP');
+    assert.equal(result.moments[0].pr.id, '1');
+    result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, result.snapshot, 30_000);
+    assert.deepEqual(kinds(result), [], 'still ready: nothing new');
+
+    // Green first, approved later: one moment, ready (not "approved" as well), and the pet still gets its cheer.
+    const green = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
+    result = at({ reviewDecision: 'APPROVED', ci: 'SUCCESS' }, green, 10_000);
+    assert.deepEqual(kinds(result), ['readyToMerge']);
+    assert.deepEqual(result.delta, { approvals: 1, readyToMerge: 1 });
+  });
+
+  test('ready to merge again after a new failure and a green re-run, and never without a green check', () => {
+    const at = (extra, snapshot, t) => diffPullRequests(snapshot, [open(extra)], REPOS, NOW + t);
+    const approved = { reviewDecision: 'APPROVED' };
+    const pending = diffPullRequests(null, [open({ ...approved, ci: 'PENDING' })], REPOS, NOW).snapshot;
+    let result = at({ ...approved, ci: 'SUCCESS' }, pending, 1);
+    assert.deepEqual(kinds(result), ['readyToMerge']);
+    result = at({ ...approved, ci: 'FAILURE' }, result.snapshot, 10_000);
+    assert.deepEqual(kinds(result), ['checksFailed']);
+    result = at({ ...approved, ci: 'SUCCESS' }, result.snapshot, 20_000);
+    assert.deepEqual(kinds(result), ['readyToMerge']);
+
+    // No checks at all (ci is null): an approval, but not "ready".
+    const none = diffPullRequests(null, [open({ ci: null })], REPOS, NOW).snapshot;
+    assert.deepEqual(kinds(at({ ...approved, ci: null }, none, 10_000)), ['approved']);
   });
 
   test('failing checks count once per failure: going from pending or green to red, not red to red', () => {
@@ -190,7 +233,7 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
     );
 
     const base = diffPullRequests(null, [open()], REPOS, NOW).snapshot;
-    const merged = pr('1', 'MERGED', { reviewDecision: 'APPROVED', ci: 'FAILURE', mergedAt: '2026-01-01T12:00:05Z' });
+    const merged = pr('1', 'MERGED', { reviewDecision: 'APPROVED', ci: 'SUCCESS', mergedAt: '2026-01-01T12:00:05Z' });
     assert.deepEqual(diffPullRequests(base, [merged], REPOS, NOW + 10_000).moments, []);
   });
 

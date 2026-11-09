@@ -186,6 +186,7 @@ const REACTIONS = [
   { kind: 'approvals', cheer: true, text: 'Your PR got approved! 🎉', dot: 'approved' },
   { kind: 'achievements', cheer: true, text: 'Achievement unlocked! 🏆', dot: 'approved' },
   { kind: 'goal', cheer: true, text: 'Daily goal reached!', dot: 'approved' },
+  { kind: 'readyToMerge', anim: 'jump', fx: 'sparkle', text: 'Your PR is ready to merge!', dot: 'approved' },
   { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'checksFailed', anim: 'wiggle', text: 'Checks failed on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },

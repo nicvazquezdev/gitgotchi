@@ -126,7 +126,7 @@ function classify(prs, now = new Date()) {
 
 /**
  * What the user may want to be told about, one PR at a time (for a system notification): `kind` is
- * 'reviewRequested' | 'approved' | 'changesRequested' | 'checksFailed'. `pr`: a normalized PR (repo is 'owner/name')
+ * 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed'. `pr`: a normalized PR (repo is 'owner/name')
  * or a queue entry (see `reviewQueue`, where it is `fullRepo`).
  */
 function attentionOf(kind, pr) {
