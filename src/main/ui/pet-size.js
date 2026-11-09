@@ -3,11 +3,12 @@ const { PET_WINDOW, PET_CANVAS, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('..
 
 const clamp = (value, min, max) => Math.max(min, Math.min(value, max));
 
-/** The nearest allowed size (a multiple of the step inside the range); the default for junk (e.g. a stale store). */
+/** The nearest allowed size (`min` plus a whole number of steps, inside the range); the default for junk (e.g. a stale store). */
 function resolveSize(size) {
   if (!Number.isFinite(size)) return DEFAULT_PET_SIZE;
   const { min, max, step } = PET_SIZE_RANGE;
-  return clamp(Math.round(size / step) * step, min, max);
+  const snapped = min + Math.round((size - min) / step) * step;
+  return clamp(Math.round(snapped * 10) / 10, min, max); // steps have one decimal: drop the float noise
 }
 
 /**
@@ -17,10 +18,10 @@ function resolveSize(size) {
 function windowSize(size) {
   const resolved = resolveSize(size);
   const growth = resolved - DEFAULT_PET_SIZE;
-  const scale = resolved / PET_SIZE_RANGE.step;
+  const scale = resolved / PET_SIZE_RANGE.box;
   return {
-    width: Math.max(PET_WINDOW.width, PET_WINDOW.width + growth),
-    height: Math.max(PET_WINDOW.height + growth, PET_CANVAS.rows * scale),
+    width: Math.max(PET_WINDOW.width, Math.round(PET_WINDOW.width + growth)),
+    height: Math.max(Math.round(PET_WINDOW.height + growth), Math.ceil(PET_CANVAS.rows * scale)),
   };
 }
 

@@ -55,7 +55,7 @@ function setStatus(next) {
 
 function setSize(px) {
   root.setProperty('--pet-size', `${px}px`);
-  view.setScale(Math.round(px / PX_PER_SCALE));
+  view.setScale(px / PX_PER_SCALE);
 }
 
 // ---------- Bubble ----------

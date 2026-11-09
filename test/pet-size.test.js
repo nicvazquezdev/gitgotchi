@@ -6,7 +6,7 @@ const { resolveSize, windowSize, anchoredBounds } = require('../src/main/ui/pet-
 const { PET_WINDOW, PET_CANVAS, PET_SIZE_RANGE, DEFAULT_PET_SIZE } = require('../src/main/config');
 const animations = require('../assets/pets/animations.json');
 
-const { min, max, step } = PET_SIZE_RANGE;
+const { min, max, step, box } = PET_SIZE_RANGE;
 const D = DEFAULT_PET_SIZE;
 const area = { x: 0, y: 0, width: 1440, height: 900 };
 
@@ -14,25 +14,37 @@ test('resolveSize snaps to the nearest step inside the range, default for junk',
   assert.equal(resolveSize(D + step / 2 - 1), D);
   assert.equal(resolveSize(D + step / 2 + 1), D + step);
   assert.equal(resolveSize(D + step), D + step);
+  assert.equal(resolveSize(D * 1.05), D + step);
+  assert.equal(resolveSize(104), 104); // sizes saved when the steps were 52 px
   assert.equal(resolveSize(min - 50), min);
   assert.equal(resolveSize(max + 50), max);
   assert.equal(resolveSize(undefined), D);
   assert.equal(resolveSize(NaN), D);
 });
 
-test('windowSize equals PET_WINDOW at the default size and grows with the pet', () => {
+test('the steps are 5% of the default size and the default is one of them', () => {
+  assert.ok(Math.abs(step - D / 20) < 1e-9);
+  assert.equal(resolveSize(D), D);
+  assert.equal(Math.round((D - min) / step) * step + min, D);
+});
+
+test('windowSize equals PET_WINDOW at the default size and grows with the pet, in whole px', () => {
   assert.deepEqual(windowSize(D), PET_WINDOW);
-  assert.deepEqual(windowSize(D + step), {
-    width: PET_WINDOW.width + step,
-    height: PET_WINDOW.height + step,
+  assert.deepEqual(windowSize(D + 5 * step), {
+    width: PET_WINDOW.width + 52,
+    height: PET_WINDOW.height + 52,
   });
+  for (let size = min; size <= max; size += step) {
+    const { width, height } = windowSize(size);
+    assert.ok(Number.isInteger(width) && Number.isInteger(height), `size ${size}`);
+  }
 });
 
 test('windowSize is always tall enough for the whole canvas, even at the biggest sizes', () => {
-  for (let size = min; size <= max; size += step) {
-    assert.ok(windowSize(size).height >= PET_CANVAS.rows * (size / step), `size ${size}`);
+  for (let size = min; size <= max + 1e-6; size += step) {
+    assert.ok(windowSize(size).height >= PET_CANVAS.rows * (resolveSize(size) / box), `size ${size}`);
   }
-  assert.equal(windowSize(max).height, PET_CANVAS.rows * (max / step));
+  assert.equal(windowSize(max).height, PET_CANVAS.rows * (max / box));
 });
 
 test('the renderer builds the same canvas as the window expects', () => {
@@ -40,7 +52,7 @@ test('the renderer builds the same canvas as the window expects', () => {
   const constant = (name) => Number(new RegExp(`const ${name} = (\\d+);`).exec(view)?.[1]);
   assert.equal(constant('HEADROOM'), PET_CANVAS.headroom);
   assert.equal(constant('BELOW'), PET_CANVAS.below);
-  assert.equal(constant('PX_PER_SCALE'), PET_SIZE_RANGE.step);
+  assert.equal(constant('PX_PER_SCALE'), PET_SIZE_RANGE.box);
 });
 
 test('the canvas rows are the headroom, the lowest floor line of any stage and the margin under it', () => {

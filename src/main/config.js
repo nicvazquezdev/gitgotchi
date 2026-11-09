@@ -20,9 +20,10 @@ module.exports = {
   // Window at the default size: the canvas plus room around it for the speech bubble card (268 px wide).
   PET_CANVAS: { headroom: 16, below: 2, rows: 73 },
   PET_WINDOW: { width: 288, height: 320 },
-  // Sizes are whole multiples of the box (1x to 8x, `step` = one native box of 52 px), so every sprite pixel
-  // is drawn at the same whole size and stays sharp. Set with the slider in the Settings window.
-  PET_SIZE_RANGE: { min: 52, max: 416, step: 52 },
+  // Sizes run from 1x to 8x the box (`box` = 52 screen px per native px at 1x) in steps of 5% of the default size.
+  // Between whole scales a sprite pixel is a fraction of a device pixel wider, so a few columns are one pixel thicker.
+  // Set with the slider in the Settings window.
+  PET_SIZE_RANGE: { min: 52, max: 416, step: 10.4, box: 52 },
   DEFAULT_PET_SIZE: 208,
   // The menu and the card: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 216, height: 200 },

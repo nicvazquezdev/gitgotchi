@@ -1,11 +1,11 @@
-// The desktop pet on its canvas: owns the animator, the one animation loop, the integer-scale layout and the
+// The desktop pet on its canvas: owns the animator, the one animation loop, the pixel-sharp layout and the
 // policy around the animation (when it walks, when it cheers, calm mode). pet.js decides what happens (moods,
 // events); the animation rules themselves are in shared/pet-animator.js.
 import { createPet, FLOOR_MAX, PAD } from '../shared/pet-sprites.js';
 import { Stroller } from '../shared/pet-stroll.js';
 import { Squish } from '../shared/pet-squish.js';
 
-/** Screen px per native px at the smallest size: pet sizes are whole multiples of it (see PET_SIZE_RANGE). */
+/** Screen px per native px at the smallest size: the scale is the pet size divided by it (see PET_SIZE_RANGE). */
 export const PX_PER_SCALE = 52;
 
 // The canvas is drawn in whole native pixels. Keep in sync with PET_CANVAS in src/main/config.js (a test checks it).
@@ -90,7 +90,7 @@ export class PetView {
     this.still = still;
   }
 
-  /** The canvas gets `scale` CSS px per native px (a whole number) and fills the width it is given. */
+  /** The canvas gets `scale` CSS px per native px (not always a whole number) and fills the width it is given. */
   setScale(scale) {
     if (scale === this.scale) return;
     this.scale = scale;
@@ -99,7 +99,11 @@ export class PetView {
 
   // ---------- Layout ----------
 
-  /** Sizes the canvas in device pixels (a whole number of them per native px, so every pixel stays sharp). */
+  /**
+   * Draws the canvas with a whole number of device px per native px (sharp pixels) and sizes it in CSS to exactly
+   * `scale` px per native px. At a whole scale the two agree; between them nearest-neighbor stretches the canvas by
+   * under half a device px per native px.
+   */
   layout() {
     if (!this.pet) return;
     const { stage } = this.pet;
@@ -113,7 +117,7 @@ export class PetView {
     this.native = { width, oy: HEADROOM + FLOOR_MAX - this.pet.groundY };
     this.canvas.width = width * ds;
     this.canvas.height = ROWS * ds;
-    const css = { width: (width * ds) / dpr, height: (ROWS * ds) / dpr };
+    const css = { width: width * this.scale, height: ROWS * this.scale };
     this.canvas.style.width = `${css.width}px`;
     this.canvas.style.height = `${css.height}px`;
     this.onLayout?.(css);

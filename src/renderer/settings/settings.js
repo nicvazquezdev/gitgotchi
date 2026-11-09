@@ -96,7 +96,7 @@ function sizeRow() {
       defaultSize = defaultPetSize;
       slider.min = sizeRange.min;
       slider.max = sizeRange.max;
-      slider.step = sizeRange.step; // whole multiples of the sprite box: pixels stay sharp
+      slider.step = sizeRange.step;
       if (!dragging) slider.value = petSize;
       paint();
     },
