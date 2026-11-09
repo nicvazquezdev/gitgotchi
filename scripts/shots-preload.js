@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onPrefs: never,
     openPopover: ignore,
     onPopoverRequest: never,
+    onPopoverOpen: never,
     onBump: never,
     onPointer: never,
     size: value(fx.petSize),
