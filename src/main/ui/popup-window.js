@@ -24,6 +24,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   let height = size.height;
   let hiddenAt = 0;
   let placed = null;
+  let sentRoom; // the `room` the page has (it is held back while the anchor is dragged, see `follow`)
   let held = false; // the anchor is being dragged: losing the focus does not close the window
   let keepUntil = 0; // until then, losing the focus does not close the window (see `keepOpen`)
   let getState = () => null;
@@ -99,30 +100,37 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   }
 
   /**
-   * The anchor moved (the pet is dragged): the window goes with it. The page only hears about it when the shape
-   * changes (the popover flips to the other side, the tail moves), not on every step.
+   * The anchor moved (the pet is dragged): the window goes with it. `room` (the space above or below) changes with
+   * almost every step and, at the screen edges, so does `tailX`: drawing the page again for each makes it flicker. So
+   * only a flip to the other side sends the state; the tail slides on its own channel, and `room` waits for `hold(false)`.
    */
   function follow(rect) {
     if (!isVisible()) return;
-    const shapeOf = ({ x, y, width, height, ...rest }) => JSON.stringify(rest);
+    const shapeOf = ({ x, y, width, height, tailX, room, ...rest }) => JSON.stringify(rest);
     const before = placed && shapeOf(placed);
+    const tailBefore = placed?.tailX;
     anchor = rect;
     place();
     if (shapeOf(placed) !== before) send();
+    else if (placed.tailX !== tailBefore) win.webContents.send(`${channel}:tail`, placed.tailX);
   }
 
   /**
    * While `on`, the window stays open without the focus (the anchor is being dragged). When it ends the window gets
-   * the focus back, so that a click elsewhere closes it again.
+   * the focus back, so that a click elsewhere closes it again, and the page learns the `room` it has now.
    */
   function hold(on) {
     held = on;
-    if (!on && isVisible()) win.focus();
+    if (on || !isVisible()) return;
+    win.focus();
+    if (placed?.room !== sentRoom) send();
   }
 
   /** Pushes the current state to the page (no-op while closed). */
   function send() {
-    if (isOpen()) win.webContents.send(channel, getState());
+    if (!isOpen()) return;
+    sentRoom = placed?.room;
+    win.webContents.send(channel, getState());
   }
 
   /** The page reports its content height; the window follows and stays anchored. */

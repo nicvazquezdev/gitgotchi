@@ -290,4 +290,10 @@ document.addEventListener('visibilitychange', () => {
 new ResizeObserver(() => api.setHeight(Math.ceil(app.getBoundingClientRect().height))).observe(app);
 
 api.onState((state) => render(state));
+// While the pet is dragged near a screen edge only the tail moves: slide it, do not draw the whole page again.
+api.onTail((tailX) => {
+  latest = { ...latest, tailX };
+  const tail = $('.tail');
+  if (tail) tail.style.left = `${tailX}px`;
+});
 api.state().then((state) => render(state));

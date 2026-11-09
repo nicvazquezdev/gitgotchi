@@ -85,6 +85,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   popover: {
     state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
     onState: subscribe('popover:state'),
+    onTail: subscribe('popover:state:tail'), // tailX: the pet is dragged and the tail slides (the page is not drawn again)
     action: send('popover:action'), // 'openShare' | 'openSettings' | 'resume'
     setHeight: send('popover:height'),
   },
