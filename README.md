@@ -31,7 +31,7 @@ npm run dev   # auto-reloads on changes
 - **Live reactions:** a `git push` from a local clone of a selected repo is detected instantly (the app watches the clones' reflogs), and your PRs are checked every ~10 s (60 s when idle) so a merge celebrates within seconds. The pet also reacts, with a wiggle and a line, when your own PR gets changes requested, its checks fail, it gets merge conflicts, or it becomes ready to merge (no XP for those). A PR with conflicts shows _Merge conflicts_ in the card, ahead of failing checks, and is never _Ready to merge_.
 - XP rules and thresholds live in `src/main/game/catalog.js`.
 
-**Usage:** drag the pet anywhere. Click it: a card opens, inside a little creature whose eyes show how the pet feels, with the level, one bar, how the pet will grow (its forms), your week and streak. Three tabs open the rest in the same place: _Pets_ (your pets), _Trophies_ and _XP log_ (what you earned each day and why, with _How XP works_); tap the open tab again to come back. The menu bar icon (a click or a right-click), a right-click on the pet and the dots of the card open the menu: _Pause_, _Hide pet_, _Pet card_ (the card, also when the pet is hidden), _Settings…_ and _Quit_.
+**Usage:** drag the pet anywhere. Click it: a card opens, inside a little creature whose eyes show how the pet feels, with the level and one bar on top and four tabs at the bottom: _Home_ (how the pet will grow, your week and streak; the one it opens on), _Pets_ (your pets), _Trophies_ and _XP log_ (what you earned each day and why, with _How XP works_). The menu bar icon (a click or a right-click), a right-click on the pet and the dots of the card open the menu: _Pause_, _Hide pet_, _Pet card_ (the card, also when the pet is hidden), _Settings…_ and _Quit_. The share icon of the card opens a small window with your pet's card to copy as an image.
 
 **Settings** (_Settings…_ in the menu): pet size, speech bubbles, pause, the account and repos (_Change…_ reopens the setup: two steps when you already have pets, since pets are managed in the collection), _Back up pet to GitHub_ and _Open at login_ (on by default; on macOS it installs a LaunchAgent in `~/Library/LaunchAgents/com.gitgotchi.app.plist`).
 
@@ -59,7 +59,7 @@ src/
   renderer/
     shared/                 synthwave tokens and components, DOM helpers, sprites, pet animation (pet-animator.js is the pack's player)
     pet/                    floating pet window
-    popover/                the card: overview, and the Pets, Trophies and XP log tabs (one module per tab)
+    popover/                the card: header and four tabs, Home, Pets, Trophies and XP log (one module per tab)
     share/                  share window: the card of your pet, to copy as an image
     settings/               preferences window
     onboarding/             onboarding: GitHub, repos and the first pet (one module per step)

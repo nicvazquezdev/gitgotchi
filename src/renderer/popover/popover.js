@@ -1,6 +1,5 @@
-// The card of the pet: its header (level, one bar and what is left) and, under it, how it will grow and how the week
-// went. Three tabs at the bottom open its collection in the same place: Pets, Trophies and the XP log (none open: the
-// overview).
+// The card of the pet: its header (level, one bar and what is left) and, under it, the tab that is open. Four tabs at
+// the bottom: Home (how it will grow and how the week went, the one it opens on), Pets, Trophies and the XP log.
 // The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
 import { icon, xpBar } from '../shared/ui.js';
@@ -55,15 +54,16 @@ let latest = {};
 
 // ---------- Tabs ----------
 
-const TABS = ['pets', 'trophies', 'xp'];
-const LABELS = { pets: 'Pets', trophies: 'Trophies', xp: 'XP log' };
+const TABS = ['home', 'pets', 'trophies', 'xp'];
+const LABELS = { home: 'Home', pets: 'Pets', trophies: 'Trophies', xp: 'XP log' };
 const [hashTab, hashPick] = location.hash.slice(1).split('/'); // e.g. #pets/koi: that pet on show (for screenshots)
-let tab = TABS.includes(hashTab) ? hashTab : null; // null: the overview (growth and week)
+let tab = TABS.includes(hashTab) ? hashTab : 'home';
 
-/** Opens a tab, or closes it when it is the one open (back to the overview). */
-function toggleTab(name) {
+/** Opens a tab. */
+function openTab(name) {
+  if (name === tab) return;
   leave();
-  tab = tab === name ? null : name;
+  tab = name;
   render(latest, { resetScroll: true, focus: `tab-${name}` });
 }
 
@@ -100,7 +100,7 @@ function tabs({ collection, achievements }) {
           role: 'tab',
           'aria-selected': String(name === tab),
           dataset: { key: `tab-${name}`, tab: name },
-          onclick: () => toggleTab(name),
+          onclick: () => openTab(name),
         },
         LABELS[name],
         counts[name] ? h('span', { class: 'count-chip' }, counts[name]) : null,
@@ -109,13 +109,13 @@ function tabs({ collection, achievements }) {
   );
 }
 
-/** What is under the tabs: the overview, or the tab that is open. */
+/** What is above the tabs: the one that is open. */
 function content(status) {
   const rerender = (options) => render(latest, options);
   if (tab === 'pets') return petsPage(status, { catalog, api: gitgotchi, pick: hashPick, rerender });
   if (tab === 'trophies') return trophiesPage(status, { rerender });
   if (tab === 'xp') return historyPage(status, { rules: catalog.xpRules, rerender });
-  return [growth(status, catalog.stages), week(status)];
+  return [growth(status, catalog.stages), week(status)]; // home
 }
 
 // ---------- Header ----------
@@ -283,11 +283,11 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
 
 // ---------- Boot ----------
 
-// Every time the popover is reopened, it starts at the overview again.
+// Every time the popover is reopened, it starts at Home again.
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) return;
   leave();
-  tab = null;
+  tab = 'home';
   render(latest, { resetScroll: true });
 });
 
