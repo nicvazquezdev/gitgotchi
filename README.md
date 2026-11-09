@@ -24,9 +24,7 @@
 </p>
 
 <p align="center">
-  <img src="docs/images/card-home.png" alt="Home tab: level, XP bar, growth path, XP this week and streak" width="250" />
-  <img src="docs/images/card-pets.png" alt="Pets tab: one card per species" width="250" />
-  <img src="docs/images/card-trophies.png" alt="Trophies tab: a grid of pixel medals" width="250" />
+  <img src="docs/images/showcase.png" alt="The desktop pet with its card open above it, in three tabs: Home (level, growth path, XP this week, streak), Pets (one card per species) and Trophies (a grid of pixel medals)" width="100%" />
 </p>
 
 ## Features
