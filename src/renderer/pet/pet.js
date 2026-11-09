@@ -127,7 +127,7 @@ function openPopover() {
 
 function reactToClick() {
   if (!status) return;
-  if (!calm()) replayClass(canvas, 'jump');
+  view.lookUp(); // the popover opens above the pet
   openPopover();
 }
 
@@ -233,6 +233,7 @@ canvas.addEventListener('pointermove', (e) => {
   if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) > DRAG_THRESHOLD_PX) {
     drag.moved = true;
     document.body.classList.add('dragging');
+    view.hold(true);
   }
 });
 
@@ -242,6 +243,7 @@ canvas.addEventListener('pointerup', (e) => {
   const wasClick = !drag.moved;
   drag = null;
   document.body.classList.remove('dragging');
+  view.hold(false);
   if (wasClick) reactToClick();
   setHover(isOverPet(e) || isOverBubble(e));
   syncStill();

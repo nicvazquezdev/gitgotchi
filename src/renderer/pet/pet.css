@@ -45,8 +45,20 @@ body {
 body.hover .pet {
   cursor: grab;
 }
+/* Held, it dangles: it swings from the top of the creature while it flaps (pet-sprites.js). */
 body.dragging .pet {
   cursor: grabbing;
+  transform-origin: 50% calc(100% - var(--u) * (var(--stage-size) + 2));
+  animation: dangle 0.8s steps(8) infinite;
+}
+@keyframes dangle {
+  0%,
+  100% {
+    transform: rotate(-5deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
 }
 
 .pet.jump {
@@ -334,6 +346,7 @@ body.dragging .pet {
   .pet.wiggle,
   .pet.evolve,
   .pet.swap,
+  body.dragging .pet,
   .alert,
   .moment,
   .float {

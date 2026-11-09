@@ -87,6 +87,16 @@ export class PetView {
     this.still = still;
   }
 
+  /** The user picks the pet up (a real drag, not a click) or puts it down: it flaps while held, then is woozy. */
+  hold(on) {
+    this.pet?.hold(on);
+  }
+
+  /** A click: the pet looks up at the popover that opens above it. */
+  lookUp() {
+    this.pet?.lookUp();
+  }
+
   /** The canvas gets `scale` CSS px per native px (a whole number) and fills the width it is given. */
   setScale(scale) {
     if (scale === this.scale) return;
@@ -132,7 +142,7 @@ export class PetView {
     if (!pet) return;
     if ((window.devicePixelRatio || 1) !== this.dpr) this.layout(); // moved to another display
 
-    this.stroller.update(dt, pet, { calm: this.calm, still: this.still });
+    this.stroller.update(dt, pet, { calm: this.calm, still: this.still || pet.engaged });
     pet.update(dt);
     if (this.wantsHappy && pet.state !== 'cheer' && pet.state !== 'landing') {
       this.wantsHappy = false;
