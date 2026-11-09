@@ -29,7 +29,7 @@ module.exports = {
   POPOVER_WINDOW: { width: 440, height: 400 },
   // Pet page, settings and evolution windows; the native traffic lights overlay the page's top.
   PROFILE_WINDOW: { width: 520, height: 720 },
-  SETTINGS_WINDOW: { width: 520, height: 920 },
+  SETTINGS_WINDOW: { width: 480, height: 600 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the steps don't fit.
   ONBOARDING_WINDOW: { width: 960, height: 640, minWidth: 960, minHeight: 640 },

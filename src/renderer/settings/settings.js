@@ -89,7 +89,7 @@ function sizeRow() {
     el: h(
       'div',
       { class: 'setting' },
-      h('div', { class: 'setting-text' }, h('label', { htmlFor: slider.id }, 'Size')),
+      h('div', { class: 'setting-text' }, h('label', { htmlFor: slider.id }, 'Pet size')),
       h('div', { class: 'size-control' }, slider, value),
     ),
     update({ petSize, sizeRange, defaultPetSize }) {
@@ -161,7 +161,7 @@ function accountRow() {
     el: h(
       'div',
       { class: 'setting' },
-      h('div', { class: 'setting-text' }, h('span', { class: 'label' }, 'Account and repos'), hint),
+      h('div', { class: 'setting-text' }, h('span', { class: 'label' }, 'Account'), hint),
       h('button', { class: 'btn sm', type: 'button', onclick: () => api.action('openSetup') }, 'Change…'),
     ),
     update({ login, repoCount }) {
@@ -193,7 +193,7 @@ function backupHint({ cloud }) {
     }
     return {
       checked: false,
-      hint: 'Keeps your pet in a private repo in your GitHub account, so it follows you to other computers. It saves the pets, your achievements, your time off and daily XP counts, and your repos as ids: no repo names, PR titles or code.',
+      hint: 'A private repo in your GitHub account, so your pet follows you to other computers. No repo names, PR titles or code.',
     };
   }
   const saved = cloud.lastPushAt ? ` Last saved ${timeAgo(cloud.lastPushAt)}.` : '';
@@ -206,11 +206,11 @@ function backupHint({ cloud }) {
 
 // ---------- Page ----------
 
-const section = (title, ...rows) =>
+// Settings come in three groups of rows, with no titles: the pet, what talks to you, and the account.
+const group = (...rows) =>
   h(
     'section',
     { class: 'card' },
-    h('h2', {}, title),
     rows.map((row) => row.el),
   );
 
@@ -218,34 +218,30 @@ const rows = {
   size: sizeRow(),
   bubbles: switchRow('Speech bubbles', 'toggleSpeechBubbles', ({ speechBubbles, pause }) => ({
     checked: speechBubbles,
-    hint: pause.active
-      ? 'Hidden for now: the pet is paused.'
-      : 'Short messages above the pet: PRs waiting for review and live reactions.',
+    hint: pause.active ? 'Hidden for now: the pet is paused.' : 'Short messages above the pet.',
   })),
-  notifications: switchRow('System notifications', 'toggleNotifications', ({ notifications, pause }) => ({
+  notifications: switchRow('Alerts', 'toggleNotifications', ({ notifications, pause }) => ({
     checked: notifications,
     hint: pause.active
       ? 'Off for now: the pet is paused.'
-      : 'When someone asks for your review, or one of your PRs gets changes requested, fails its checks or is approved.',
+      : 'A notification when someone asks for your review or one of your PRs needs you.',
   })),
   pause: pauseRow(),
   pauseReturn: returnRow(),
   account: accountRow(),
-  backup: switchRow('Back up pet to GitHub', 'toggleCloudSync', backupHint),
+  backup: switchRow('Back up pet', 'toggleCloudSync', backupHint),
   openAtLogin: switchRow('Open at login', 'toggleOpenAtLogin', ({ openAtLogin }) => ({
     checked: openAtLogin,
-    hint: 'Starts Gitgotchi when you log in to this computer.',
+    hint: 'Starts Gitgotchi when you log in.',
   })),
 };
 
 const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
-  section('Pet', rows.size, rows.bubbles),
-  section('Reviews', rows.notifications),
-  section('Pause', rows.pause, rows.pauseReturn),
-  section('GitHub', rows.account, rows.backup),
-  section('General', rows.openAtLogin),
+  group(rows.size, rows.bubbles),
+  group(rows.notifications, rows.pause, rows.pauseReturn),
+  group(rows.account, rows.backup, rows.openAtLogin),
 );
 
 let state = null;

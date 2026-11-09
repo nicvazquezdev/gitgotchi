@@ -1,4 +1,4 @@
-/* Settings window: section cards of setting rows (label and hint on the left, control on the right). */
+/* Settings window: three cards of setting rows (label and hint on the left, control on the right). */
 body {
   background: var(--bg-subtle);
   overflow: hidden;
@@ -14,20 +14,12 @@ body {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 24px;
+  gap: 14px;
+  padding: 18px 20px 24px;
 }
 
 .card {
   padding: 4px 18px;
-}
-.card h2 {
-  margin: 12px 0 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  color: var(--text-3);
 }
 
 /* ---------- Rows ---------- */
