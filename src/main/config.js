@@ -26,7 +26,7 @@ module.exports = {
   DEFAULT_PET_SIZE: 208,
   // Menu-bar dropdown and PR popover: fixed width; the height follows the content (the page reports it).
   PANEL_WINDOW: { width: 320, height: 360 },
-  POPOVER_WINDOW: { width: 360, height: 400 },
+  POPOVER_WINDOW: { width: 440, height: 400 },
   // Profile, settings and evolution windows; the native traffic lights overlay the 40 px page title bar.
   PROFILE_WINDOW: { width: 1040, height: 712 },
   SETTINGS_WINDOW: { width: 520, height: 920 },

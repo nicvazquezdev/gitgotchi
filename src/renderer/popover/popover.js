@@ -391,6 +391,32 @@ const footer = () =>
     ),
   );
 
+// ---------- Shell ----------
+
+const layer = (cls) => h('i', { class: cls });
+
+/** The creature around the card: ears, eyes, feet. Only drawing, the CSS puts every piece where the design has it. */
+const shell = () =>
+  h(
+    'div',
+    { class: 'decor', ariaHidden: 'true' },
+    h('div', { class: 'silhouette' }, layer('ear-l-out'), layer('ear-r-out'), layer('body-out')),
+    layer('ear-l'),
+    layer('ear-l-in'),
+    layer('ear-r'),
+    layer('ear-r-in'),
+    layer('foot-out l'),
+    layer('foot-out r'),
+    layer('foot l'),
+    layer('foot r'),
+    layer('body'),
+    layer('eye l'),
+    layer('eye r'),
+    layer('belly-a'),
+    layer('belly-b'),
+    layer('belly-c'),
+  );
+
 // ---------- Render ----------
 
 /** `resetScroll`: start at the top of the list (another tab, or the popover reopened); a sync keeps the scroll. */
@@ -425,7 +451,7 @@ function render(state = latest, { resetScroll = false } = {}) {
   const tail = h('div', { class: 'tail-zone' }, h('i', { class: 'tail', style: { left: `${tailX}px` } }));
   const scroll = resetScroll ? 0 : ($('.list')?.scrollTop ?? 0);
   app.className = `wrap ${placement}`;
-  app.replaceChildren(card, tail);
+  app.replaceChildren(h('div', { class: 'rig' }, shell(), card), tail);
   const list = $('.list');
   if (list) list.scrollTop = scroll;
 }

@@ -1,4 +1,4 @@
-/* PR popover. The window is transparent: the neon-framed card and its stepped tail are the visible shape (the OS adds the shadow). */
+/* PR popover. The window is transparent: a little creature (the shell) holds the card, and a stepped tail points at the pet. */
 html,
 body {
   background: transparent;
@@ -8,7 +8,8 @@ body {
 .wrap {
   display: flex;
   flex-direction: column;
-  width: 360px;
+  width: 440px;
+  padding: 16px 0 28px; /* room for the glow and the shadow of the shell */
   user-select: none;
   cursor: default;
 }
@@ -17,11 +18,511 @@ body {
 }
 
 .card {
+  position: relative;
   background: var(--bg-menu);
-  box-shadow:
-    inset 0 0 0 2px var(--neon-pink),
-    inset 0 0 0 4px var(--on-accent);
+  box-shadow: inset 0 0 0 2px var(--ink);
   overflow: hidden;
+}
+/* ---------- The shell: a little creature around the card (ears, eyes, feet) ---------- */
+/* The rig is 440 wide; the coordinates below are those of the design (its y axis starts 20px above the ears). The
+   card sits inside the body, the body grows with it. The window is transparent: the glow and shadow need the padding. */
+.rig {
+  --shell-hi: #7a4ad6;
+  --shell: #4a1f9e;
+  --shell-lo: #2e1270;
+  --ear-in: #2a0f5a;
+  position: relative;
+  padding: 120px 44px 32px;
+}
+.decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.decor > * {
+  position: absolute;
+  display: block;
+}
+/* The outlines of ears and body, with the glow and the drop shadow of the whole silhouette. */
+.silhouette {
+  inset: 0;
+  filter: drop-shadow(0 0 20px rgba(255, 62, 165, 0.35)) drop-shadow(0 10px 16px rgba(0, 0, 0, 0.5));
+}
+.silhouette > * {
+  position: absolute;
+  background: var(--ink);
+}
+.ear-l-out,
+.ear-r-out,
+.ear-l,
+.ear-l-in,
+.ear-r,
+.ear-r-in {
+  left: 0;
+  top: 0;
+  width: 440px;
+  height: 80px;
+}
+.ear-l,
+.ear-r {
+  background: linear-gradient(var(--shell-hi) 0 20px, var(--shell) 20px);
+}
+.ear-l-in,
+.ear-r-in {
+  background: var(--ear-in);
+}
+.ear-l-out {
+  clip-path: polygon(
+    84px 4px,
+    84px 12px,
+    86px 12px,
+    86px 16px,
+    88px 16px,
+    88px 20px,
+    90px 20px,
+    90px 24px,
+    94px 24px,
+    94px 28px,
+    96px 28px,
+    96px 32px,
+    100px 32px,
+    100px 36px,
+    102px 36px,
+    102px 40px,
+    104px 40px,
+    104px 44px,
+    108px 44px,
+    108px 48px,
+    110px 48px,
+    110px 52px,
+    114px 52px,
+    114px 56px,
+    116px 56px,
+    116px 60px,
+    118px 60px,
+    118px 64px,
+    122px 64px,
+    122px 68px,
+    124px 68px,
+    124px 76px,
+    46px 76px,
+    46px 68px,
+    48px 68px,
+    48px 64px,
+    50px 64px,
+    50px 56px,
+    52px 56px,
+    52px 52px,
+    54px 52px,
+    54px 48px,
+    56px 48px,
+    56px 40px,
+    58px 40px,
+    58px 36px,
+    60px 36px,
+    60px 28px,
+    62px 28px,
+    62px 24px,
+    64px 24px,
+    64px 20px,
+    66px 20px,
+    66px 12px,
+    64px 12px,
+    64px 4px
+  );
+}
+.ear-r-out {
+  clip-path: polygon(
+    376px 4px,
+    376px 12px,
+    374px 12px,
+    374px 20px,
+    376px 20px,
+    376px 24px,
+    378px 24px,
+    378px 28px,
+    380px 28px,
+    380px 36px,
+    382px 36px,
+    382px 40px,
+    384px 40px,
+    384px 48px,
+    386px 48px,
+    386px 52px,
+    388px 52px,
+    388px 56px,
+    390px 56px,
+    390px 64px,
+    392px 64px,
+    392px 68px,
+    394px 68px,
+    394px 76px,
+    316px 76px,
+    316px 68px,
+    318px 68px,
+    318px 64px,
+    322px 64px,
+    322px 60px,
+    324px 60px,
+    324px 56px,
+    326px 56px,
+    326px 52px,
+    330px 52px,
+    330px 48px,
+    332px 48px,
+    332px 44px,
+    336px 44px,
+    336px 40px,
+    338px 40px,
+    338px 36px,
+    340px 36px,
+    340px 32px,
+    344px 32px,
+    344px 28px,
+    346px 28px,
+    346px 24px,
+    350px 24px,
+    350px 20px,
+    352px 20px,
+    352px 16px,
+    354px 16px,
+    354px 12px,
+    356px 12px,
+    356px 4px
+  );
+}
+.ear-l {
+  clip-path: polygon(
+    80px 8px,
+    80px 16px,
+    82px 16px,
+    82px 20px,
+    84px 20px,
+    84px 24px,
+    88px 24px,
+    88px 28px,
+    90px 28px,
+    90px 32px,
+    94px 32px,
+    94px 36px,
+    96px 36px,
+    96px 40px,
+    100px 40px,
+    100px 44px,
+    102px 44px,
+    102px 48px,
+    106px 48px,
+    106px 52px,
+    108px 52px,
+    108px 56px,
+    112px 56px,
+    112px 60px,
+    114px 60px,
+    114px 64px,
+    118px 64px,
+    118px 68px,
+    120px 68px,
+    120px 72px,
+    50px 72px,
+    50px 68px,
+    52px 68px,
+    52px 64px,
+    54px 64px,
+    54px 60px,
+    56px 60px,
+    56px 52px,
+    58px 52px,
+    58px 48px,
+    60px 48px,
+    60px 44px,
+    62px 44px,
+    62px 36px,
+    64px 36px,
+    64px 32px,
+    66px 32px,
+    66px 28px,
+    68px 28px,
+    68px 20px,
+    70px 20px,
+    70px 16px,
+    68px 16px,
+    68px 8px
+  );
+}
+.ear-l-in {
+  clip-path: polygon(
+    84px 28px,
+    84px 40px,
+    88px 40px,
+    88px 44px,
+    90px 44px,
+    90px 48px,
+    92px 48px,
+    92px 52px,
+    96px 52px,
+    96px 56px,
+    98px 56px,
+    98px 60px,
+    102px 60px,
+    102px 64px,
+    104px 64px,
+    104px 68px,
+    106px 68px,
+    106px 72px,
+    66px 72px,
+    66px 68px,
+    68px 68px,
+    68px 60px,
+    70px 60px,
+    70px 52px,
+    72px 52px,
+    72px 48px,
+    74px 48px,
+    74px 40px,
+    72px 40px,
+    72px 28px
+  );
+}
+.ear-r {
+  clip-path: polygon(
+    372px 8px,
+    372px 16px,
+    370px 16px,
+    370px 20px,
+    372px 20px,
+    372px 28px,
+    374px 28px,
+    374px 32px,
+    376px 32px,
+    376px 36px,
+    378px 36px,
+    378px 44px,
+    380px 44px,
+    380px 48px,
+    382px 48px,
+    382px 52px,
+    384px 52px,
+    384px 60px,
+    386px 60px,
+    386px 64px,
+    388px 64px,
+    388px 68px,
+    390px 68px,
+    390px 72px,
+    320px 72px,
+    320px 68px,
+    322px 68px,
+    322px 64px,
+    326px 64px,
+    326px 60px,
+    328px 60px,
+    328px 56px,
+    332px 56px,
+    332px 52px,
+    334px 52px,
+    334px 48px,
+    338px 48px,
+    338px 44px,
+    340px 44px,
+    340px 40px,
+    344px 40px,
+    344px 36px,
+    346px 36px,
+    346px 32px,
+    350px 32px,
+    350px 28px,
+    352px 28px,
+    352px 24px,
+    356px 24px,
+    356px 20px,
+    358px 20px,
+    358px 16px,
+    360px 16px,
+    360px 8px
+  );
+}
+.ear-r-in {
+  clip-path: polygon(
+    368px 28px,
+    368px 40px,
+    366px 40px,
+    366px 48px,
+    368px 48px,
+    368px 52px,
+    370px 52px,
+    370px 60px,
+    372px 60px,
+    372px 68px,
+    374px 68px,
+    374px 72px,
+    334px 72px,
+    334px 68px,
+    336px 68px,
+    336px 64px,
+    338px 64px,
+    338px 60px,
+    342px 60px,
+    342px 56px,
+    344px 56px,
+    344px 52px,
+    348px 52px,
+    348px 48px,
+    350px 48px,
+    350px 44px,
+    352px 44px,
+    352px 40px,
+    356px 40px,
+    356px 28px
+  );
+}
+.body-out {
+  inset: 64px 30px 16px;
+  clip-path: polygon(
+    0 16px,
+    4px 16px,
+    4px 8px,
+    8px 8px,
+    8px 4px,
+    16px 4px,
+    16px 0,
+    calc(100% - 16px) 0,
+    calc(100% - 16px) 4px,
+    calc(100% - 8px) 4px,
+    calc(100% - 8px) 8px,
+    calc(100% - 4px) 8px,
+    calc(100% - 4px) 16px,
+    100% 16px,
+    100% calc(100% - 16px),
+    calc(100% - 4px) calc(100% - 16px),
+    calc(100% - 4px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 4px),
+    calc(100% - 16px) calc(100% - 4px),
+    calc(100% - 16px) 100%,
+    16px 100%,
+    16px calc(100% - 4px),
+    8px calc(100% - 4px),
+    8px calc(100% - 8px),
+    4px calc(100% - 8px),
+    4px calc(100% - 16px),
+    0 calc(100% - 16px)
+  );
+}
+.body {
+  inset: 68px 34px 20px;
+  clip-path: polygon(
+    0 16px,
+    4px 16px,
+    4px 8px,
+    8px 8px,
+    8px 4px,
+    16px 4px,
+    16px 0,
+    calc(100% - 16px) 0,
+    calc(100% - 16px) 4px,
+    calc(100% - 8px) 4px,
+    calc(100% - 8px) 8px,
+    calc(100% - 4px) 8px,
+    calc(100% - 4px) 16px,
+    100% 16px,
+    100% calc(100% - 16px),
+    calc(100% - 4px) calc(100% - 16px),
+    calc(100% - 4px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 8px),
+    calc(100% - 8px) calc(100% - 4px),
+    calc(100% - 16px) calc(100% - 4px),
+    calc(100% - 16px) 100%,
+    16px 100%,
+    16px calc(100% - 4px),
+    8px calc(100% - 4px),
+    8px calc(100% - 8px),
+    4px calc(100% - 8px),
+    4px calc(100% - 16px),
+    0 calc(100% - 16px)
+  );
+  background: linear-gradient(
+    var(--shell-hi) 0 6px,
+    var(--shell) 6px calc(100% - 12px),
+    var(--shell-lo) calc(100% - 12px)
+  );
+}
+.foot-out {
+  bottom: 4px;
+  width: 68px;
+  height: 28px;
+  clip-path: var(--cut-4);
+  background: var(--ink);
+}
+.foot {
+  bottom: 8px;
+  width: 60px;
+  height: 20px;
+  clip-path: var(--cut-3);
+  background: linear-gradient(var(--shell) 0 12px, var(--shell-lo) 12px);
+}
+.foot-out.l {
+  left: 86px;
+}
+.foot.l {
+  left: 90px;
+}
+.foot-out.r {
+  right: 86px;
+}
+.foot.r {
+  right: 90px;
+}
+.eye {
+  top: 86px;
+  width: 18px;
+  height: 8px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px 2px rgba(45, 226, 255, 0.55);
+  transform-origin: 50% 70%;
+}
+.eye.l {
+  left: 184px;
+}
+.eye.r {
+  left: 238px;
+}
+/* The belly: a small notch at the bottom edge of the body. */
+.belly-a {
+  left: 212px;
+  bottom: 14px;
+  width: 16px;
+  height: 6px;
+  background: var(--ink);
+}
+.belly-b {
+  left: 216px;
+  bottom: 8px;
+  width: 8px;
+  height: 6px;
+  background: var(--ink);
+}
+.belly-c {
+  left: 216px;
+  bottom: 16px;
+  width: 8px;
+  height: 6px;
+  background: var(--shell-lo);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .eye {
+    animation: blink-eye 4.6s steps(1, end) infinite;
+  }
+}
+@keyframes blink-eye {
+  0% {
+    transform: scaleY(1);
+  }
+  93% {
+    transform: scaleY(0.25);
+  }
+  95% {
+    transform: scaleY(1);
+  }
 }
 
 /* Tail: four pixel steps in the frame's pink, centered on the pet. It touches the card edge it comes out of. */
