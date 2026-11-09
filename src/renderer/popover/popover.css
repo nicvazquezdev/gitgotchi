@@ -722,12 +722,14 @@ body {
   display: grid;
 }
 .need-title {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
+  overflow-wrap: anywhere; /* a long name with no spaces breaks instead of widening the card */
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .need-title.done {
   color: var(--text-2);

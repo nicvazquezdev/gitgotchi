@@ -89,7 +89,6 @@ function header(status) {
             class: 'icon-btn',
             type: 'button',
             'aria-label': 'Menu',
-            title: 'Menu',
             onclick: () => api.action('openMenu'),
           },
           icon('dots', { size: 18 }),
@@ -176,13 +175,14 @@ function tabs(status) {
 // ---------- Rows ----------
 
 /**
- * One PR row: a dot for what it needs, the title, the reason in bold and where (repo, author), and on the right how
- * long it has waited (hovering swaps it for the "open" icon).
+ * One PR row: a dot for what it needs, the title (up to two lines: a tooltip would open behind the card, which floats
+ * above everything), the reason in bold and where (repo, author), and on the right how long it has waited (hovering
+ * swaps it for the "open" icon).
  */
 function prRow(pr, { dot = '', reason, where, end, done = false }) {
   return h(
     'button',
-    { class: 'need', type: 'button', title: pr.title, onclick: () => api.openPullRequest(pr.url) },
+    { class: 'need', type: 'button', onclick: () => api.openPullRequest(pr.url) },
     h('span', { class: `dot ${dot}` }),
     h(
       'span',

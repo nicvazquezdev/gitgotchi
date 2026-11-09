@@ -32,6 +32,28 @@ canvas.sprite {
   outline-offset: 2px;
 }
 
+/* ---------- Scrollbars: square and thin, in the colors of the night (pink under the pointer) ---------- */
+::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  min-height: 32px;
+  border: 3px solid transparent;
+  border-radius: 0;
+  background: var(--border-strong);
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:active {
+  background: var(--accent);
+  background-clip: padding-box;
+}
+
 /* ---------- Type ---------- */
 .pixel-title {
   margin: 0;
