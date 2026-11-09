@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/banner.png" alt="Kindlet, a pixel art fire creature, cheering in front of a synthwave sunset" width="100%" />
+  <img src="docs/images/banner.png" alt="Jellumi, Cindle and Sporby side by side in front of a synthwave sunset" width="100%" />
 </p>
 
 # Gitgotchi
