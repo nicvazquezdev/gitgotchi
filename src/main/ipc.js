@@ -43,7 +43,9 @@ const PANEL_ACTIONS = [
 ];
 const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
-const POPOVER_ACTIONS = ['openShare', 'openMenu', 'resume'];
+const POPOVER_ACTIONS = ['openShare', 'openSettings', 'resume'];
+// The windows the card opens do not close it.
+const POPOVER_STAYS = new Set(['openShare', 'openSettings']);
 // ---- end everyday UI ----
 
 // Settings window controls.
@@ -159,7 +161,8 @@ function registerIpc(actions) {
   handle('popover:state', () => popoverWindow.state());
   on('popover:action', (name) => {
     if (!POPOVER_ACTIONS.includes(name)) return;
-    popoverWindow.hide();
+    if (POPOVER_STAYS.has(name)) popoverWindow.keepOpen();
+    else popoverWindow.hide();
     actions[name]();
   });
   on('popover:height', (height) => Number.isFinite(height) && popoverWindow.setHeight(height));

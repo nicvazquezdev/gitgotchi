@@ -151,8 +151,8 @@ function header(status) {
           ),
           h(
             'button',
-            { class: 'icon-btn', type: 'button', 'aria-label': 'Menu', onclick: () => api.action('openMenu') },
-            icon('dots', { size: 18 }),
+            { class: 'icon-btn', type: 'button', 'aria-label': 'Settings', onclick: () => api.action('openSettings') },
+            icon('gear', { size: 18 }),
           ),
         ),
       ),

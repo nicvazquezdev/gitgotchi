@@ -8,6 +8,8 @@ const { IS_MAC } = require('../config');
 const REOPEN_GUARD_MS = 250;
 // Pressing the pet blurs the popover before the page says that a drag begins: hide a moment later, unless held.
 const BLUR_GRACE_MS = 60;
+// A window opened from this one (share, settings) takes the focus a moment later: that blur does not close it.
+const KEEP_OPEN_MS = 2500;
 const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 900; // the popover with its shell is taller than a plain card
 
@@ -23,6 +25,7 @@ function createPopup({ page, channel, size, level, boundsFor }) {
   let hiddenAt = 0;
   let placed = null;
   let held = false; // the anchor is being dragged: losing the focus does not close the window
+  let keepUntil = 0; // until then, losing the focus does not close the window (see `keepOpen`)
   let getState = () => null;
   let onVisibility = () => {};
 
@@ -47,7 +50,10 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     });
     win.setAlwaysOnTop(true, level, 1); // relative level 1: above the pet window, which sits on the same level
     win.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
-    win.on('blur', () => setTimeout(() => !held && hide(), BLUR_GRACE_MS));
+    win.on('blur', () => {
+      if (Date.now() < keepUntil) return;
+      setTimeout(() => !held && hide(), BLUR_GRACE_MS);
+    });
     win.webContents.on('before-input-event', (event, input) => {
       if (input.type === 'keyDown' && input.key === 'Escape') {
         event.preventDefault();
@@ -135,6 +141,8 @@ function createPopup({ page, channel, size, level, boundsFor }) {
     show,
     follow,
     hold,
+    /** Another window of the app is about to open from this one: the focus it takes does not close this window. */
+    keepOpen: () => (keepUntil = Date.now() + KEEP_OPEN_MS),
     hide,
     toggle,
     send,
