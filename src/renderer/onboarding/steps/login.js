@@ -1,7 +1,7 @@
 // Step 1: connect to GitHub using the `gh` CLI session (and offer a cloud save, if there is one).
 import { h } from '../../shared/dom.js';
 import { icon, spriteImg } from '../../shared/ui.js';
-import { button, illustration, statusCard, stepCount, stepProgress } from './parts.js';
+import { button, hero, statusCard, stepCount, stepProgress } from './parts.js';
 
 const HELP = {
   GH_NOT_FOUND: { title: 'GitHub CLI not found', command: 'brew install gh && gh auth login' },
@@ -17,16 +17,14 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
       const show = (...nodes) => slot.replaceChildren(...nodes.filter(Boolean));
       let accounts = null; // last answer of auth:accounts
 
-      const heading = [
-        stepProgress(1, stepCount(state)),
-        h('h1', { class: 'pixel-title' }, 'Connect GitHub'),
-        h(
-          'p',
-          { class: 'lead' },
-          'Your pet earns XP from your pull requests and reviews. Gitgotchi reads your activity through the gh session you already have. No tokens to paste, and it never reads your code.',
-        ),
-      ];
-      const footnote = h('p', { class: 'footnote' }, 'You can disconnect anytime in Settings.');
+      const title = h('h1', { class: 'pixel-title' }, 'Meet your pet');
+      const lead = h(
+        'p',
+        { class: 'lead' },
+        'It grows with the pull requests and reviews you already do. Gitgotchi uses your GitHub CLI session and never reads your code.',
+      );
+      const heading = [stepProgress(1, stepCount(state)), title, lead];
+      const footnote = h('p', { class: 'footnote' }, 'You can disconnect any time in Settings.');
 
       function showHelp({ error, message }) {
         const { title, command } = HELP[error] ?? HELP.DEFAULT;
@@ -94,11 +92,14 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
         const { login } = state.user;
         const status = statusCard({
           tone: 'success',
-          title: 'gh session found',
-          text: `Signed in as @${login} on github.com`,
+          title: `Signed in as @${login}`,
           action: button('Not you?', { class: 'link', onclick: notYou }),
         });
-        if (restorable) return show(status, cloudCard(restorable));
+        title.textContent = restorable ? 'Welcome back' : 'Meet your pet';
+        if (restorable) {
+          lead.textContent = 'We found a saved pet in your GitHub. Restore it, or start fresh with a new one.';
+          return show(cloudCard(restorable));
+        }
         show(status, button(`Continue as @${login}`, { onclick: () => go('repos') }, { primary: true, large: true }));
       }
 
@@ -122,14 +123,8 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
           h(
             'span',
             { class: 'status-text' },
-            h(
-              'strong',
-              {},
-              count > 1
-                ? `We found your ${count} companions in your GitHub`
-                : `We found your pet ${name} in your GitHub`,
-            ),
-            h('span', {}, count > 1 ? `${name} is active · Level ${level}` : `Level ${level}`),
+            h('strong', {}, name),
+            h('span', {}, count > 1 ? `${count} pets · ${name} is active at level ${level}` : `Level ${level}`),
           ),
           restore,
           button('Start fresh', { class: 'link', onclick: () => showConnected() }),
@@ -148,15 +143,7 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
       // Always re-check `gh`: the saved account may be gone if it was logged out since.
       start();
 
-      return h(
-        'div',
-        { class: 'split' },
-        illustration({
-          species: trio,
-          tagline: 'A pixel companion that lives on your desktop and grows with every PR you ship.',
-        }),
-        h('div', { class: 'pane centered' }, ...heading, slot, footnote),
-      );
+      return h('div', { class: 'ob' }, hero(trio), h('div', { class: 'ob-body' }, ...heading, slot, footnote));
     },
   };
 }

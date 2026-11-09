@@ -1,7 +1,7 @@
 // Step 2: pick the repos that count for the pet.
 import { h } from '../../shared/dom.js';
 import { icon } from '../../shared/ui.js';
-import { button, illustration, stepCount, stepProgress } from './parts.js';
+import { button, hero, stepCount, stepProgress } from './parts.js';
 
 const REPO_PATTERN = /^[\w.-]+\/[\w.-]+$/;
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -150,14 +150,11 @@ export function createReposStep({ api, catalog, state, go, toast }) {
 
       return h(
         'div',
-        { class: 'split' },
-        illustration({
-          species: trio,
-          tagline: 'More repos, more chances to grow. Pick the ones where you really work.',
-        }),
+        { class: 'ob' },
+        hero(trio),
         h(
           'div',
-          { class: 'pane' },
+          { class: 'ob-body' },
           stepProgress(2, stepCount(state)),
           h('h1', { class: 'pixel-title' }, 'Pick your repos'),
           h('p', { class: 'lead' }, 'Only activity in these repos earns XP. You can change this later.'),

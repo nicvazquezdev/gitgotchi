@@ -1,5 +1,5 @@
-// `npm run shots [-- page ...] [--mine] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
-// so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
+// `npm run shots [-- page ...] [--mine] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet onboarding.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
 const { app, BrowserWindow, nativeTheme } = require('electron');
@@ -14,7 +14,9 @@ const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { earnedSince, NAME_MAX } = require(path.join(ROOT, 'src/main/game/collection.js'));
 const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
-const flagValues = new Set(['--out', '--tab', '--click'].map((f) => process.argv[process.argv.indexOf(f) + 1]));
+const flagValues = new Set(
+  process.argv.flatMap((a, i) => (['--out', '--tab', '--click'].includes(a) ? [process.argv[i + 1]] : [])),
+);
 const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagValues.has(a));
 // Its own profile folder, so a run never waits for the lock of the real app's (or touches its data).
 app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-shots-profile'));
@@ -29,7 +31,9 @@ const levelUp = process.argv.includes('--level-up'); // pet: a new level (the ho
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
 const complete = process.argv.includes('--complete'); // a pet with every achievement
 const final = process.argv.includes('--final'); // evolution: into the last stage (the pet is fully grown)
-const click = process.argv.includes('--click') ? process.argv[process.argv.indexOf('--click') + 1] : null; // a selector to click before the capture
+// Selectors to click, in order, before the capture (each `--click` is one).
+const clicks = process.argv.flatMap((a, i) => (a === '--click' ? [process.argv[i + 1]] : []));
+const restore = process.argv.includes('--restore'); // onboarding: a save of the pets was found in the account
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
 const scroll = process.argv.includes('--scroll'); // scroll the content to the end before the capture
 const freeze = process.argv.includes('--freeze'); // a fixed clock and nothing that moves, for pixel comparisons
@@ -41,6 +45,7 @@ const PAGES = {
   popover: { size: { width: config.POPOVER_WINDOW.width, height: 1000 }, fit: true },
   panel: { size: { width: config.PANEL_WINDOW.width, height: 1000 }, fit: true },
   pet: { size: config.PET_WINDOW },
+  onboarding: { size: config.ONBOARDING_WINDOW },
 };
 const pages = args.filter((a) => a in PAGES);
 
@@ -168,6 +173,20 @@ const fixtures = {
   status,
   catalog: { species: catalog.SPECIES, stages: catalog.STAGES, xpRules: catalog.XP_RULES, nameMax: NAME_MAX },
   petSize: config.DEFAULT_PET_SIZE,
+  onboarding: {
+    accounts: [{ login: 'sample-user', active: true, avatarUrl: null }],
+    repos: [
+      { fullName: 'acme/web-app', private: true, recent: 6, pushedAt: ago(2 * H) },
+      { fullName: 'acme/cli', private: true, recent: 3, pushedAt: ago(30 * H) },
+      { fullName: 'acme/design-tokens', private: false, recent: 0, pushedAt: ago(3 * 24 * H) },
+      { fullName: 'acme/docs', private: false, recent: 0, pushedAt: ago(14 * 24 * H) },
+      { fullName: 'acme/infra', private: true, recent: 0, pushedAt: ago(90 * 24 * H) },
+      { fullName: 'sample-user/dotfiles', private: false, recent: 0, pushedAt: ago(400 * 24 * H) },
+    ],
+    save: restore
+      ? { found: true, pet: { name: 'Mergon', speciesId: 'phoenix', stageIndex: 1, level: 9, count: 4 } }
+      : { found: false },
+  },
   panel: {
     status,
     configured: true,
@@ -227,8 +246,8 @@ async function shot(name) {
         `(() => { const r = document.querySelector('#app').getBoundingClientRect(); return { x: 0, y: 0, width: innerWidth, height: Math.ceil(r.bottom) + 8 }; })()`,
       )
     : undefined;
-  if (click) {
-    await win.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(click)}).click()`);
+  for (const selector of clicks) {
+    await win.webContents.executeJavaScript(`document.querySelector(${JSON.stringify(selector)}).click()`);
     await new Promise((resolve) => setTimeout(resolve, 400));
   }
   if (scroll) {
@@ -241,7 +260,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${restore ? '-restore' : ''}${clicks.length ? `-clicked${clicks.length > 1 ? clicks.length : ''}` : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

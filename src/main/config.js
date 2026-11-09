@@ -32,7 +32,7 @@ module.exports = {
   SETTINGS_WINDOW: { width: 480, height: 600 },
   EVOLUTION_WINDOW: { width: 960, height: 640 },
   // Default size is also the minimum: below it the steps don't fit.
-  ONBOARDING_WINDOW: { width: 960, height: 640, minWidth: 960, minHeight: 640 },
+  ONBOARDING_WINDOW: { width: 560, height: 700, minWidth: 560, minHeight: 700 },
 
   // Base poll period. Cheap: conditional requests answer 304 when nothing changed.
   // GitHub's X-Poll-Interval header can only raise it.

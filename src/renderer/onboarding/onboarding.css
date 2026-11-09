@@ -1,4 +1,5 @@
-/* Onboarding window (960×640): tokens and shared components come from ../shared. */
+/* Onboarding window (560 wide): a night with three baby pets on top, and one column under it. Tokens and shared
+   components come from ../shared. */
 
 html,
 body {
@@ -13,237 +14,72 @@ body {
 .step {
   flex: 1;
   min-height: 0;
-  display: flex;
-}
-h1 {
-  margin: 0;
-}
-.pixel-title {
-  color: #ffffff;
-  text-shadow:
-    0 0 18px rgba(255, 62, 165, 0.55),
-    3px 3px 0 #3a0d5c;
+  overflow-y: auto;
 }
 
-/* ---------- Progress ---------- */
-.step-progress {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-.step-progress .eyebrow {
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--select);
-}
-.segments {
-  display: flex;
-  gap: 4px;
-}
-.segments i {
-  width: 24px;
-  height: 4px;
-  background: var(--track);
-}
-.segments i.on {
-  background: var(--accent);
-}
-
-/* ---------- Steps 1 and 2: illustration + content ---------- */
-.split {
-  flex: 1;
-  display: flex;
-  min-width: 0;
-}
-/* The sunset: sky, the glow behind the sun, the sun and the floor (.night), the ridges, and the creatures on the grid. */
-.illustration {
-  --sun-top: 160px;
-  --sun-size: 260px;
-  --floor-h: 200px;
-  width: 380px;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-end;
-  padding-bottom: 96px;
-  background:
-    radial-gradient(
-      circle 254px at 190px 290px,
-      rgba(255, 62, 165, 0.4),
-      rgba(255, 62, 165, 0.1) 45%,
-      rgba(255, 62, 165, 0) 70%
-    ),
-    linear-gradient(
-      var(--sky-1) 0 120px,
-      var(--sky-2) 120px 200px,
-      var(--sky-3) 200px 266px,
-      var(--sky-4) 266px 320px,
-      var(--sky-5) 320px 360px,
-      var(--sky-6) 360px 400px,
-      #100326 400px
-    );
-}
-.illustration::after {
-  background:
-    url('../../../assets/ui/grid-floor.svg') -530px 0 / 1440px 360px no-repeat,
-    linear-gradient(#8a1d6c 0 30px, #6e1866 30px 80px, #561460 80px 150px, #42105a 150px 240px, #320c4e 240px);
-}
-.stars {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 3px;
-  height: 3px;
-  background: #ffffff;
-  box-shadow:
-    40px 150px 0 0 #ffffff,
-    330px 136px 0 -1px #b8f6ff,
-    300px 200px 0 -1px #ffb3e1,
-    64px 236px 0 -1px #ffffff,
-    320px 168px 0 0 #ffffff,
-    120px 90px 0 -1px #ffffff,
-    250px 60px 0 -1px #b8f6ff;
-}
-.ridges {
-  position: absolute;
-  left: 0;
-  top: 290px;
-  width: 380px;
-  height: 110px;
-  filter: drop-shadow(0 -2px 0 var(--neon-pink)) drop-shadow(2px 0 0 var(--neon-pink))
-    drop-shadow(-2px 0 0 var(--neon-pink));
-}
-.ridge {
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(#1c0742 0 6px, #24094f 6px 8px);
-}
-.ridge.left {
-  clip-path: polygon(
-    0px 110px,
-    0px 46px,
-    28px 46px,
-    28px 30px,
-    56px 30px,
-    56px 14px,
-    70px 14px,
-    70px 22px,
-    84px 22px,
-    84px 30px,
-    98px 30px,
-    98px 38px,
-    112px 38px,
-    112px 46px,
-    126px 46px,
-    126px 54px,
-    140px 54px,
-    140px 62px,
-    152px 62px,
-    152px 70px,
-    164px 70px,
-    164px 78px,
-    188px 78px,
-    188px 86px,
-    200px 86px,
-    200px 94px,
-    227px 94px,
-    227px 110px,
-    240px 110px
-  );
-}
-.ridge.right {
-  clip-path: polygon(
-    140px 110px,
-    140px 102px,
-    152px 102px,
-    152px 94px,
-    165px 94px,
-    165px 86px,
-    178px 86px,
-    178px 78px,
-    190px 78px,
-    190px 62px,
-    218px 62px,
-    218px 46px,
-    246px 46px,
-    246px 30px,
-    272px 30px,
-    272px 38px,
-    284px 38px,
-    284px 46px,
-    296px 46px,
-    296px 54px,
-    308px 54px,
-    308px 62px,
-    332px 62px,
-    332px 54px,
-    344px 54px,
-    344px 46px,
-    368px 46px,
-    368px 38px,
-    380px 38px,
-    380px 110px
-  );
-}
-.trio {
+/* ---------- The night on top ---------- */
+.ob-hero {
+  --sun-size: 34%;
+  --sun-top: 8%;
+  --floor-h: 30%;
+  height: 132px;
   display: flex;
   align-items: flex-end;
-  gap: 4px;
-  padding-bottom: 8px;
+  justify-content: center;
+  gap: 34px;
+  padding-bottom: 16px;
+  -webkit-app-region: drag; /* the window can be dragged by it (there is no title bar) */
+  user-select: none;
+}
+.ob-hero::after {
+  background:
+    url('../../../assets/ui/grid-floor.svg') center top / max(100%, 760px) 100% no-repeat,
+    linear-gradient(#8a1d6c 0 12px, #6e1866 12px 30px, #561460 30px);
 }
 .creature {
   position: relative;
-  flex: none;
 }
 .creature .sprite + .sprite {
   position: absolute;
   inset: 0;
 }
 .creature .sprite {
-  filter: none;
-}
-.tagline {
-  position: absolute;
-  left: 40px;
-  right: 40px;
-  top: 40px;
-  margin: 0;
-  text-align: center;
-  font-size: 15px;
-  line-height: 1.5;
-  color: var(--text);
+  image-rendering: pixelated;
 }
 
-.pane {
-  flex: 1;
-  min-width: 0;
+/* ---------- The column ---------- */
+.ob-body {
+  padding: 22px 32px 28px;
+}
+.steps {
   display: flex;
-  flex-direction: column;
-  padding: 40px 64px 32px;
+  gap: 6px;
+  margin-bottom: 14px;
 }
-.pane.centered {
-  justify-content: center;
-  padding: 48px 64px;
+.steps i {
+  width: 22px;
+  height: 6px;
+  background: var(--track);
 }
-.pane .pixel-title {
-  margin-top: 14px;
+.steps i.on {
+  background: var(--accent);
+}
+.ob-body .pixel-title {
+  font: 600 26px/30px var(--font-pixel);
 }
 .lead {
-  margin: 10px 0 0;
-  max-width: 440px;
-  font-size: 15px;
-  line-height: 1.55;
+  margin: 8px 0 18px;
+  font-size: 14px;
+  line-height: 1.5;
   color: var(--text-2);
 }
 .slot {
-  margin-top: 28px;
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 .slot > .btn {
-  margin-top: 8px;
+  width: 100%;
 }
 .footnote {
   margin: 12px 0 0;
@@ -387,13 +223,11 @@ h1 {
 }
 
 /* ---------- Step 2: repo list ---------- */
-.pane .field {
-  margin-top: 20px;
+.ob-body .field {
+  margin: 0;
 }
 .repo-card {
   margin-top: 12px;
-  flex: 1;
-  min-height: 0;
   display: flex;
   flex-direction: column;
   clip-path: var(--cut-4);
@@ -423,8 +257,7 @@ h1 {
   font-weight: 500;
 }
 .repo-list {
-  flex: 1;
-  min-height: 0;
+  max-height: 252px;
   overflow-y: auto;
 }
 .repo {
@@ -461,201 +294,63 @@ h1 {
   font-size: 13px;
 }
 .actions {
-  flex: none;
-  margin-top: 20px;
+  margin-top: 18px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
   gap: 8px;
 }
 
-/* ---------- Step 3 ---------- */
-.pet-step {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  padding: 22px 40px 18px;
-}
-.pet-head {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 24px;
-}
-.pet-head > div:first-child {
-  flex: none; /* the title keeps one line; the text beside it wraps */
-}
-.pet-head .pixel-title {
-  margin-top: 8px;
-}
-.pixel-title.small {
-  font-size: 32px;
-  line-height: 38px;
-}
-.pet-head p {
-  margin: 0 0 4px;
-}
-.pet-main {
-  margin-top: 16px;
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  gap: 20px;
-}
-.pet-left {
-  width: 414px;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-}
+/* ---------- Step 3: the pets ---------- */
 .picker {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 .pick {
-  padding: 6px 6px 8px;
+  padding: 0;
   border: 0;
-  clip-path: var(--cut-4);
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--border);
+  background: transparent;
   color: var(--text);
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 14px;
-}
-.pick[aria-checked='true'] {
-  background: var(--accent-tint);
-  box-shadow: inset 0 0 0 2px var(--select);
-}
-.tile,
-.evo-tile {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  overflow: hidden;
-  clip-path: var(--cut-3);
-}
-.tile {
-  --sun-top: 8%;
-  --sun-size: 80%;
-  height: 100px;
-}
-.tile .sprite {
-  margin-bottom: 2px;
-}
-.pet-options {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.pet-options .field {
-  height: 36px;
-}
-.check-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-2);
-  cursor: pointer;
-}
-.check-row input {
-  flex: none;
-  margin-top: 1px;
-}
-
-.detail {
-  flex: 1;
-  min-width: 0;
-  padding: 20px;
-  clip-path: var(--cut-4);
-  background: var(--bg);
-  box-shadow: inset 0 0 0 1px var(--card-border);
-  display: flex;
-  flex-direction: column;
-}
-.detail-top {
-  display: flex;
-  gap: 18px;
-  align-items: center;
-}
-.detail-name {
-  margin-top: 4px;
-  font-size: 30px;
-  line-height: 34px;
-}
-.desc {
-  margin: 8px 0 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-2);
-}
-.evo-head {
-  margin-top: auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  font-size: 13px;
-}
-.evo-grid {
-  margin-top: 10px;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 6px;
-}
-.evo-stage {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   text-align: center;
+  cursor: pointer;
 }
-.evo-stage .pixel-name {
+.pick .portrait {
+  --frame: transparent;
+  display: block;
+  width: 100%;
+  aspect-ratio: 1;
+}
+.pick[aria-checked='true'] .portrait {
+  --frame: var(--select);
+}
+.pick .portrait > .inner {
+  --sun-size: 74%;
+  --sun-top: 8%;
+  --floor-h: 28%;
+}
+.pick .portrait > .inner img {
+  margin-bottom: 8px;
+}
+.pick .pixel-name {
+  display: block;
+  margin-top: 7px;
   font-size: 14px;
 }
-.evo-stage .meta,
-.stage-now {
-  font-size: 12px;
+.pick-about {
+  min-height: 2.8em;
+  margin: 14px 0 0;
+  font-size: 13px;
+  color: var(--text-2);
 }
-.stage-now {
-  color: var(--select);
-  font-weight: 600;
-}
-.evo-tile {
-  --sun-top: 8%;
-  --sun-size: 88%;
-  height: 108px;
-  padding-bottom: 6px;
-  border: 2px solid var(--divider);
-  clip-path: var(--cut-4);
-}
-.evo-tile.current {
-  border-color: var(--select);
-}
-.evo-tile:not(.current) .sprite {
-  opacity: 0.3;
-  filter: brightness(0) invert(1); /* a white silhouette, so it shows on the night scene */
-}
-.pixel-name.locked {
-  color: var(--text-4);
-}
-
-.pet-footer {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--divider);
+.name-field {
   display: flex;
   align-items: center;
   gap: 12px;
+  margin-top: 10px;
 }
-.footer-text {
-  margin: 0;
+.name-field .field {
   flex: 1;
-  color: var(--text-2);
+  height: 46px;
 }
 
 /* ---------- Toast ---------- */

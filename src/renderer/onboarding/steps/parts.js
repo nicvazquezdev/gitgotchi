@@ -5,17 +5,12 @@ import { icon, spriteImg } from '../../shared/ui.js';
 /** How many steps the flow has: someone who already has pets does not pick one again (their collection is for that). */
 export const stepCount = (state) => (state.existingPet ? 2 : 3);
 
-/** "STEP n OF m" with the segmented progress. */
+/** Little squares: the step you are on and the ones to go. */
 export const stepProgress = (n, total = 3) =>
   h(
     'div',
-    { class: 'step-progress' },
-    h('span', { class: 'eyebrow' }, `Step ${n} of ${total}`),
-    h(
-      'div',
-      { class: 'segments', 'aria-hidden': 'true' },
-      Array.from({ length: total }, (_, i) => h('i', { class: i < n ? 'on' : '' })),
-    ),
+    { class: 'steps', role: 'img', 'aria-label': `Step ${n} of ${total}` },
+    Array.from({ length: total }, (_, i) => h('i', { class: i < n ? 'on' : '' })),
   );
 
 /** A creature standing on its own shadow, feet on the bottom edge of the box. */
@@ -29,27 +24,13 @@ export function creature(stage, scale, alt = '') {
   );
 }
 
-/** Left panel: a sunset with three baby creatures standing on the grid, and a tagline. */
-export function illustration({ species, tagline }) {
-  const scales = [3, 4, 3];
-  return h(
-    'aside',
-    { class: 'illustration night' },
-    h('div', { class: 'stars', ariaHidden: 'true' }),
-    h(
-      'div',
-      { class: 'ridges', ariaHidden: 'true' },
-      h('div', { class: 'ridge left' }),
-      h('div', { class: 'ridge right' }),
-    ),
-    h(
-      'div',
-      { class: 'trio' },
-      species.map((s, i) => creature(s.stages[0], scales[i], s.stages[0].name)),
-    ),
-    h('p', { class: 'tagline' }, tagline),
+/** The top of every step: a night with three baby creatures standing on the grid. */
+export const hero = (species) =>
+  h(
+    'header',
+    { class: 'ob-hero night' },
+    species.map((s) => creature(s.stages[0], 3, s.stages[0].name)),
   );
-}
 
 /** Card with a round icon, a title, a line of text and an optional action on the right. */
 export function statusCard({ tone = 'neutral', title, text, action }) {

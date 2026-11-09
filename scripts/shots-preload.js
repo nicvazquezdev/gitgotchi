@@ -26,10 +26,14 @@ const never = () => () => {};
 const ignore = () => {};
 
 contextBridge.exposeInMainWorld('gitgotchi', {
-  bootstrap: value({ status: fx.status, catalog: fx.catalog }),
-  auth: { accounts: value({ accounts: [], selected: null, missing: false }), connect: value({}), disconnect: ignore },
-  onboarding: { listRepos: value([]), finish: value({}) },
-  cloud: { find: value({ found: false }), restore: value({}) },
+  bootstrap: value({ user: null, repos: [], pet: null, status: fx.status, catalog: fx.catalog }),
+  auth: {
+    accounts: value({ accounts: fx.onboarding.accounts, selected: 'sample-user', missing: false }),
+    connect: value({ user: { login: 'sample-user' } }),
+    disconnect: ignore,
+  },
+  onboarding: { listRepos: value(fx.onboarding.repos), finish: value({}) },
+  cloud: { find: value(fx.onboarding.save), restore: value({}) },
   pet: {
     status: value(fx.status),
     refresh: value(fx.status),
