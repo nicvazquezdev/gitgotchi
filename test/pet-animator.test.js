@@ -125,43 +125,12 @@ describe('the animation rules', () => {
     assert.ok(a.x <= 5 && a.x >= 0);
   });
 
-  test('a happy pet does not throw hearts and sparkles by itself: they are a burst that rejoice() starts', async () => {
-    const kinds = (a) => a.parts.map((p) => p.kind);
+  test('a happy pet keeps its pose but does not throw hearts and sparkles by itself', async () => {
     const happy = await pet('moth', 2, { mood: 'happy' });
-    let seen = new Set();
-    step(happy, 6000, () => kinds(happy).forEach((k) => seen.add(k)));
+    const seen = new Set();
+    step(happy, 8000, () => happy.parts.forEach((p) => seen.add(p.kind)));
     assert.ok(!seen.has('heart') && !seen.has('sparkle'), 'a happy mood alone is quiet');
-
-    happy.rejoice(3000);
-    seen = new Set();
-    step(happy, 3000, () => kinds(happy).forEach((k) => seen.add(k)));
-    assert.ok(seen.has('heart') && seen.has('sparkle'), 'the burst has hearts and sparkles');
-
-    step(happy, 2000); // the last ones fade (a heart lives 1150 ms)
-    seen = new Set();
-    step(happy, 6000, () => kinds(happy).forEach((k) => seen.add(k)));
-    assert.ok(!seen.has('heart') && !seen.has('sparkle'), 'and it stops by itself');
-    assert.equal(happy.mood, 'happy', 'the pet stays happy');
-  });
-
-  test('rejoice() only works for a happy pet that is not calm, and a mood change ends it', async () => {
-    const neutral = await pet('moth', 2, { mood: 'neutral' });
-    neutral.rejoice(3000);
-    step(neutral, 3000);
-    assert.ok(!neutral.parts.some((p) => p.kind === 'heart'));
-
-    const calm = await pet('moth', 2, { mood: 'happy' });
-    calm.calm = true;
-    calm.rejoice(3000);
-    assert.equal(calm.joyLeft, 0);
-
-    const happy = await pet('moth', 2, { mood: 'happy' });
-    happy.rejoice(60000);
-    happy.setMood('neutral');
-    happy.setMood('happy');
-    let hearts = false;
-    step(happy, 3000, () => (hearts ||= happy.parts.some((p) => p.kind === 'heart')));
-    assert.ok(!hearts, 'a new mood starts quiet');
+    assert.equal(happy.mood, 'happy');
   });
 
   test('anxious pets sweat and shiver, and every line has ambient particles', async () => {

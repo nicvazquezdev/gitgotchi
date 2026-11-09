@@ -51,8 +51,7 @@ function setStatus(next) {
   const moodChanged = status && status.mood !== next.mood;
   const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
   status = next;
-  // The animator takes the mood from the status. A cheer that makes the pet happy lasts until the mood changes.
-  if (moodChanged || creatureChanged) view.setMood(status.mood);
+  // The pet on the desktop is always in its normal state: the mood (and why) is shown in the popover.
   if (creatureChanged) {
     loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
   }

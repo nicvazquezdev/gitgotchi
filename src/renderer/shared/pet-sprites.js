@@ -37,36 +37,19 @@ function loadImage(file) {
 /**
  * The animator, plus two rules of the app:
  * - Hearts and sparkles are a reaction, not a state. The pack makes a happy pet throw them all the time, but a pet
- *   can be happy for days, so they only come in a burst after `rejoice(ms)` (the happy pose itself stays).
+ *   can be happy for days, so a happy mood keeps only its pose (a cheer has its own burst of hearts).
  * - "Calm" mode: no effects and no cheer, just the idle loop of the mood's pose.
  */
 export class DesktopPet extends PetAnimator {
   calm = false;
-  joyLeft = 0; // ms of hearts and sparkles still to come
 
   setMood(mood) {
     super.setMood(mood);
-    this.joyLeft = 0;
     this.nextHeart = Infinity; // super turned them on for a happy mood
     this.nextSparkle = Infinity;
   }
 
-  /** A burst of hearts and sparkles for `ms`, as the pack plays them in the happy mood. Happy mood only. */
-  rejoice(ms) {
-    if (this.mood !== 'happy' || this.calm) return;
-    this.joyLeft = ms;
-    this.nextHeart = this.t + 200; // the same start as setMood('happy') in the reference
-    this.nextSparkle = this.t + 450;
-  }
-
   update(dt) {
-    if (this.joyLeft > 0) {
-      this.joyLeft -= dt;
-      if (this.joyLeft <= 0) {
-        this.nextHeart = Infinity;
-        this.nextSparkle = Infinity;
-      }
-    }
     super.update(dt);
     if (this.calm) {
       this.parts.length = 0; // hearts, sparkles, ambient particles and dust

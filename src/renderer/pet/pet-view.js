@@ -12,8 +12,6 @@ const HEADROOM = 16; // hearts and particles float above the creature
 const BELOW = 2; // rows under the floor line
 const ROWS = HEADROOM + FLOOR_MAX + BELOW;
 
-const JOY_MS = 8000; // hearts and sparkles after a celebration (not for as long as the mood lasts)
-const HAPPY_AFTER_CHEER_MS = 5 * 60 * 1000; // then the pet goes back to the mood the status says
 const MAX_FRAME_MS = 50; // a long pause (sleep, a hidden window) must not make the animation jump ahead
 const POKE_OUT = 4; // the 6 px of padding around a sprite may stick out of the canvas by this much at the edges
 const HIT_SLACK = 2; // native rows above the creature that still count as the creature (it hops)
@@ -35,8 +33,6 @@ export class PetView {
     this.calm = false; // Do not disturb or Reduce Motion: only the idle loop
     this.still = false; // the user holds or points at the pet
     this.mood = 'neutral';
-    this.wantsHappy = false; // after a cheer, the pet is happy
-    this.happyUntil = 0; // when that happiness ends (a performance.now() time), or 0
     this.native = { width: 0, oy: 0 }; // canvas width in native px; row of the creature's cell inside the canvas
     this.ds = 1; // device px per native px
     this.dpr = 0;
@@ -58,21 +54,16 @@ export class PetView {
     this.layout();
   }
 
+  /** The pose and effects of a mood. The desktop pet never calls it (it is always neutral); the popover's portrait does. */
   setMood(mood) {
     this.mood = mood;
-    this.wantsHappy = false;
-    this.happyUntil = 0;
     this.pet?.setMood(mood);
   }
 
-  /**
-   * A merged PR, an approval or an achievement: cheer, then a burst of hearts and a while of being happy
-   * (unless PRs have waited long enough to worry the pet).
-   */
+  /** A merged PR, an approval or an achievement: a cheer (its own burst of hearts, then back to normal). */
   celebrate() {
     if (this.calm || !this.pet) return;
     this.pet.cheer();
-    this.wantsHappy = true;
   }
 
   setCalm(calm) {
@@ -136,18 +127,6 @@ export class PetView {
 
     this.stroller.update(dt, pet, { calm: this.calm, still: this.still });
     pet.update(dt);
-    if (this.wantsHappy && pet.state !== 'cheer' && pet.state !== 'landing') {
-      this.wantsHappy = false;
-      if (this.mood !== 'anxious') {
-        pet.setMood('happy');
-        pet.rejoice(JOY_MS);
-        this.happyUntil = now + HAPPY_AFTER_CHEER_MS;
-      }
-    }
-    if (this.happyUntil && now >= this.happyUntil) {
-      this.happyUntil = 0;
-      pet.setMood(this.mood); // the status decides again
-    }
     this.draw();
   }
 
