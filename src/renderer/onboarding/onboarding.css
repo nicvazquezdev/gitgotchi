@@ -1,20 +1,5 @@
 /* Onboarding window (960×640): tokens and shared components come from ../shared. */
 
-:root {
-  --panel-lilac: #efe9fb;
-  --panel-sky: #e6f1f8;
-  --panel-text-lilac: #4d4460;
-  --panel-text-sky: #3f4f5c;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --panel-lilac: #2a2445;
-    --panel-sky: #1e2a3a;
-    --panel-text-lilac: #cfc7e6;
-    --panel-text-sky: #b9cadb;
-  }
-}
-
 html,
 body {
   height: 100%;
@@ -33,12 +18,23 @@ body {
 h1 {
   margin: 0;
 }
+.pixel-title {
+  color: #ffffff;
+  text-shadow:
+    0 0 18px rgba(255, 62, 165, 0.55),
+    3px 3px 0 #3a0d5c;
+}
 
 /* ---------- Progress ---------- */
 .step-progress {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+.step-progress .eyebrow {
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  color: var(--select);
 }
 .segments {
   display: flex;
@@ -59,22 +55,136 @@ h1 {
   display: flex;
   min-width: 0;
 }
+/* The sunset: sky, the glow behind the sun, the sun and the floor (.night), the ridges, and the creatures on the grid. */
 .illustration {
+  --sun-top: 160px;
+  --sun-size: 260px;
+  --floor-h: 200px;
   width: 380px;
   flex: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 28px;
+  justify-content: flex-end;
+  padding-bottom: 96px;
+  background:
+    radial-gradient(
+      circle 254px at 190px 290px,
+      rgba(255, 62, 165, 0.4),
+      rgba(255, 62, 165, 0.1) 45%,
+      rgba(255, 62, 165, 0) 70%
+    ),
+    linear-gradient(
+      var(--sky-1) 0 120px,
+      var(--sky-2) 120px 200px,
+      var(--sky-3) 200px 266px,
+      var(--sky-4) 266px 320px,
+      var(--sky-5) 320px 360px,
+      var(--sky-6) 360px 400px,
+      #100326 400px
+    );
 }
-.illustration.lilac {
-  background: var(--panel-lilac);
-  color: var(--panel-text-lilac);
+.illustration::after {
+  background:
+    url('../../../assets/ui/grid-floor.svg') -530px 0 / 1440px 360px no-repeat,
+    linear-gradient(#8a1d6c 0 30px, #6e1866 30px 80px, #561460 80px 150px, #42105a 150px 240px, #320c4e 240px);
 }
-.illustration.sky {
-  background: var(--panel-sky);
-  color: var(--panel-text-sky);
+.stars {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 3px;
+  background: #ffffff;
+  box-shadow:
+    40px 150px 0 0 #ffffff,
+    330px 136px 0 -1px #b8f6ff,
+    300px 200px 0 -1px #ffb3e1,
+    64px 236px 0 -1px #ffffff,
+    320px 168px 0 0 #ffffff,
+    120px 90px 0 -1px #ffffff,
+    250px 60px 0 -1px #b8f6ff;
+}
+.ridges {
+  position: absolute;
+  left: 0;
+  top: 290px;
+  width: 380px;
+  height: 110px;
+  filter: drop-shadow(0 -2px 0 var(--neon-pink)) drop-shadow(2px 0 0 var(--neon-pink))
+    drop-shadow(-2px 0 0 var(--neon-pink));
+}
+.ridge {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(#1c0742 0 6px, #24094f 6px 8px);
+}
+.ridge.left {
+  clip-path: polygon(
+    0px 110px,
+    0px 46px,
+    28px 46px,
+    28px 30px,
+    56px 30px,
+    56px 14px,
+    70px 14px,
+    70px 22px,
+    84px 22px,
+    84px 30px,
+    98px 30px,
+    98px 38px,
+    112px 38px,
+    112px 46px,
+    126px 46px,
+    126px 54px,
+    140px 54px,
+    140px 62px,
+    152px 62px,
+    152px 70px,
+    164px 70px,
+    164px 78px,
+    188px 78px,
+    188px 86px,
+    200px 86px,
+    200px 94px,
+    227px 94px,
+    227px 110px,
+    240px 110px
+  );
+}
+.ridge.right {
+  clip-path: polygon(
+    140px 110px,
+    140px 102px,
+    152px 102px,
+    152px 94px,
+    165px 94px,
+    165px 86px,
+    178px 86px,
+    178px 78px,
+    190px 78px,
+    190px 62px,
+    218px 62px,
+    218px 46px,
+    246px 46px,
+    246px 30px,
+    272px 30px,
+    272px 38px,
+    284px 38px,
+    284px 46px,
+    296px 46px,
+    296px 54px,
+    308px 54px,
+    308px 62px,
+    332px 62px,
+    332px 54px,
+    344px 54px,
+    344px 46px,
+    368px 46px,
+    368px 38px,
+    380px 38px,
+    380px 110px
+  );
 }
 .trio {
   display: flex;
@@ -94,11 +204,15 @@ h1 {
   filter: none;
 }
 .tagline {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  top: 40px;
   margin: 0;
-  max-width: 260px;
   text-align: center;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.5;
+  color: var(--text);
 }
 
 .pane {
@@ -145,14 +259,15 @@ h1 {
   align-items: center;
   gap: 12px;
   padding: 14px 16px;
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
 }
 .status-icon {
   flex: none;
   width: 32px;
   height: 32px;
-  border-radius: 50%;
+  clip-path: var(--cut-3);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -196,12 +311,12 @@ h1 {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: var(--accent-soft);
 }
 .terminal {
   padding: 12px 14px;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border);
   font:
@@ -217,7 +332,8 @@ h1 {
 
 /* ---------- Account picker ---------- */
 .account-list {
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
 }
@@ -248,7 +364,7 @@ h1 {
 .account .avatar {
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  clip-path: var(--cut-3);
   background: var(--chip);
 }
 .account-login {
@@ -261,7 +377,7 @@ h1 {
   height: 20px;
   align-items: center;
   justify-content: center;
-  border-radius: 50%;
+  clip-path: var(--cut-3);
   background: var(--accent);
   color: var(--on-accent);
   visibility: hidden;
@@ -280,7 +396,8 @@ h1 {
   min-height: 0;
   display: flex;
   flex-direction: column;
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
   overflow: hidden;
 }
@@ -363,6 +480,10 @@ h1 {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
+  gap: 24px;
+}
+.pet-head > div:first-child {
+  flex: none; /* the title keeps one line; the text beside it wraps */
 }
 .pet-head .pixel-title {
   margin-top: 8px;
@@ -395,7 +516,7 @@ h1 {
 .pick {
   padding: 6px 6px 8px;
   border: 0;
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
   background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--border);
   color: var(--text);
@@ -407,7 +528,7 @@ h1 {
 }
 .pick[aria-checked='true'] {
   background: var(--accent-tint);
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--select);
 }
 .tile,
 .evo-tile {
@@ -415,9 +536,11 @@ h1 {
   align-items: flex-end;
   justify-content: center;
   overflow: hidden;
-  border-radius: 8px;
+  clip-path: var(--cut-3);
 }
 .tile {
+  --sun-top: 8%;
+  --sun-size: 80%;
   height: 100px;
 }
 .tile .sprite {
@@ -450,7 +573,8 @@ h1 {
   flex: 1;
   min-width: 0;
   padding: 20px;
-  border-radius: var(--radius-xl);
+  clip-path: var(--cut-4);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px var(--card-border);
   display: flex;
   flex-direction: column;
@@ -498,19 +622,23 @@ h1 {
   font-size: 12px;
 }
 .stage-now {
-  color: var(--accent-text);
+  color: var(--select);
   font-weight: 600;
 }
 .evo-tile {
+  --sun-top: 8%;
+  --sun-size: 88%;
   height: 108px;
   padding-bottom: 6px;
-  border-radius: 10px;
+  border: 2px solid var(--divider);
+  clip-path: var(--cut-4);
 }
 .evo-tile.current {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  border-color: var(--select);
 }
 .evo-tile:not(.current) .sprite {
-  opacity: 0.22;
+  opacity: 0.3;
+  filter: brightness(0) invert(1); /* a white silhouette, so it shows on the night scene */
 }
 .pixel-name.locked {
   color: var(--text-4);

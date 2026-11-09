@@ -60,11 +60,6 @@ canvas.sprite {
   color: var(--accent-text);
   white-space: nowrap;
 }
-/* Figures (XP, counts, stats) are set in the terminal font */
-.num {
-  font-family: var(--font-num);
-  font-weight: 400;
-}
 
 /* ---------- Pixel-cut corners (buttons, cards, portrait frames) ---------- */
 .card {
@@ -354,7 +349,7 @@ canvas.sprite {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 28%;
+  height: var(--floor-h, 28%);
   border-top: 2px solid var(--neon-glow);
   background:
     url('../../../assets/ui/grid-tile.svg') center top / 100% 100% no-repeat,

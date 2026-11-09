@@ -153,7 +153,6 @@ export function createLoginStep({ api, catalog, state, go, toast }) {
         { class: 'split' },
         illustration({
           species: trio,
-          tone: 'lilac',
           tagline: 'A pixel companion that lives on your desktop and grows with every PR you ship.',
         }),
         h('div', { class: 'pane centered' }, ...heading, slot, footnote),

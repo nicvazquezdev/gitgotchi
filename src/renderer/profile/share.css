@@ -5,7 +5,7 @@
   z-index: 20;
   display: grid;
   place-items: center;
-  background: color-mix(in srgb, #0b0912 86%, transparent);
+  background: color-mix(in srgb, var(--sky-1) 88%, transparent);
   backdrop-filter: blur(4px);
 }
 .share-panel {
@@ -23,7 +23,7 @@
   max-width: 440px;
   text-align: center;
   font-size: 12px;
-  color: #cfc9dd; /* the dialog is dark in both themes */
+  color: var(--text-2);
 }
 
 /* ---------- The card ---------- */
@@ -36,7 +36,7 @@
   --px: 4px;
   width: 480px;
   padding: 2px;
-  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+  background: var(--frame-gradient);
 }
 .share-in {
   position: relative;
@@ -45,7 +45,7 @@
   gap: 16px;
   padding: 20px 22px 18px;
   background:
-    radial-gradient(circle at 12% 12%, color-mix(in srgb, #f2c14e 20%, transparent), transparent 40%),
+    radial-gradient(circle at 12% 12%, color-mix(in srgb, var(--neon-gold) 20%, transparent), transparent 40%),
     linear-gradient(135deg, color-mix(in srgb, var(--accent) 16%, var(--bg)), var(--bg) 70%);
   color: var(--text);
 }
@@ -97,7 +97,7 @@
   align-items: center;
   gap: 8px;
   padding: 12px 4px 10px;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 .share-digits {

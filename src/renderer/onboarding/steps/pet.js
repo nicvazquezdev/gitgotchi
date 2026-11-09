@@ -35,7 +35,7 @@ export function createPetStep({ api, catalog, state, go, toast }) {
         return h(
           'button',
           { class: 'pick', role: 'radio', title: species.desc, onclick: () => select(species.id) },
-          h('span', { class: 'tile', style: { background: species.tint } }, spriteImg(baby.file, baby.size, 3)),
+          h('span', { class: 'tile night' }, spriteImg(baby.file, baby.size, 3)),
           h('span', { class: 'pixel-name' }, baby.name),
         );
       });
@@ -52,7 +52,7 @@ export function createPetStep({ api, catalog, state, go, toast }) {
             { class: 'evo-stage' },
             h(
               'div',
-              { class: `evo-tile${locked ? '' : ' current'}`, style: { background: species.tint } },
+              { class: `evo-tile night${locked ? '' : ' current'}` },
               spriteImg(locked ? stage.silhouette : stage.file, stage.size, 2, locked ? 'Hidden evolution' : baby.name),
             ),
             h('div', { class: locked ? 'pixel-name locked' : 'pixel-name' }, locked ? '???' : stage.name),
@@ -67,11 +67,7 @@ export function createPetStep({ api, catalog, state, go, toast }) {
             h(
               'div',
               { class: 'portrait pixel-cut', style: { width: '140px', height: '140px' } },
-              h(
-                'div',
-                { class: 'inner', style: { background: species.tint } },
-                spriteImg(baby.file, baby.size, 4, baby.name),
-              ),
+              h('div', { class: 'inner' }, spriteImg(baby.file, baby.size, 4, baby.name)),
             ),
             h(
               'div',

@@ -115,13 +115,11 @@ function mate(entry, species, { isSelected, onSelect, index }) {
       'aria-label': label,
       tabIndex: isSelected ? 0 : -1,
       dataset: { key: entry.id },
-      style: { '--tint': species.tint },
       onclick: () => onSelect(entry.id),
     },
     h(
       'span',
-      { class: 'mate-art' },
-      h('span', { class: 'floor', ariaHidden: 'true' }),
+      { class: 'mate-art night' },
       entry.hatched ? spriteImg(stage.file, stage.size, 2, '') : spriteImg(baby.silhouette, baby.size, 2, ''),
       h(
         'span',
@@ -220,7 +218,7 @@ function miniLine(species, stages, stageIndex, nowLabel = 'now') {
         { class: `mini ${state}` },
         h(
           'div',
-          { class: 'mini-art' },
+          { class: 'mini-art night' },
           state === 'locked'
             ? spriteImg(stage.silhouette, stage.size, 1)
             : spriteImg(stage.file, stage.size, 1, stage.name),
@@ -255,8 +253,8 @@ function hatchedDetail(entry, species, status, ctx) {
       { class: 'col-hero' },
       h(
         'div',
-        { class: `portrait pixel-cut${fresh === entry.id ? ' reveal' : ''}`, style: { '--tint': species.tint } },
-        h('div', { class: 'inner pixel-cut' }, h('div', { class: 'floor', ariaHidden: 'true' }), portrait),
+        { class: `portrait pixel-cut${fresh === entry.id ? ' reveal' : ''}` },
+        h('div', { class: 'inner pixel-cut' }, portrait),
       ),
       h(
         'div',
@@ -384,13 +382,8 @@ function lockedDetail(entry, species, status, ctx) {
       { class: 'col-hero' },
       h(
         'div',
-        { class: 'portrait pixel-cut', style: { '--tint': species.tint } },
-        h(
-          'div',
-          { class: 'inner pixel-cut' },
-          h('div', { class: 'floor', ariaHidden: 'true' }),
-          spriteImg(baby.file, baby.size, 3, baby.name),
-        ),
+        { class: 'portrait pixel-cut' },
+        h('div', { class: 'inner pixel-cut' }, spriteImg(baby.file, baby.size, 3, baby.name)),
       ),
       h(
         'div',
@@ -575,7 +568,7 @@ export function collectionPage(status, { catalog, api, rerender, animate, pick, 
       ),
       h(
         'aside',
-        { class: 'col-detail card', 'aria-label': 'Selected companion', style: { '--tint': species.tint } },
+        { class: 'col-detail card', 'aria-label': 'Selected companion' },
         entry.hatched ? hatchedDetail(entry, species, status, ctx) : lockedDetail(entry, species, status, ctx),
       ),
     ),

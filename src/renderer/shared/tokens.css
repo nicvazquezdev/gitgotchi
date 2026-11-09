@@ -27,7 +27,6 @@
   --neon-gold: #ffd23f;
   --neon-amber: #ffb547;
   --neon-mint: #4dffb4;
-  --neon-violet: #8a2ad0;
 
   /* Sky: the stripes of the night, from the top of the window to the horizon */
   --sky-1: #0a0318;
@@ -36,7 +35,6 @@
   --sky-4: #250a4c;
   --sky-5: #360d5e;
   --sky-6: #4c1268;
-  --sky-7: #66176f;
   --sun-bands: linear-gradient(
     #fff27a 0 16%,
     #ffd23f 16% 32%,
@@ -45,7 +43,12 @@
     #ff3e8a 64% 80%,
     #d22fae 80%
   );
-  --xp-fill: linear-gradient(90deg, #ffd23f, #ff8a3d 45%, #ff3e8a);
+  --frame-gradient: linear-gradient(
+    135deg,
+    var(--neon-gold),
+    var(--neon-pink) 55%,
+    var(--neon-cyan)
+  ); /* banners and the share card */
 
   /* Surfaces */
   --bg: #170a31; /* cards */
@@ -75,11 +78,11 @@
   --accent-text: var(--neon-pink-soft); /* XP figures */
   --accent-soft: #0f2c48; /* chips, size badges */
   --accent-tint: #22104a; /* selected card */
-  --on-accent: #1a0530;
+  --ink: #1a0530; /* pixel outlines, text on neon */
+  --on-accent: var(--ink);
   --track: #2c1a5c; /* empty XP blocks, progress tracks */
   --link: var(--neon-cyan);
   --select: var(--neon-cyan); /* ring of the selected card */
-  --glow: rgba(255, 62, 165, 0.35);
 
   /* Secondary button */
   --btn-2: #2a1656;
@@ -106,8 +109,6 @@
 
   /* Elevation */
   --ring: #3d2775; /* 1px edge of floating cards (the OS draws the shadow) */
-  --shadow-menu: 0 0 0 1px #3d2775, 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 36px rgba(255, 62, 165, 0.18);
-  --shadow-popover: 0 0 0 2px var(--neon-pink), 0 16px 40px rgba(0, 0, 0, 0.6), 0 0 36px rgba(255, 62, 165, 0.3);
   --shadow-bubble: 0 0 0 1px #3d2775, 0 10px 28px rgba(0, 0, 0, 0.55);
 
   /* Shape */

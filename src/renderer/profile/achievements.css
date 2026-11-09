@@ -49,7 +49,7 @@
 .ach-banner {
   --px: 4px;
   padding: 2px;
-  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+  background: var(--frame-gradient);
 }
 .ach-banner-in {
   position: relative;
@@ -58,7 +58,7 @@
   gap: 30px;
   padding: 22px 26px;
   background:
-    radial-gradient(circle at 9% 50%, color-mix(in srgb, #f2c14e 22%, transparent), transparent 36%),
+    radial-gradient(circle at 9% 50%, color-mix(in srgb, var(--neon-gold) 22%, transparent), transparent 36%),
     linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, var(--bg)), var(--bg) 70%);
 }
 .ach-banner-in::before {
@@ -114,7 +114,7 @@
   gap: 5px;
   width: 68px;
   padding: 10px 4px 8px;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: color-mix(in srgb, var(--text) 6%, transparent);
 }
 .ab-tier b {
@@ -180,7 +180,7 @@
 .ach-all-done {
   --px: 4px;
   padding: 2px;
-  background: linear-gradient(135deg, #f2c14e, var(--accent) 55%, #d58cff);
+  background: var(--frame-gradient);
 }
 .ach-all-done-in {
   display: flex;
@@ -311,8 +311,8 @@
   top: 34px;
   right: 10px;
   padding: 1px 5px;
-  background: #ff5d8f;
-  color: #fff;
+  background: var(--neon-pink);
+  color: var(--on-accent);
   font: 600 10px var(--font-pixel);
   letter-spacing: 0.06em;
 }

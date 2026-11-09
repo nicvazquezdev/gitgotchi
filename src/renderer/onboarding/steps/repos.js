@@ -153,7 +153,6 @@ export function createReposStep({ api, catalog, state, go, toast }) {
         { class: 'split' },
         illustration({
           species: trio,
-          tone: 'sky',
           tagline: 'More repos, more chances to grow. Pick the ones where you really work.',
         }),
         h(

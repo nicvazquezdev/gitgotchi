@@ -29,12 +29,19 @@ export function creature(stage, scale, alt = '') {
   );
 }
 
-/** Left panel: three baby creatures on a tint, with a tagline. */
-export function illustration({ species, tone, tagline }) {
+/** Left panel: a sunset with three baby creatures standing on the grid, and a tagline. */
+export function illustration({ species, tagline }) {
   const scales = [3, 4, 3];
   return h(
     'aside',
-    { class: `illustration ${tone}` },
+    { class: 'illustration night' },
+    h('div', { class: 'stars', ariaHidden: 'true' }),
+    h(
+      'div',
+      { class: 'ridges', ariaHidden: 'true' },
+      h('div', { class: 'ridge left' }),
+      h('div', { class: 'ridge right' }),
+    ),
     h(
       'div',
       { class: 'trio' },

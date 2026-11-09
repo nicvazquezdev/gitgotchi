@@ -5,7 +5,7 @@
   overscroll-behavior: contain;
 }
 .col-page {
-  --gold: #f2c14e;
+  --gold: var(--neon-gold);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -36,8 +36,8 @@
   margin-top: 8px;
   padding: 6px 12px;
   border: 0;
-  border-radius: var(--radius);
-  background: var(--accent-soft);
+  clip-path: var(--cut-3);
+  background: var(--surface-hover);
   color: var(--accent-text);
   font: 600 12px/1.35 var(--font-ui);
   text-align: left;
@@ -118,29 +118,25 @@
   min-height: 0;
   padding: 0;
   border: 0;
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
   background: var(--bg);
   color: var(--text);
   font: inherit;
   text-align: left;
   cursor: pointer;
   overflow: hidden;
-  transition:
-    transform 120ms,
-    box-shadow 120ms;
+  transition: transform 120ms steps(2);
 }
 /* The ring is drawn over the art (an inset shadow of the card would sit under it). */
 .mate::after {
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: inherit;
   box-shadow: inset 0 0 0 1px var(--card-border);
   pointer-events: none;
 }
 .mate:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(29, 24, 48, 0.14);
 }
 .mate:hover::after {
   box-shadow: inset 0 0 0 1px var(--border-strong);
@@ -151,17 +147,14 @@
 .mate.active::after {
   box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--accent) 55%, transparent);
 }
-.mate.selected {
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 24%, transparent);
-}
 .mate.selected::after {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--select);
 }
 .mate:focus-visible {
   outline: none;
 }
 .mate:focus-visible::after {
-  box-shadow: inset 0 0 0 3px var(--accent);
+  box-shadow: inset 0 0 0 3px var(--select);
 }
 
 .mate-art {
@@ -172,25 +165,23 @@
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 10px;
-  background: var(--tint);
-}
-.mate-art .floor {
-  height: 24px;
+  --sun-top: 4%;
+  --sun-size: 62%;
 }
 .mate-art img {
   position: relative;
 }
+/* A place not hatched yet is an empty slot: no scene, just the silhouette. */
 .mate.locked .mate-art {
   background: var(--surface);
 }
-.mate.locked .mate-art img {
-  opacity: 0.16; /* the silhouette is dark: fine on light backgrounds */
+.mate.locked .mate-art::before,
+.mate.locked .mate-art::after {
+  display: none;
 }
-@media (prefers-color-scheme: dark) {
-  .mate.locked .mate-art img {
-    opacity: 0.3;
-    filter: brightness(0) invert(1); /* white silhouette so it shows on the dark slot */
-  }
+.mate.locked .mate-art img {
+  opacity: 0.3;
+  filter: brightness(0) invert(1); /* a white silhouette, so it shows on the dark slot */
 }
 .mate-top {
   position: absolute;
@@ -204,7 +195,7 @@
   min-height: 16px;
   font: 600 10px/16px var(--font-pixel);
   letter-spacing: 0.08em;
-  color: color-mix(in srgb, #2a1840 55%, transparent);
+  color: var(--text-3);
 }
 .mate.locked .mate-no {
   color: var(--text-4);
@@ -255,7 +246,7 @@
   font-weight: 600;
 }
 .mate-done {
-  color: color-mix(in srgb, #b8801c 85%, var(--text));
+  color: var(--gold);
 }
 .mate-hint {
   color: var(--accent-text);
@@ -286,7 +277,7 @@
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 999px;
+  clip-path: var(--cut-3);
   background: var(--chip);
   color: var(--chip-text);
   font: 600 11px/16px var(--font-ui);
@@ -298,7 +289,7 @@
 }
 .col-chip.master {
   background: color-mix(in srgb, var(--gold) 24%, transparent);
-  color: color-mix(in srgb, #b8801c 80%, var(--text));
+  color: var(--gold);
 }
 
 /* ---------- Detail ---------- */
@@ -322,15 +313,7 @@
   height: 124px;
 }
 .col-hero .portrait .inner {
-  position: relative;
   padding-bottom: 12px;
-  background: var(--tint);
-}
-.col-hero .floor {
-  height: 26px;
-}
-.col-hero canvas {
-  position: relative;
 }
 .col-who {
   flex: 1;
@@ -379,7 +362,7 @@
   height: 34px;
   padding: 0 10px;
   border: 0;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: var(--surface);
   box-shadow: inset 0 0 0 1px var(--border-strong);
   color: var(--text);
@@ -387,7 +370,7 @@
 }
 .col-name-input:focus {
   outline: none;
-  box-shadow: inset 0 0 0 2px var(--accent);
+  box-shadow: inset 0 0 0 2px var(--select);
 }
 
 .col-progress {
@@ -436,6 +419,8 @@
   text-align: center;
 }
 .mini-art {
+  --sun-top: 6%;
+  --sun-size: 90%;
   width: 100%;
   height: 56px;
   display: flex;
@@ -443,24 +428,15 @@
   justify-content: center;
   padding-bottom: 6px;
   margin-bottom: 4px;
-  border-radius: var(--radius);
-  background: var(--surface);
-}
-.mini.done .mini-art,
-.mini.now .mini-art {
-  background: var(--tint);
+  border: 2px solid var(--divider);
+  clip-path: var(--cut-3);
 }
 .mini.now .mini-art {
-  box-shadow: inset 0 0 0 2px var(--accent);
+  border-color: var(--select);
 }
 .mini.locked img {
-  opacity: 0.16;
-}
-@media (prefers-color-scheme: dark) {
-  .mini.locked img {
-    opacity: 0.3;
-    filter: brightness(0) invert(1);
-  }
+  opacity: 0.3;
+  filter: brightness(0) invert(1);
 }
 .mini-name {
   max-width: 100%;
@@ -477,7 +453,7 @@
   color: var(--text-3);
 }
 .mini.now .mini-lv {
-  color: var(--accent-text);
+  color: var(--select);
   font-weight: 600;
 }
 
@@ -512,8 +488,8 @@
   align-items: center;
   gap: 12px;
   padding: 12px;
-  border-radius: var(--radius-lg);
-  background: var(--accent-soft);
+  clip-path: var(--cut-3);
+  background: var(--surface-hover);
   font-size: 13px;
 }
 .col-earning b {
@@ -528,7 +504,7 @@
   place-items: center;
   width: 36px;
   height: 36px;
-  border-radius: var(--radius);
+  clip-path: var(--cut-3);
   background: var(--accent);
   color: var(--on-accent);
 }

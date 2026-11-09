@@ -42,11 +42,7 @@ export function shareCard(status) {
           h(
             'div',
             { class: 'share-portrait portrait pixel-cut' },
-            h(
-              'div',
-              { class: 'inner pixel-cut', style: { background: species.tint } },
-              spriteImg(creature.file, creature.size, scale, creature.name),
-            ),
+            h('div', { class: 'inner pixel-cut' }, spriteImg(creature.file, creature.size, scale, creature.name)),
           ),
           h(
             'div',

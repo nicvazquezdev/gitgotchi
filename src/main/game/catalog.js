@@ -20,11 +20,10 @@ const SPECIES_COPY = {
 // A faint shadow means the creature hovers (jelly, koi, flying moth and phoenix).
 const FLOAT_SHADOW_ALPHA = 0.6;
 
-const SPECIES = SPRITES.map(({ id, title, bg, stages }) => ({
+const SPECIES = SPRITES.map(({ id, title, stages }) => ({
   id,
   line: title, // e.g. 'Phoenix line'
   ...SPECIES_COPY[id],
-  tint: bg, // panel background behind the creature
   stages: stages.map(({ name, file, shadow, size, shadowEllipse }, i) => ({
     name, // creature name at this stage, e.g. Cindle → Kindlet → Pyrrow → Solphyre
     file,
