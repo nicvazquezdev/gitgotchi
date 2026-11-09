@@ -41,6 +41,8 @@ let pendingEvolution = null;
 
 const actions = {
   openProfile: (view) => profileWindow.open(view),
+  openPets: () => profileWindow.open('pets'),
+  openTrophies: () => profileWindow.open('trophies'),
   openXp: () => profileWindow.open('xp'),
   // The card hangs from the pet (it answers with the rect to anchor on, see `togglePopover`), or from the menu bar icon
   // when the pet is hidden.

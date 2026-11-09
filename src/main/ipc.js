@@ -45,7 +45,7 @@ const PANEL_ACTIONS = [
 ];
 const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
-const POPOVER_ACTIONS = ['openProfile', 'openXp', 'openMenu', 'resume'];
+const POPOVER_ACTIONS = ['openPets', 'openTrophies', 'openXp', 'openMenu', 'resume'];
 // ---- end everyday UI ----
 
 // Settings window controls.
@@ -158,7 +158,7 @@ function registerIpc(actions) {
   });
   on('panel:height', (height) => Number.isFinite(height) && panelWindow.setHeight(height));
 
-  // Popover (PRs)
+  // Popover (the card)
   handle('popover:state', () => popoverWindow.state());
   on('popover:action', (name) => {
     if (!POPOVER_ACTIONS.includes(name)) return;

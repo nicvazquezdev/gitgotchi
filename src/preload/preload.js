@@ -87,7 +87,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   popover: {
     state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
     onState: subscribe('popover:state'),
-    action: send('popover:action'), // 'openProfile' | 'openXp' | 'openMenu' | 'resume'
+    action: send('popover:action'), // 'openPets' | 'openTrophies' | 'openXp' | 'openMenu' | 'resume'
     setHeight: send('popover:height'),
   },
   // ---- end everyday UI ----

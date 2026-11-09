@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--mine] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet onboarding.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -12,7 +12,6 @@ const config = require(path.join(ROOT, 'src/main/config.js'));
 const catalog = require(path.join(ROOT, 'src/main/game/catalog.js'));
 const { computeStatus } = require(path.join(ROOT, 'src/main/game/engine.js'));
 const { earnedSince, NAME_MAX } = require(path.join(ROOT, 'src/main/game/collection.js'));
-const { reviewQueue } = require(path.join(ROOT, 'src/main/game/pull-requests.js'));
 
 const flagValues = new Set(
   process.argv.flatMap((a, i) => (['--out', '--tab', '--click'].includes(a) ? [process.argv[i + 1]] : [])),
@@ -22,10 +21,8 @@ const args = process.argv.slice(2).filter((a) => !a.startsWith('--') && !flagVal
 app.setPath('userData', path.join(os.tmpdir(), 'gitgotchi-shots-profile'));
 const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
-const mine = process.argv.includes('--mine'); // popover: nothing waits for the user's review (no count on "To review")
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
-const conflicts = process.argv.includes('--conflicts'); // popover: two of the PRs have merge conflicts
 const happy = process.argv.includes('--happy'); // a happy pet: it merged PRs recently and nothing has waited for long
 const levelUp = process.argv.includes('--level-up'); // pet: a new level (the hop and the toast)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
@@ -98,7 +95,6 @@ const prs = [
     createdAt: ago(40 * H),
   }),
 ];
-if (conflicts) for (const p of prs) if (p.id === 'pr2' || p.id === 'pr4') p.mergeable = 'CONFLICTING';
 const repos = ['acme/web-app', 'acme/cli'];
 // A collection of four: the phoenix is the one being raised (it earned what the ledger above gave), the koi is a young
 // one, the mushroom is fully grown and the geode just hatched. The other four species are still to hatch.
@@ -126,33 +122,6 @@ if (pets.mushroom) pets.mushroom.matureAt = dayKey(30);
 const achievements = complete ? Object.fromEntries(catalog.ACHIEVEMENTS.map((a) => [a.id, dayKey(1)])) : undefined;
 const timeOff = away ? [{ from: dayKey(2), to: dayKey(-4) }] : [];
 const status = computeStatus({ pets, activePet: 'phoenix', achievements, activity: history, repos, timeOff }, NOW);
-status.reviewQueue = reviewQueue(
-  [
-    // Asked 25 minutes ago: a review now still earns the fast-review bonus.
-    {
-      ...pr(11, 'Fix flaky editor selection test', 'acme/web-app', 35),
-      author: 'ana-dev',
-      requestedAt: ago(25 * 60000),
-    },
-    {
-      ...pr(12, 'Bump design tokens to 4.2', 'acme/cli', 520),
-      author: 'lee-ui',
-      createdAt: ago(80 * H),
-      requestedAt: ago(70 * H),
-      via: 'acme/code',
-    },
-    // The date of the request could not be proved: the row says how old the PR is and does not flag it as late.
-    {
-      ...pr(13, 'Add keyboard shortcuts to the navigator', 'acme/web-app', 140),
-      author: 'sam',
-      createdAt: ago(9 * 24 * H),
-    },
-  ],
-  repos,
-  NOW,
-);
-
-if (mine) status.reviewQueue = [];
 if (happy) Object.assign(status, { mood: 'happy', moodLabel: 'Happy', moodReason: '2 PRs merged recently' });
 const fixtures = {
   freeze: freeze ? NOW.getTime() : null,
@@ -259,7 +228,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${restore ? '-restore' : ''}${clicks.length ? `-clicked${clicks.length > 1 ? clicks.length : ''}` : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${restore ? '-restore' : ''}${clicks.length ? `-clicked${clicks.length > 1 ? clicks.length : ''}` : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

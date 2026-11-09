@@ -1,4 +1,4 @@
-/* PR popover. The window is transparent: a little creature (the shell) holds the card, and a stepped tail points at the pet. */
+/* The card. The window is transparent: a little creature (the shell) holds the card, and a stepped tail points at the pet. */
 html,
 body {
   background: transparent;
@@ -648,122 +648,125 @@ body {
   margin-left: auto;
 }
 
-/* ---------- Tabs: a segmented control with a count per tab ---------- */
-.tabs {
-  display: flex;
-  gap: 2px;
-  margin: 0 16px;
-  padding: 3px;
-  clip-path: var(--cut-3);
-  background: var(--surface);
-}
-.tab {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  height: 30px;
-  border: 0;
-  clip-path: var(--cut-3);
-  background: transparent;
-  color: var(--text-2);
-  font: 600 13px var(--font-ui);
-  cursor: pointer;
-}
-.tab:hover:not([aria-selected='true']) {
-  color: var(--text);
-}
-.tab[aria-selected='true'] {
-  background: var(--surface-hover);
-  color: var(--accent-text);
-}
-.tab[aria-selected='true'] .count-chip {
-  background: var(--accent);
-  color: var(--on-accent);
-}
-
-/* ---------- Lists: about five rows, then it scrolls ---------- */
-.list {
-  max-height: 284px;
-  margin-top: 8px;
+/* ---------- Card body: how it will grow and how the week went (it scrolls when the screen is short) ---------- */
+.card-body {
+  max-height: 440px;
+  padding: 0 16px 4px;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
-.prs {
-  padding: 4px 8px;
+.sect {
+  margin-top: 16px;
 }
-.section-title {
-  padding: 8px 8px 6px;
+.sect-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.sect-head .fig {
+  font: 400 22px/1 var(--font-num);
+  color: var(--accent-text);
 }
 
-/* One row: a dot for what it needs, the title, the reason and where, and how long it has waited. */
-.need {
+/* The line of forms: reached, the one it is in (framed), and the ones still hidden. */
+.growth {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  padding: 8px;
-  border: 0;
-  clip-path: var(--cut-3);
-  background: transparent;
-  color: var(--text);
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
+  align-items: flex-start;
+  justify-content: space-between;
 }
-.need:hover,
-.need:focus-visible {
-  background: var(--surface-hover);
+.stage {
+  width: 68px;
+  text-align: center;
 }
-.need-body {
+.stage .portrait,
+.stage .night {
+  --sun-size: 60%;
+  --sun-top: 8%;
+  --floor-h: 30%;
+  height: 56px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+.stage.now .portrait {
+  --frame: var(--select);
+}
+.stage .portrait > .inner img,
+.stage .night > img {
+  margin-bottom: 4px;
+}
+.stage.locked img {
+  opacity: 0.85;
+}
+.stage .nm {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.stage .nm.dim {
+  font-weight: 500;
+  color: var(--text-3);
+}
+.stage.now .nm {
+  color: var(--select);
+}
+.arrow {
+  align-self: flex-start;
+  margin-top: 20px;
+  color: var(--text-4);
+}
+
+/* The week: one bar per day, today in the accent. */
+.week {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  height: 44px;
+}
+.week .day {
   flex: 1;
-  min-width: 0;
-  display: grid;
-}
-.need-title {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-  overflow: hidden;
-  overflow-wrap: anywhere; /* a long name with no spaces breaks instead of widening the card */
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-}
-.need-title.done {
-  color: var(--text-2);
-}
-.need-meta {
-  overflow: hidden;
-  font-size: 12px;
-  line-height: 16px;
-  color: var(--text-3);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.need-meta b {
-  font-weight: 500;
-  color: var(--text-2);
-}
-.need-age {
-  flex: none;
-  font-size: 12px;
-  color: var(--text-3);
-  font-variant-numeric: tabular-nums;
-}
-.need-open {
-  display: none;
-  flex: none;
-  color: var(--link);
-}
-.need:hover .need-open,
-.need:focus-visible .need-open {
   display: flex;
+  align-items: flex-end;
+  height: 100%;
 }
-.need:hover .need-age,
-.need:focus-visible .need-age {
-  display: none;
+.week .bar {
+  width: 100%;
+  min-height: 4px;
+  background: #7a2d86;
+  clip-path: var(--cut-3);
+}
+.week .bar.today {
+  background: var(--accent);
+}
+.week .bar.none {
+  background: var(--track);
+}
+.week-days {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+.week-days small {
+  flex: 1;
+  text-align: center;
+  font-size: 11px;
+  color: var(--text-3);
+}
+.week-days small.today {
+  color: var(--text);
+  font-weight: 600;
+}
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.streak .pa-i {
+  fill: var(--neon-amber);
 }
 
 /* ---------- Nothing to show ---------- */
@@ -772,63 +775,33 @@ body {
   padding: 16px;
   color: var(--text-2);
 }
-.clear {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 8px 16px 18px;
-}
-.tick {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  clip-path: var(--cut-3);
-  background: var(--success-bg);
-  color: var(--success);
-}
-.clear b {
-  display: block;
-  font-size: 14px;
-  font-weight: 600;
-}
-.clear .meta {
-  display: block;
-}
-.starter {
-  margin: 0;
-  padding: 8px 16px 18px;
-  font-size: 13px;
-  color: var(--text-2);
-}
-.starter b {
-  color: var(--text);
-  font-weight: 600;
-}
-.starter .link {
-  display: block;
-  margin-top: 6px;
-}
 
-/* ---------- Footer: the way to the pet page ---------- */
+/* ---------- Footer: the way to the collection (pets, trophies, XP log) ---------- */
 .card-foot {
+  display: flex;
+  gap: 4px;
+  margin-top: 14px;
   padding: 8px;
   border-top: 1px solid var(--divider);
 }
 .foot-btn {
-  display: flex;
+  flex: 1;
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  width: 100%;
+  justify-content: center;
+  gap: 6px;
   height: 36px;
-  padding: 0 10px;
+  padding: 0 8px;
   border: 0;
   clip-path: var(--cut-3);
   background: transparent;
   color: var(--text-2);
   font: 600 13px var(--font-ui);
   cursor: pointer;
+}
+.foot-btn .n {
+  color: var(--text-3);
+  font-weight: 500;
 }
 .foot-btn:hover,
 .foot-btn:focus-visible {
