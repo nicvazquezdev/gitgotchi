@@ -650,7 +650,7 @@ body {
 
 /* ---------- Card body: how it will grow and how the week went (it scrolls when the screen is short) ---------- */
 .card .tabs {
-  margin: 0 16px;
+  margin: 12px 16px 16px;
 }
 .head-actions {
   display: flex;

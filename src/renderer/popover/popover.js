@@ -1,5 +1,6 @@
 // The card of the pet: its header (level, one bar and what is left) and, under it, how it will grow and how the week
-// went. Three tabs open its collection in the same place: Pets, Trophies and the XP log (none open: the overview).
+// went. Three tabs at the bottom open its collection in the same place: Pets, Trophies and the XP log (none open: the
+// overview).
 // The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
 import { icon, xpBar } from '../shared/ui.js';
@@ -265,7 +266,7 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
     'div',
     { class: 'card' },
     ...(status
-      ? [header(status), pauseBanner(status.pause), tabs(status), h('div', { class: 'card-body' }, content(status))]
+      ? [header(status), pauseBanner(status.pause), h('div', { class: 'card-body' }, content(status)), tabs(status)]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 
