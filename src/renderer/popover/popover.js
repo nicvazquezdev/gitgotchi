@@ -256,7 +256,14 @@ function prRow(pr, { badge, meta, end, endClass = 'xp-text', endTitle, done = fa
 }
 
 // The left chip says what the PR needs: a state icon, never an unexplained letter. The size is spelled out in the text.
-const STATUS_ICONS = { changes: 'alert', failing: 'x', ready: 'check', running: 'clock', review: 'clock' };
+const STATUS_ICONS = {
+  changes: 'alert',
+  conflicts: 'merge',
+  failing: 'x',
+  ready: 'check',
+  running: 'clock',
+  review: 'clock',
+};
 const statusBadge = (pr) =>
   h(
     'span',
@@ -266,7 +273,7 @@ const statusBadge = (pr) =>
 const doneBadge = () => h('span', { class: 'badge ready' }, icon('check', { size: 14, stroke: 3 }));
 const queueBadge = () => h('span', { class: 'badge review' }, icon('search', { size: 14, stroke: 2.6 }));
 
-const FLAGGED = ['changes', 'failing', 'running']; // states worth a line of their own
+const FLAGGED = ['changes', 'conflicts', 'failing', 'running']; // states worth a line of their own
 
 /**
  * Detail lines: the fast-review bonus while it lasts, the PR's state when it needs attention (each on its own line),

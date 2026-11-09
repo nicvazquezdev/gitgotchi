@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -26,6 +26,7 @@ const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an e
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const goalOpen = process.argv.includes('--goal-open'); // today has little XP yet: the goal is still ahead
 const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
+const conflicts = process.argv.includes('--conflicts'); // popover: two of the PRs have merge conflicts
 const happy = process.argv.includes('--happy'); // a happy pet: it merged PRs recently and nothing has waited for long
 const levelUp = process.argv.includes('--level-up'); // pet: a new level (the hop and the toast)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
@@ -95,6 +96,7 @@ const prs = [
     createdAt: ago(40 * H),
   }),
 ];
+if (conflicts) for (const p of prs) if (p.id === 'pr2' || p.id === 'pr4') p.mergeable = 'CONFLICTING';
 const repos = ['acme/web-app', 'acme/cli'];
 // A collection of four: the phoenix is the one being raised (it earned what the ledger above gave), the koi is a young
 // one, the mushroom is fully grown and the geode just hatched. The other four species are still to hatch.
@@ -246,7 +248,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

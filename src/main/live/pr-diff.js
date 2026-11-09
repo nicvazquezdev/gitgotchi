@@ -8,18 +8,25 @@ const sameRepo = (a, b) => a.toLowerCase() === b.toLowerCase();
 /** The checks states that mean the PR is red (see `ci` in the normalized PRs). */
 const FAILED = new Set(['FAILURE', 'ERROR']);
 
-/** Approved with every check green: nothing is left but to merge it. (No checks at all is not "green".) */
-const isReady = (decision, ci) => decision === 'APPROVED' && ci === 'SUCCESS';
+/**
+ * Does the PR have merge conflicts? GitHub answers UNKNOWN for a while after the base or the PR moves, and that
+ * says nothing: it keeps what it was (`before`), so a PR does not turn conflicted and clean and conflicted again.
+ */
+const conflicts = (pr, before) => (pr.mergeable === 'UNKNOWN' ? before === true : pr.mergeable === 'CONFLICTING');
+
+/** Approved with every check green and no conflicts: nothing is left but to merge it. (No checks is not "green".) */
+const isReady = (pr, conflicting) => pr.reviewDecision === 'APPROVED' && pr.ci === 'SUCCESS' && !conflicting;
 
 /**
  * `prs`: normalized nodes `{ id, state, reviewDecision, ci, createdAt, mergedAt, repo }`; `repos`: selected
  * `owner/repo` names. Besides `prs` and `merges`, the delta carries three animation-only kinds (they give no XP):
  * `approvals` and `changesRequested`, when the review decision of an open PR just became APPROVED or CHANGES_REQUESTED,
- * `checksFailed`, when its checks just went red, and `readyToMerge`, when it just became approved with green checks
- * (by an approval, or by the checks turning green after one).
+ * `checksFailed`, when its checks just went red, `mergeConflicts`, when it just got conflicts, and `readyToMerge`, when
+ * it just became approved with green checks and no conflicts (by an approval, by the checks turning green after one,
+ * or by the conflicts being fixed).
  * `prev`: the previous snapshot or null. Returns the next snapshot, the new activity, and the `moments`: what just
  * happened to one of the user's open PRs that they may want to hear about, with the PR:
- * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed' | 'readyToMerge', pr }]`. A PR the app already knew is
+ * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed' | 'mergeConflicts' | 'readyToMerge', pr }]`. A PR the app already knew is
  * needed to tell a change from something that was already so; checks count when they go from not failing to failing.
  * An approval that comes with green checks is reported as `readyToMerge` only: it says more, and it is one thing to
  * hear about, not two.
@@ -27,11 +34,14 @@ const isReady = (decision, ci) => decision === 'APPROVED' && ci === 'SUCCESS';
  */
 function diffPullRequests(prev, prs, repos, now = Date.now()) {
   const selected = prs.filter((pr) => repos.some((r) => sameRepo(r, pr.repo)));
+  const conflicting = Object.fromEntries(selected.map((pr) => [pr.id, conflicts(pr, prev?.conflicting?.[pr.id])]));
   const snapshot = {
     at: now,
     states: Object.fromEntries(selected.map((pr) => [pr.id, pr.state])),
     decisions: Object.fromEntries(selected.map((pr) => [pr.id, pr.reviewDecision ?? null])),
     checks: Object.fromEntries(selected.map((pr) => [pr.id, pr.ci ?? null])),
+    conflicting,
+    ready: Object.fromEntries(selected.map((pr) => [pr.id, isReady(pr, conflicting[pr.id])])),
   };
   const delta = {};
   const moments = [];
@@ -49,7 +59,7 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
     // Feedback on an open PR we already knew: only a change is news.
     const decision = pr.reviewDecision ?? null;
     const known = pr.state === 'OPEN' && pr.id in (prev.decisions ?? {}) && pr.id in (prev.checks ?? {});
-    const ready = known && isReady(decision, pr.ci) && !isReady(prev.decisions[pr.id], prev.checks[pr.id]);
+    const ready = known && snapshot.ready[pr.id] && !prev.ready?.[pr.id];
     if (known && prev.decisions[pr.id] !== decision) {
       if (decision === 'APPROVED') {
         bump('approvals');
@@ -66,6 +76,10 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
     if (known && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) {
       bump('checksFailed');
       moments.push({ kind: 'checksFailed', pr });
+    }
+    if (known && conflicting[pr.id] && !prev.conflicting?.[pr.id]) {
+      bump('mergeConflicts');
+      moments.push({ kind: 'mergeConflicts', pr });
     }
   }
   return { snapshot, delta, moments };

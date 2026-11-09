@@ -371,8 +371,16 @@ describe('PR status', () => {
   const { statusOf } = require('../src/main/game/pull-requests');
   const kind = (p) => statusOf(p).kind;
 
-  test('most urgent first: changes requested, failing checks, ready, checks running, else needs review', () => {
-    assert.equal(kind({ reviewDecision: 'CHANGES_REQUESTED', ci: 'FAILURE' }), 'changes');
+  test('most urgent first: changes, merge conflicts, failing checks, ready, checks running, else needs review', () => {
+    assert.equal(kind({ reviewDecision: 'CHANGES_REQUESTED', ci: 'FAILURE', mergeable: 'CONFLICTING' }), 'changes');
+    assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'FAILURE', mergeable: 'CONFLICTING' }), 'conflicts');
+    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'CONFLICTING' }), 'conflicts');
+    assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'MERGEABLE' }), 'ready');
+    assert.equal(
+      kind({ reviewDecision: 'APPROVED', ci: 'SUCCESS', mergeable: 'UNKNOWN' }),
+      'ready',
+      'not worked out yet',
+    );
     assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'FAILURE' }), 'failing');
     assert.equal(kind({ reviewDecision: 'REVIEW_REQUIRED', ci: 'ERROR' }), 'failing');
     assert.equal(kind({ reviewDecision: 'APPROVED', ci: 'PENDING' }), 'ready');

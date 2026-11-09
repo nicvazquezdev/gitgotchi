@@ -32,16 +32,21 @@ describe('planNotifications', () => {
   });
 
   test('each kind reads on its own, and good news is silent', () => {
-    const titles = ['reviewRequested', 'changesRequested', 'checksFailed', 'readyToMerge', 'approved'].map(
-      (kind) => planNotifications([item(kind, 1)], { now: NOW }).notifications[0],
-    );
+    const titles = [
+      'reviewRequested',
+      'changesRequested',
+      'checksFailed',
+      'mergeConflicts',
+      'readyToMerge',
+      'approved',
+    ].map((kind) => planNotifications([item(kind, 1)], { now: NOW }).notifications[0]);
     assert.deepEqual(
       titles.map((n) => n.title),
-      ['Review requested', 'Changes requested', 'Checks failed', 'Ready to merge', 'PR approved'],
+      ['Review requested', 'Changes requested', 'Checks failed', 'Merge conflicts', 'Ready to merge', 'PR approved'],
     );
     assert.deepEqual(
       titles.map((n) => n.silent),
-      [false, false, false, true, true],
+      [false, false, false, false, true, true],
     );
   });
 

@@ -279,6 +279,7 @@ body {
   color: var(--success);
 }
 .badge.changes,
+.badge.conflicts,
 .badge.failing {
   background: var(--warning-bg);
   color: var(--warning-icon);
@@ -293,7 +294,8 @@ body {
 .flag.running {
   color: var(--text-2);
 }
-.flag.changes {
+.flag.changes,
+.flag.conflicts {
   color: var(--warning-icon);
 }
 .flag.failing {

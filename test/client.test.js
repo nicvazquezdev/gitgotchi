@@ -251,6 +251,18 @@ describe('pull requests (GraphQL)', () => {
     assert.equal(prs[0].commits, undefined);
   });
 
+  test('asks for `mergeable` on the viewer’s own PRs, and passes it on', async () => {
+    stubFetch(
+      page([{ ...node('1', '2026-06-15T10:00:00Z'), mergeable: 'CONFLICTING' }, node('2', '2026-06-15T09:00:00Z')]),
+    );
+    const prs = await client.recentPullRequests();
+    assert.match(JSON.parse(calls[0].opts.body).query, /\bmergeable\b/);
+    assert.deepEqual(
+      prs.map((p) => p.mergeable),
+      ['CONFLICTING', undefined],
+    );
+  });
+
   test('pullRequestsSince pages until a PR older than `since`, and keeps only newer ones', async () => {
     stubFetch(
       page([node('1', '2026-06-15T10:00:00Z'), node('2', '2026-06-14T10:00:00Z')], 'c1'),
@@ -306,6 +318,11 @@ describe('review requests', () => {
   test('normalizes the PRs and adds the author', async () => {
     stubFetch(search(node('1')));
     const [pr] = await client.reviewRequests(me);
+    assert.doesNotMatch(
+      JSON.parse(calls[0].opts.body).query,
+      /\bmergeable\b/,
+      'it is not needed for other people’s PRs',
+    );
     assert.equal(pr.repo, 'a/b');
     assert.equal(pr.lines, 34);
     assert.equal(pr.author, 'someone');

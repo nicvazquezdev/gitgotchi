@@ -22,6 +22,7 @@ const toRecord = ({
   isDraft,
   reviewDecision,
   ci,
+  mergeable,
   lines,
   createdAt,
   mergedAt,
@@ -35,6 +36,7 @@ const toRecord = ({
   isDraft,
   reviewDecision,
   ci: ci ?? null,
+  mergeable: mergeable ?? null,
   lines,
   createdAt,
   mergedAt,
@@ -68,12 +70,14 @@ function pullRequestDays(prs) {
 }
 
 /**
- * What a PR needs from its author, most urgent first: changes requested, failing checks, then (when nothing is wrong)
- * approved, checks still running, or simply waiting for a review.
- * @returns {{ kind: 'changes' | 'failing' | 'ready' | 'running' | 'review', label: string }}
+ * What a PR needs from its author, most urgent first: changes requested, merge conflicts (they must be fixed to merge
+ * at all, and the checks may be out of date), failing checks, then (when nothing is wrong) approved, checks still
+ * running, or simply waiting for a review.
+ * @returns {{ kind: 'changes' | 'conflicts' | 'failing' | 'ready' | 'running' | 'review', label: string }}
  */
-function statusOf({ reviewDecision, ci }) {
+function statusOf({ reviewDecision, ci, mergeable }) {
   if (reviewDecision === 'CHANGES_REQUESTED') return { kind: 'changes', label: 'Changes requested' };
+  if (mergeable === 'CONFLICTING') return { kind: 'conflicts', label: 'Merge conflicts' };
   if (ci === 'FAILURE' || ci === 'ERROR') return { kind: 'failing', label: 'Checks failing' };
   if (reviewDecision === 'APPROVED') return { kind: 'ready', label: 'Ready to merge' };
   if (ci === 'PENDING' || ci === 'EXPECTED') return { kind: 'running', label: 'Checks running' };
@@ -126,7 +130,7 @@ function classify(prs, now = new Date()) {
 
 /**
  * What the user may want to be told about, one PR at a time (for a system notification): `kind` is
- * 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed'. `pr`: a normalized PR (repo is 'owner/name')
+ * 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed' | 'mergeConflicts'. `pr`: a normalized PR (repo is 'owner/name')
  * or a queue entry (see `reviewQueue`, where it is `fullRepo`).
  */
 function attentionOf(kind, pr) {

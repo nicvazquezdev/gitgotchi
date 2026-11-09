@@ -224,8 +224,47 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
     assert.deepEqual(kinds(result), ['checksFailed'], 'a new failure after a re-run is news again');
   });
 
+  test('merge conflicts: reported once when a PR gets them, and GitHub still working it out (UNKNOWN) changes nothing', () => {
+    const at = (mergeable, snapshot, t, extra = {}) =>
+      diffPullRequests(snapshot, [open({ mergeable, ...extra })], REPOS, NOW + t);
+    let result = at('MERGEABLE', diffPullRequests(null, [open({ mergeable: 'MERGEABLE' })], REPOS, NOW).snapshot, 1);
+    assert.deepEqual(kinds(result), []);
+    result = at('UNKNOWN', result.snapshot, 10_000); // the base moved: not known yet
+    assert.deepEqual(kinds(result), []);
+    result = at('CONFLICTING', result.snapshot, 20_000);
+    assert.deepEqual(kinds(result), ['mergeConflicts']);
+    assert.deepEqual(result.delta, { mergeConflicts: 1 }, 'animation only: no XP');
+    assert.equal(result.moments[0].pr.id, '1');
+    result = at('CONFLICTING', result.snapshot, 30_000);
+    assert.deepEqual(kinds(result), [], 'still conflicted: nothing new');
+    result = at('UNKNOWN', result.snapshot, 40_000); // recomputing: it is still what it was
+    result = at('CONFLICTING', result.snapshot, 50_000);
+    assert.deepEqual(kinds(result), [], 'no second notice for the same conflict');
+    result = at('MERGEABLE', result.snapshot, 60_000);
+    result = at('CONFLICTING', result.snapshot, 70_000);
+    assert.deepEqual(kinds(result), ['mergeConflicts'], 'fixed and conflicted again is news again');
+  });
+
+  test('a PR with conflicts is not ready to merge, and becomes ready when they are fixed', () => {
+    const approved = { reviewDecision: 'APPROVED', ci: 'SUCCESS' };
+    const at = (mergeable, snapshot, t) =>
+      diffPullRequests(snapshot, [open({ ...approved, mergeable })], REPOS, NOW + t);
+    const before = diffPullRequests(null, [open({ ci: 'SUCCESS', mergeable: 'CONFLICTING' })], REPOS, NOW).snapshot;
+    let result = at('CONFLICTING', before, 10_000); // approved, green, but conflicted
+    assert.deepEqual(kinds(result), ['approved'], 'an approval, not "ready"');
+    result = at('UNKNOWN', result.snapshot, 20_000);
+    assert.deepEqual(kinds(result), [], 'not worked out yet: nothing');
+    result = at('MERGEABLE', result.snapshot, 30_000); // the conflicts were fixed
+    assert.deepEqual(kinds(result), ['readyToMerge']);
+    assert.deepEqual(result.delta, { readyToMerge: 1 });
+    result = at('UNKNOWN', result.snapshot, 40_000); // the base moved and GitHub is recomputing
+    result = at('MERGEABLE', result.snapshot, 50_000);
+    assert.deepEqual(kinds(result), [], 'a recomputation is not a new ready');
+  });
+
   test('nothing is news for a PR the app did not know, on the first look, or when it is not open', () => {
     assert.deepEqual(diffPullRequests(null, [open({ ci: 'FAILURE' })], REPOS, NOW).moments, []);
+    assert.deepEqual(diffPullRequests(null, [open({ mergeable: 'CONFLICTING' })], REPOS, NOW).moments, []);
     const empty = diffPullRequests(null, [], REPOS, NOW).snapshot;
     assert.deepEqual(
       diffPullRequests(empty, [open({ ci: 'FAILURE', reviewDecision: 'APPROVED' })], REPOS, NOW + 10_000).moments,

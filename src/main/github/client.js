@@ -48,7 +48,8 @@ const PR_FIELDS = `id number title url state isDraft reviewDecision additions de
 const REVIEW_REQUESTS_QUERY = 'is:pr is:open archived:false draft:false review-requested:@me';
 
 /**
- * GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, ci, lines, createdAt, updatedAt, mergedAt, repo }`.
+ * GraphQL PR node -> `{ id, number, title, url, state, isDraft, reviewDecision, ci, lines, createdAt, updatedAt, mergedAt, repo }`
+ * (and `mergeable` for the viewer's own PRs: MERGEABLE, CONFLICTING or UNKNOWN while GitHub works it out).
  * `ci`: the checks state of the last commit (SUCCESS, FAILURE, ERROR, PENDING, EXPECTED), null when there are none.
  */
 const normalizePullRequest = ({ repository, additions, deletions, commits, ...pr }) => ({
@@ -212,7 +213,7 @@ class GitHubClient {
     const data = await this.graphql(
       `query($first: Int!, $after: String, $states: [PullRequestState!]) { viewer {
         pullRequests(first: $first, after: $after, orderBy: {field: UPDATED_AT, direction: DESC}, states: $states) {
-          pageInfo { hasNextPage endCursor } nodes { ${PR_FIELDS} } } } }`,
+          pageInfo { hasNextPage endCursor } nodes { ${PR_FIELDS} mergeable } } } }`,
       { first, after, states },
     );
     const { nodes, pageInfo } = data.viewer.pullRequests;
