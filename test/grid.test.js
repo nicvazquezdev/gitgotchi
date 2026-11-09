@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const path = require('node:path');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const grid = () => import(path.join(__dirname, '../src/renderer/profile/grid.js'));
+const grid = () => import(path.join(__dirname, '../src/renderer/popover/grid.js'));
 
 test('gridMove: arrows move one card or one row, stop at the edges, Home and End jump', async () => {
   const { gridMove } = await grid();

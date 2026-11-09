@@ -1,4 +1,4 @@
-// The XP the person earned, day by day and why (pure, no I/O): what the XP view of the collection lists.
+// The XP the person earned, day by day and why (pure, no I/O): what the XP log tab of the card lists.
 const { WEIGHTS, DAILY_CAPS } = require('./catalog');
 const { dayXp } = require('./stats');
 const { toDay } = require('../dates');

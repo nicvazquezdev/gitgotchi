@@ -1,6 +1,12 @@
 // XP: what you earned, day by day, and why (the newest day first). Whichever pet was earning it: the XP is yours.
 import { h } from '../shared/dom.js';
 import { timeAgo, dayLabel } from '../shared/format.js';
+import { xpRules } from './xp-rules.js';
+
+let rulesOpen = false; // the rules of XP are open above the log
+
+/** Leaving the tab: the rules fold again. */
+export const leaveHistory = () => (rulesOpen = false);
 
 const plural = (n, one, many) => (n === 1 ? one : many(n));
 const REASONS = {
@@ -49,19 +55,35 @@ const dayBlock = ({ day, xp, lines }, { now, commitsPerDay }) =>
     ...lines.map((line) => row(line, commitsPerDay)),
   );
 
-/** @param {{ openSheet: () => void, commitsPerDay: number, now?: Date }} options */
-export function historyPage({ xpLog, lastSyncedAt }, { openSheet, commitsPerDay, now = new Date() }) {
+/** @param {{ rules: object, rerender: (options?: { focus?: string }) => void, now?: Date }} options */
+export function historyPage({ xpLog, lastSyncedAt }, { rules, rerender, now = new Date() }) {
   return h(
     'div',
     { class: 'log-page' },
     h(
       'div',
       { class: 'log-intro' },
-      h('p', {}, 'What you earned, day by day, and why. The XP is yours, whichever pet was earning it.'),
-      h('button', { class: 'link', type: 'button', id: 'sheet-open', onclick: openSheet }, 'How XP works'),
+      h('p', {}, 'What you earned, and why.'),
+      h(
+        'button',
+        {
+          class: 'link',
+          type: 'button',
+          id: 'rules-toggle',
+          'aria-expanded': String(rulesOpen),
+          'aria-controls': 'xp-rules',
+          dataset: { key: 'rules' },
+          onclick: () => {
+            rulesOpen = !rulesOpen;
+            rerender({ focus: 'rules' });
+          },
+        },
+        rulesOpen ? 'Hide the rules' : 'How XP works',
+      ),
     ),
+    rulesOpen ? xpRules(rules) : null,
     xpLog.length
-      ? xpLog.map((entry) => dayBlock(entry, { now, commitsPerDay }))
+      ? xpLog.map((entry) => dayBlock(entry, { now, commitsPerDay: rules.commitsPerDay }))
       : h('p', { class: 'log-empty' }, 'No XP yet. Open a PR, review one or get one merged to earn it.'),
     h('p', { class: 'meta log-foot' }, lastSyncedAt ? `Synced ${timeAgo(lastSyncedAt)}` : 'Not synced yet'),
   );

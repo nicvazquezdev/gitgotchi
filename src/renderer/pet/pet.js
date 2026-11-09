@@ -181,7 +181,7 @@ function reactToActivity(delta) {
   say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { sub: reaction.sub, dot: reaction.dot, ms: 4000 });
 }
 
-/** New achievements: the cheer, then one pill with the medal of the first one (the rest are in the collection). */
+/** New achievements: the cheer, then one pill with the medal of the first one (the rest are in the Trophies tab of the card). */
 function celebrateAchievements(list) {
   if (!list?.length) return;
   if (!calm()) view.celebrate();

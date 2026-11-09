@@ -5,7 +5,7 @@ const { validRect, MIN, MAX } = require('../src/main/capture-rect');
 const { computeStatus } = require('../src/main/game/engine');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const card = () => import(path.join(__dirname, '../src/renderer/profile/share-card.js'));
+const card = () => import(path.join(__dirname, '../src/renderer/share/share-card.js'));
 
 test('the rectangle to copy has to be whole numbers inside the window, of a sensible size', () => {
   assert.deepEqual(validRect({ x: 10.4, y: 20.6, width: 512.2, height: 302.7 }), {

@@ -125,7 +125,6 @@ export function trophiesPage(status, { rerender, now = new Date() }) {
             'aria-label': `${a.name}${a.unlockedAt ? ', unlocked' : ', locked'}`,
             tabIndex: a.id === selected ? 0 : -1,
             dataset: { key: a.id },
-            title: a.name,
             onclick: () => select(a.id),
           },
           medalOf(a, 2),

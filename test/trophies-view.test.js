@@ -5,7 +5,7 @@ const { achievementProgress, groupAchievements } = require('../src/main/game/ach
 const { ACHIEVEMENTS } = require('../src/main/game/catalog');
 
 // The renderer modules are ES modules; Node detects that and loads them.
-const view = () => import(path.join(__dirname, '../src/renderer/profile/trophies-view.js'));
+const view = () => import(path.join(__dirname, '../src/renderer/popover/trophies-view.js'));
 const art = () => import(path.join(__dirname, '../src/renderer/shared/pixel-art.js'));
 
 const day = (counts = {}) => ({ prs: 0, prsXp: 0, reviews: 0, merges: 0, commits: 0, issues: 0, ...counts });

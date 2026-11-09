@@ -1,4 +1,4 @@
-// Profile > Share: a card with the pet, its level and the trophies, to copy as an image and show off.
+// Share: a card with the pet, its level and the trophies, to copy as an image and show off.
 // It has nothing else on it: no repos, no PR titles, no username.
 import { h } from '../shared/dom.js';
 import { spriteImg, xpBar } from '../shared/ui.js';
@@ -90,11 +90,11 @@ export function shareCard(status) {
 }
 
 /**
- * The dialog: the card as it will look, a button that copies it and one that closes.
- * @param {{ status: object, copy: (card: HTMLElement) => Promise<{ ok?: boolean }>, close: () => void }} options
+ * The content of the window: the card as it will look, and a button that copies it.
+ * @param {{ status: object, copy: (card: HTMLElement) => Promise<{ ok?: boolean }> }} options
  *   `copy` copies the card on screen (the page asks main to capture its rectangle)
  */
-export function shareDialog({ status, copy, close }) {
+export function shareView({ status, copy }) {
   const card = shareCard(status);
   let timer = null;
   const note = h(
@@ -122,26 +122,5 @@ export function shareDialog({ status, copy, close }) {
     },
     'Copy image',
   );
-  return h(
-    'div',
-    {
-      class: 'share-overlay',
-      role: 'dialog',
-      'aria-modal': 'true',
-      'aria-label': 'Share your pet',
-      onclick: (e) => e.target === e.currentTarget && close(),
-    },
-    h(
-      'div',
-      { class: 'share-panel' },
-      card,
-      h(
-        'div',
-        { class: 'share-actions' },
-        button,
-        h('button', { class: 'btn sm pixel-cut', type: 'button', onclick: close }, 'Close'),
-      ),
-      note,
-    ),
-  );
+  return h('div', { class: 'share-panel' }, card, button, note);
 }

@@ -57,17 +57,17 @@ function card(entry, species, { isSelected, onSelect }) {
       h(
         'span',
         { class: 'inner pixel-cut' },
-        entry.hatched ? spriteImg(stage.file, stage.size, 2, '') : spriteImg(baby.silhouette, baby.size, 2, ''),
+        entry.hatched ? spriteImg(stage.file, stage.size, 1, '') : spriteImg(baby.silhouette, baby.size, 1, ''),
       ),
       entry.active ? h('span', { class: 'tile-badge' }, icon('bolt', { size: 11, stroke: 3 }), 'Active') : null,
-      entry.mastered ? h('span', { class: 'tile-crown', title: 'Fully grown' }, glyph('crown', 2)) : null,
+      entry.mastered ? h('span', { class: 'tile-crown' }, glyph('crown', 1)) : null,
       entry.hatched ? null : h('span', { class: 'tile-lock' }, icon('lock', { size: 16 })),
     ),
     h('span', { class: 'nm' }, entry.hatched ? entry.name : '???'),
     h(
       'span',
       { class: 'lv' },
-      entry.hatched ? `Lv ${entry.level}${entry.mastered ? ' · Fully grown' : ''}` : `${species.type} type`,
+      entry.hatched ? `Lv ${entry.level}` : species.type, // a crown on the card says that it is fully grown
     ),
   );
 }

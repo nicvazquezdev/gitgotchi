@@ -1,5 +1,5 @@
-// `npm run shots [-- page ...] [--tab pets|pets/koi|trophies] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
-// so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet onboarding.
+// `npm run shots [-- page ...] [--tab pets|pets/koi|trophies|xp] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--fresh] [--complete] [--final] [--click selector ...] [--restore] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// so a UI change can be checked by eye without running the app. Pages: share popover panel settings evolution pet onboarding.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
 const { app, BrowserWindow, nativeTheme } = require('electron');
@@ -34,9 +34,9 @@ const restore = process.argv.includes('--restore'); // onboarding: a save of the
 const tall = process.argv.includes('--tall'); // a much taller window, to see content that scrolls
 const scroll = process.argv.includes('--scroll'); // scroll the content to the end before the capture
 const freeze = process.argv.includes('--freeze'); // a fixed clock and nothing that moves, for pixel comparisons
-const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // profile: a view
+const tab = process.argv.includes('--tab') ? process.argv[process.argv.indexOf('--tab') + 1] : null; // popover: a tab (pets, trophies, xp)
 const PAGES = {
-  profile: { size: config.PROFILE_WINDOW },
+  share: { size: config.SHARE_WINDOW },
   evolution: { size: config.EVOLUTION_WINDOW },
   settings: { size: config.SETTINGS_WINDOW },
   popover: { size: { width: config.POPOVER_WINDOW.width, height: 1000 }, fit: true },

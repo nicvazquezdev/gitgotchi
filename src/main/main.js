@@ -7,7 +7,7 @@ const petService = require('./services/pet-service');
 const petWindow = require('./ui/pet-window');
 const onboardingWindow = require('./ui/onboarding-window');
 const panelWindow = require('./ui/panel-window');
-const profileWindow = require('./ui/profile-window');
+const shareWindow = require('./ui/share-window');
 const settingsWindow = require('./ui/settings-window');
 const evolutionWindow = require('./ui/evolution-window');
 const popoverWindow = require('./ui/popover-window');
@@ -34,16 +34,13 @@ if (IS_MAC) {
 
 // ---------- App actions ----------
 
-// --- Profile & evolution windows ---
+// --- Share & evolution windows ---
 // An evolution that happens during a pause waits here ({ fromIndex, toIndex }, merged if several pile up)
 // and is shown by `flushEvolution`: on the next status update after the pause ends, or when the menu opens.
 let pendingEvolution = null;
 
 const actions = {
-  openProfile: (view) => profileWindow.open(view),
-  openPets: () => profileWindow.open('pets'),
-  openTrophies: () => profileWindow.open('trophies'),
-  openXp: () => profileWindow.open('xp'),
+  openShare: () => shareWindow.open(),
   // The card hangs from the pet (it answers with the rect to anchor on, see `togglePopover`), or from the menu bar icon
   // when the pet is hidden.
   openCard: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
@@ -56,7 +53,7 @@ const actions = {
     evolutionWindow.open(pendingEvolution);
     pendingEvolution = null;
   },
-  // --- end Profile & evolution windows ---
+  // --- end Share & evolution windows ---
   sync: () => petService.sync(),
   togglePet: () => {
     if (petWindow.isVisible()) petWindow.hide();
@@ -180,7 +177,7 @@ function togglePref(key) {
 
 petService.on('status', (status) => {
   petWindow.send('pet:status', status);
-  profileWindow.send('profile:status', status);
+  shareWindow.send('share:status', status);
   panelWindow.send();
   settingsWindow.send(); // account and repos change when the setup flow finishes
   popoverWindow.send();

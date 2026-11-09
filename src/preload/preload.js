@@ -59,26 +59,24 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
   },
 
-  // --- Profile & evolution windows ---
-  profile: {
-    status: invoke('profile:status'),
-    onStatus: subscribe('profile:status'),
-    view: invoke('profile:view'), // -> the tab the window was opened on ('collection'...), or null
-    onView: subscribe('profile:view'), // an open window is asked to show another tab
-    copyCard: invoke('profile:copy-card'), // { x, y, width, height } of the share card: copies it to the clipboard as an image -> { ok } | { error, message }
+  // --- Share & evolution windows ---
+  share: {
+    status: invoke('share:status'),
+    onStatus: subscribe('share:status'),
+    copyCard: invoke('share:copy-card'), // { x, y, width, height } of the share card: copies it to the clipboard as an image -> { ok } | { error, message }
   },
 
   evolution: {
     data: invoke('evolution:data'), // -> { fromIndex, toIndex }
     close: send('evolution:close'),
   },
-  // --- end Profile & evolution windows ---
+  // --- end Share & evolution windows ---
 
   // ---- everyday UI ----
   panel: {
     state: invoke('panel:state'), // -> { status, configured, connected, petVisible }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openCard' | 'openProfile'
+    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openCard'
     // | 'openSettings' | 'quit'
     action: send('panel:action'),
     setHeight: send('panel:height'), // content height in px
@@ -87,7 +85,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   popover: {
     state: invoke('popover:state'), // -> panel state plus { placement: 'above' | 'below', tailX }
     onState: subscribe('popover:state'),
-    action: send('popover:action'), // 'openPets' | 'openTrophies' | 'openXp' | 'openMenu' | 'resume'
+    action: send('popover:action'), // 'openShare' | 'openMenu' | 'resume'
     setHeight: send('popover:height'),
   },
   // ---- end everyday UI ----

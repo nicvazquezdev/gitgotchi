@@ -49,12 +49,12 @@ export function nameLine({ entry, nameMax, headingClass, rename, rerender }) {
       }),
       h(
         'button',
-        { class: 'icon-btn', type: 'button', 'aria-label': 'Save name', title: 'Save', onclick: save },
+        { class: 'icon-btn', type: 'button', 'aria-label': 'Save name', onclick: save },
         icon('check', { size: 16, stroke: 2.6 }),
       ),
       h(
         'button',
-        { class: 'icon-btn', type: 'button', 'aria-label': 'Cancel', title: 'Cancel', onclick: () => done('rename') },
+        { class: 'icon-btn', type: 'button', 'aria-label': 'Cancel', onclick: () => done('rename') },
         icon('x', { size: 16, stroke: 2.4 }),
       ),
     );
@@ -69,7 +69,6 @@ export function nameLine({ entry, nameMax, headingClass, rename, rerender }) {
         class: 'icon-btn',
         type: 'button',
         'aria-label': `Rename ${entry.name}`,
-        title: 'Rename',
         dataset: { key: 'rename' },
         onclick: () => {
           editing = entry.id;

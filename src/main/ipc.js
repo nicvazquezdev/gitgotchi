@@ -13,7 +13,6 @@ const catalog = require('./game/catalog');
 const collection = require('./game/collection');
 const evolutionWindow = require('./ui/evolution-window');
 const { copyRegion } = require('./ui/share');
-const profileWindow = require('./ui/profile-window');
 
 // Only accept messages from our own local pages.
 const isTrusted = (event) => event.senderFrame?.url.startsWith('file://');
@@ -39,13 +38,12 @@ const PANEL_ACTIONS = [
   'pauseVacation',
   'resume',
   'openCard',
-  'openProfile',
   'openSettings',
   'quit',
 ];
 const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
-const POPOVER_ACTIONS = ['openPets', 'openTrophies', 'openXp', 'openMenu', 'resume'];
+const POPOVER_ACTIONS = ['openShare', 'openMenu', 'resume'];
 // ---- end everyday UI ----
 
 // Settings window controls.
@@ -62,7 +60,7 @@ const SETTINGS_ACTIONS = [
 ];
 
 /**
- * @param {{ openProfile: () => void, finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
+ * @param {{ finishOnboarding: () => void, showMenu: () => void, disconnect: () => void, panelState: () => object,
  *           setPetSize: (size: number, persist?: boolean) => void, togglePopover: (rect: object) => void }} actions
  */
 function registerIpc(actions) {
@@ -112,7 +110,7 @@ function registerIpc(actions) {
     petService.sync();
   });
 
-  // The collection: every window can switch pets. Each returns nothing or { error, message }.
+  // The collection: the card (Pets tab) switches, hatches and renames pets. Each returns nothing or { error, message }.
   handle('pets:activate', (species) => attempt(() => petService.activate(species)));
   handle('pets:hatch', (choice) => attempt(() => petService.hatch(choice ?? {})));
   handle('pets:rename', (choice) => attempt(() => petService.rename(choice ?? {})));
@@ -135,18 +133,17 @@ function registerIpc(actions) {
   });
   // ---- end everyday UI ----
 
-  // --- Profile & evolution windows ---
-  handle('profile:status', () => petService.status());
-  handle('profile:view', () => profileWindow.takeView());
+  // --- Share & evolution windows ---
+  handle('share:status', () => petService.status());
   // The share card: copies the part of the window it is drawn in to the clipboard, as an image. It needs the window
   // that asked, so it does not go through `handle`.
-  ipcMain.handle('profile:copy-card', (event, rect) => {
+  ipcMain.handle('share:copy-card', (event, rect) => {
     if (!isTrusted(event)) throw new Error('Untrusted sender');
     return copyRegion(event.sender, rect);
   });
   handle('evolution:data', () => evolutionWindow.current());
   on('evolution:close', () => evolutionWindow.close());
-  // --- end Profile & evolution windows ---
+  // --- end Share & evolution windows ---
 
   // ---- everyday UI ----
   // Menu

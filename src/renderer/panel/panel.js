@@ -1,4 +1,4 @@
-// The menu: the few things nobody needs every day (pause, hide the pet, the card, the collection, settings, quit). It opens from a
+// The menu: the few things nobody needs every day (pause, hide the pet, the card, settings, quit). It opens from a
 // right-click on the pet or on the menu bar icon, or from the dots of the card. The card is the home of everything else.
 import { $, h } from '../shared/dom.js';
 import { icon } from '../shared/ui.js';
@@ -64,7 +64,6 @@ function render(next = state) {
           item(petVisible ? 'Hide pet' : 'Show pet', { onclick: act('togglePet') }),
           divider(),
           item('Pet card', { onclick: act('openCard') }),
-          item('Collection', { onclick: act('openProfile') }),
           item('Settings…', { onclick: act('openSettings') }),
         ]
       : [item('Set up Gitgotchi…', { onclick: act('openSettings') })]),

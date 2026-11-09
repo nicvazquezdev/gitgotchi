@@ -1,14 +1,19 @@
-// The card of the pet: its header (level, one bar and what is left), how it will grow, how the week went, and the way to
-// its collection (pets, trophies, XP). The card lives inside a little creature (the shell) whose eyes show how the pet
-// feels.
+// The card of the pet: its header (level, one bar and what is left) and, under it, how it will grow and how the week
+// went. Three tabs open its collection in the same place: Pets, Trophies and the XP log (none open: the overview).
+// The card lives inside a little creature (the shell) whose eyes show how the pet feels.
 import { $, h } from '../shared/dom.js';
 import { icon, xpBar } from '../shared/ui.js';
 import { pauseUntilText } from '../shared/pause-text.js';
 import { PetView } from '../pet/pet-view.js';
 import { growth, week } from './overview.js';
+import { petsPage, leavePets } from './pets-view.js';
+import { trophiesPage, leaveTrophies } from './trophies-view.js';
+import { historyPage, leaveHistory } from './history-view.js';
+import { stopRenaming } from './rename.js';
 
-const api = window.gitgotchi.popover;
-const { catalog } = await window.gitgotchi.bootstrap(); // the level that unlocks each form
+const gitgotchi = window.gitgotchi;
+const api = gitgotchi.popover;
+const { catalog } = await gitgotchi.bootstrap(); // the level that unlocks each form, the pets and the rules of XP
 const app = $('#app');
 
 // ---------- Portrait: the pet playing its mood ----------
@@ -47,6 +52,71 @@ function syncPortrait(status) {
 // The last state received.
 let latest = {};
 
+// ---------- Tabs ----------
+
+const TABS = ['pets', 'trophies', 'xp'];
+const LABELS = { pets: 'Pets', trophies: 'Trophies', xp: 'XP log' };
+const [hashTab, hashPick] = location.hash.slice(1).split('/'); // e.g. #pets/koi: that pet on show (for screenshots)
+let tab = TABS.includes(hashTab) ? hashTab : null; // null: the overview (growth and week)
+
+/** Opens a tab, or closes it when it is the one open (back to the overview). */
+function toggleTab(name) {
+  leave();
+  tab = tab === name ? null : name;
+  render(latest, { resetScroll: true, focus: `tab-${name}` });
+}
+
+/** Leaving a tab: what was half done in it is dropped. */
+function leave() {
+  if (tab === 'pets') leavePets();
+  if (tab === 'trophies') leaveTrophies();
+  if (tab === 'xp') leaveHistory();
+  stopRenaming();
+}
+
+function tabs({ collection, achievements }) {
+  const counts = {
+    pets: `${collection.hatched}/${collection.total}`,
+    trophies: `${achievements.unlocked}/${achievements.total}`,
+  };
+  const onKey = (e) => {
+    const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
+    if (!step) return;
+    e.preventDefault();
+    const at = TABS.indexOf(document.activeElement?.dataset?.tab);
+    $(`#tab-${TABS[(at + step + TABS.length) % TABS.length]}`)?.focus();
+  };
+  return h(
+    'div',
+    { class: 'tabs', role: 'tablist', 'aria-label': 'Collection', onkeydown: onKey },
+    TABS.map((name) =>
+      h(
+        'button',
+        {
+          id: `tab-${name}`,
+          class: 'tab',
+          type: 'button',
+          role: 'tab',
+          'aria-selected': String(name === tab),
+          dataset: { key: `tab-${name}`, tab: name },
+          onclick: () => toggleTab(name),
+        },
+        LABELS[name],
+        counts[name] ? h('span', { class: 'count-chip' }, counts[name]) : null,
+      ),
+    ),
+  );
+}
+
+/** What is under the tabs: the overview, or the tab that is open. */
+function content(status) {
+  const rerender = (options) => render(latest, options);
+  if (tab === 'pets') return petsPage(status, { catalog, api: gitgotchi, pick: hashPick, rerender });
+  if (tab === 'trophies') return trophiesPage(status, { rerender });
+  if (tab === 'xp') return historyPage(status, { rules: catalog.xpRules, rerender });
+  return [growth(status, catalog.stages), week(status)];
+}
+
 // ---------- Header ----------
 
 /** The next level is an evolution: then what is left is "to evolve". */
@@ -71,14 +141,23 @@ function header(status) {
         { class: 'head-title' },
         h('span', { class: 'pixel-name name' }, name),
         h(
-          'button',
-          {
-            class: 'icon-btn',
-            type: 'button',
-            'aria-label': 'Menu',
-            onclick: () => api.action('openMenu'),
-          },
-          icon('dots', { size: 18 }),
+          'div',
+          { class: 'head-actions' },
+          h(
+            'button',
+            {
+              class: 'icon-btn',
+              type: 'button',
+              'aria-label': 'Share your pet',
+              onclick: () => api.action('openShare'),
+            },
+            icon('share', { size: 18 }),
+          ),
+          h(
+            'button',
+            { class: 'icon-btn', type: 'button', 'aria-label': 'Menu', onclick: () => api.action('openMenu') },
+            icon('dots', { size: 18 }),
+          ),
         ),
       ),
       h('div', { class: 'level' }, `Level ${level}`),
@@ -112,26 +191,6 @@ function pauseBanner(pause) {
       h('span', { class: 'meta' }, 'Streak safe'),
     ),
     h('button', { class: 'link', type: 'button', onclick: () => api.action('resume') }, 'Resume'),
-  );
-}
-
-// ---------- Footer ----------
-
-/** The way to the collection: pets, trophies and the XP log, each one opens its view. */
-function footer({ collection, achievements }) {
-  const link = (label, count, action) =>
-    h(
-      'button',
-      { class: 'foot-btn', type: 'button', onclick: () => api.action(action) },
-      label,
-      count ? h('span', { class: 'n' }, count) : null,
-    );
-  return h(
-    'div',
-    { class: 'card-foot' },
-    link('Pets', `${collection.hatched}/${collection.total}`, 'openPets'),
-    link('Trophies', `${achievements.unlocked}/${achievements.total}`, 'openTrophies'),
-    link('XP log', null, 'openXp'),
   );
 }
 
@@ -182,8 +241,21 @@ function fitBody(room) {
 
 // ---------- Render ----------
 
-/** `resetScroll`: start at the top (the popover reopened); a sync keeps the scroll. */
-function render(state = latest, { resetScroll = false } = {}) {
+/** What has the focus (a tab, a card, a name field), to give it back after the card is drawn again. */
+const focusKey = () => document.activeElement?.dataset?.key ?? null;
+function restoreFocus(key) {
+  const el = key && $(`[data-key="${CSS.escape(key)}"]`);
+  if (!el) return;
+  el.focus();
+  if (el.setSelectionRange) el.setSelectionRange(el.value.length, el.value.length); // typing goes on at the end
+}
+
+/**
+ * `resetScroll`: start at the top (another tab, or the popover reopened); a sync keeps the scroll.
+ * `focus`: the data-key of what gets the focus after drawing; by default what had it before.
+ */
+function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
+  const focus = focusOn ?? focusKey();
   latest = state;
   const { status, placement = 'above', tailX = 180, room } = state;
   if (status) syncPortrait(status);
@@ -193,12 +265,7 @@ function render(state = latest, { resetScroll = false } = {}) {
     'div',
     { class: 'card' },
     ...(status
-      ? [
-          header(status),
-          pauseBanner(status.pause),
-          h('div', { class: 'card-body' }, growth(status, catalog.stages), week(status)),
-          footer(status),
-        ]
+      ? [header(status), pauseBanner(status.pause), tabs(status), h('div', { class: 'card-body' }, content(status))]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 
@@ -210,13 +277,16 @@ function render(state = latest, { resetScroll = false } = {}) {
   fitBody(room);
   const body = $('.card-body');
   if (body) body.scrollTop = scroll;
+  restoreFocus(focus);
 }
 
 // ---------- Boot ----------
 
-// Every time the popover is reopened, it starts at the top again.
+// Every time the popover is reopened, it starts at the overview again.
 document.addEventListener('visibilitychange', () => {
   if (!document.hidden) return;
+  leave();
+  tab = null;
   render(latest, { resetScroll: true });
 });
 

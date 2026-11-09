@@ -1,12 +1,12 @@
-/* Trophies: a grid of medals, and under it the selected one. */
+/* Trophies tab: a grid of medals, and under it the selected one. */
 .trophies-page {
   min-height: 100%;
 }
 .medals {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 10px;
-  padding: 18px 24px 4px;
+  gap: 6px;
+  padding: 12px 0 4px;
 }
 .medal-cell {
   display: grid;
@@ -32,9 +32,9 @@
 .detail {
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin: 18px 24px 24px;
-  padding: 14px 16px;
+  gap: 12px;
+  margin: 12px 0 16px;
+  padding: 12px 14px;
   clip-path: var(--cut-4);
   background: var(--surface);
 }
@@ -44,7 +44,7 @@
   display: grid;
 }
 .detail .t b {
-  font-size: 15px;
+  font-size: 14px;
 }
 .detail .when {
   color: var(--text-2);

@@ -35,7 +35,7 @@ export function createReposStep({ api, catalog, state, go, toast }) {
       const list = h('div', { class: 'repo-list' });
       const count = h('span', { class: 'muted' });
       const selectAll = h('input', { type: 'checkbox', onchange: (e) => setVisible(e.target.checked) });
-      // Someone who already has pets is done here: the pets are managed in the collection (Profile > Collection).
+      // Someone who already has pets is done here: the pets are managed in the collection (the Pets tab of the card).
       const returning = Boolean(state.existingPet);
       const next = button(
         returning ? 'Save' : 'Continue',

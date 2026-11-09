@@ -1,4 +1,4 @@
-// Step 3: pick the first pet (and its name), then start. Later ones are hatched from the Pets view of the collection.
+// Step 3: pick the first pet (and its name), then start. Later ones are hatched from the Pets tab of the card.
 import { h } from '../../shared/dom.js';
 import { spriteImg } from '../../shared/ui.js';
 import { button, hero, stepProgress } from './parts.js';

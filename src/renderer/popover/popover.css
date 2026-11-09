@@ -649,6 +649,13 @@ body {
 }
 
 /* ---------- Card body: how it will grow and how the week went (it scrolls when the screen is short) ---------- */
+.card .tabs {
+  margin: 0 16px;
+}
+.head-actions {
+  display: flex;
+  gap: 2px;
+}
 .card-body {
   max-height: 440px;
   padding: 0 16px 4px;
@@ -774,37 +781,4 @@ body {
   margin: 0;
   padding: 16px;
   color: var(--text-2);
-}
-
-/* ---------- Footer: the way to the collection (pets, trophies, XP log) ---------- */
-.card-foot {
-  display: flex;
-  gap: 4px;
-  margin-top: 14px;
-  padding: 8px;
-  border-top: 1px solid var(--divider);
-}
-.foot-btn {
-  flex: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 8px;
-  border: 0;
-  clip-path: var(--cut-3);
-  background: transparent;
-  color: var(--text-2);
-  font: 600 13px var(--font-ui);
-  cursor: pointer;
-}
-.foot-btn .n {
-  color: var(--text-3);
-  font-weight: 500;
-}
-.foot-btn:hover,
-.foot-btn:focus-visible {
-  background: var(--surface-hover);
-  color: var(--text);
 }

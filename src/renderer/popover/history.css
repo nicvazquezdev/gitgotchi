@@ -1,0 +1,83 @@
+/* XP log tab: what you earned, day by day, and the rules of XP when they are open. */
+.log-page {
+  padding: 12px 0 16px;
+}
+.log-intro {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.log-intro p {
+  margin: 0;
+}
+.log-intro .link {
+  flex: none;
+}
+.log-day {
+  margin-top: 18px;
+}
+.log-day-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding-bottom: 6px;
+}
+.log-day-head .fig {
+  font: 400 20px/1 var(--font-num);
+  color: var(--accent-text);
+}
+.log-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--divider-soft);
+}
+.log-row b {
+  display: block;
+  font-size: 13px;
+}
+.log-row .xp-text {
+  font-size: 20px;
+}
+.log-empty {
+  margin: 28px 0 0;
+  color: var(--text-2);
+}
+.log-foot {
+  margin: 24px 0 0;
+  text-align: right;
+}
+
+/* The rules of XP, open above the log. */
+.rules {
+  margin-top: 8px;
+}
+.rule {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 0;
+  border-top: 1px solid var(--divider-soft);
+}
+.rule b {
+  display: block;
+  font-size: 13px;
+}
+.rule .xp-text {
+  font-size: 20px;
+}
+.rule .xp-text .unit {
+  margin-left: 5px;
+  font: 600 11px var(--font-ui);
+  letter-spacing: 0.06em;
+  color: var(--text-3);
+}
+.rules .fine {
+  margin: 8px 0 0;
+}
