@@ -229,18 +229,17 @@ export class PetView {
   }
 
   /**
-   * The pet is picked up at a point of the window (CSS px): it hangs from there. Held by the head it hangs straight,
-   * held by the feet it turns upside down, held by a side it hangs sideways. Returns how many CSS px the window must
-   * be lowered for the body to fit below the cursor (0 for most grabs): pet.js tells the main process.
+   * The pet is picked up at a point of the window (CSS px): it hangs from there. Grabbed by the lowest quarter of the
+   * body (the feet) it turns upside down; anywhere else it hangs the right way up, with the arms raised. Returns how
+   * many CSS px the window must be lowered for the body to fit below the cursor (0 unless it is upside down): pet.js
+   * tells the main process.
    */
   pickUp(clientX, clientY) {
     const { canvas, pet, ds, native, squish, k } = this;
     const box = canvas.getBoundingClientRect();
     this.grab = { x: (clientX - box.left) * k, y: (clientY - box.top) * k };
     const b = this.bounds();
-    squish.pickUp(
-      b ? { x: (b.x + b.width / 2 - clientX) / b.height, y: (b.y + b.height / 2 - clientY) / b.height } : undefined,
-    );
+    squish.pickUp(b ? { fromTop: (clientY - b.y) / b.height, turn: clientX < b.x + b.width / 2 ? 1 : -1 } : undefined);
     // Where the lowest point of the body ends up when it hangs, and how far below the canvas that is.
     const angle = squish.hangAngle;
     if (!pet || Math.abs(angle) < 0.3) return (this.lower.target = 0);

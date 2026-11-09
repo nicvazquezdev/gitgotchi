@@ -1,6 +1,6 @@
 // How the body of the pet answers the hand, with no frames from the pack: it squashes under a press, boings at a
 // click (a hop that lands in a squash), looks up while the popover it opened is on screen, and when it is picked up
-// it hangs from the point where it was grabbed (by the feet it turns upside down), swings with the speed of the
+// it hangs from the point where it was grabbed (by the lowest quarter, the feet, it turns upside down), swings with the speed of the
 // cursor, and when it is let go it skids a little, rights itself and lands. Shaken or turned over again and again it
 // gets dizzy, and an edge of the screen squashes it. A few springs and one hop. Pure rules (no DOM, no timers): the
 // host calls `update` on every frame and draws with `scaleX`, `scaleY`, `lean`, `skid`, `gaze` and `air`, and asks for
@@ -18,8 +18,7 @@ export const SQUISH = {
   maxLean: 0.5, // radians of swing from the cursor speed
   leanPerPx: 0.0006, // radians for each px per second of cursor speed
   speedFade: 0.06, // seconds for the cursor speed to fade out when no moves come
-  deadZone: 0.15, // a grab this close to the center (in body heights) hangs it straight
-  ramp: 0.2, // and from there it takes this much more to hang it all the way (feet: upside down)
+  feetZone: 0.25, // the lowest quarter of the body counts as the feet: grabbed there, it hangs upside down
   skid: 0.0003, // radians of forward lean for each px per second it was going when let go
   maxSkid: 0.3, // radians
   slideMin: 350, // px/s: slower than this, the pet does not slide (keep in sync with THROW.minSpeed in main/ui/pet-throw.js)
@@ -64,7 +63,7 @@ export class Squish {
   held = false;
   #pressed = false;
   #looking = false;
-  #hang = 0; // where the lean settles while held, from where it was grabbed
+  #hang = 0; // where the lean settles while held: 0 the right way up, ±π upside down (grabbed by the feet)
   #stretchV = 0;
   #leanV = 0;
   #skidV = 0;
@@ -122,17 +121,16 @@ export class Squish {
   }
 
   /**
-   * The press turned into a drag: the pet is picked up. `toCenter`: from the point it was grabbed to the center of
-   * its body, in body heights (x to the right, y down). Held by the head the center is below (it hangs straight),
-   * held by the feet it is above (it turns upside down), held by a side it hangs sideways. Near the center it hangs
-   * straight, so a grab on the belly does not tip it over.
+   * The press turned into a drag: the pet is picked up. `fromTop`: where on its body it was grabbed, 0 at the head and
+   * 1 at the feet. Grabbed by the lowest quarter (the feet) it turns upside down, with the body below the cursor;
+   * anywhere else it hangs the right way up, with the arms raised. `turn`: which way it turns over, 1 clockwise
+   * (grabbed on the left of the body) or -1.
    */
-  pickUp({ x = 0, y = 1 } = {}) {
+  pickUp({ fromTop = 0, turn = 1 } = {}) {
     if (this.calm) return;
     this.#pressed = false;
     this.held = true;
-    const reach = Math.max(0, Math.min(1, (Math.hypot(x, y) - SQUISH.deadZone) / SQUISH.ramp));
-    this.#hang = Math.atan2(x, y) * reach; // the angle that puts the center straight below the grab point
+    this.#hang = fromTop >= 1 - SQUISH.feetZone ? (turn < 0 ? -Math.PI : Math.PI) : 0;
   }
 
   /** The cursor moved `dx` px in `ms` while the pet is held. */

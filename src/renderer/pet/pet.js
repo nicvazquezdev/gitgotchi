@@ -258,7 +258,7 @@ canvas.addEventListener('pointermove', (e) => {
     if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) <= DRAG_THRESHOLD_PX) return;
     drag.moved = true;
     document.body.classList.add('dragging');
-    const lowerBy = view.pickUp(drag.grab.x, drag.grab.y); // it hangs from where it was grabbed
+    const lowerBy = view.pickUp(drag.grab.x, drag.grab.y); // it hangs from where it was grabbed (by the feet: upside down)
     if (lowerBy > 0) api.dragShift(lowerBy); // held by the feet: the window goes lower so the body fits below the cursor
   }
   view.squish.drag(e.screenX - drag.lastX, e.timeStamp - drag.lastTime); // it swings with the speed of the cursor

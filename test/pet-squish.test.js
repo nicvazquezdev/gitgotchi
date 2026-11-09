@@ -117,26 +117,30 @@ describe('how the pet answers the hand', () => {
     assert.ok(Math.abs(s.stretch) < 1 && s.air < 10);
   });
 
-  test('it hangs from where it was grabbed: by the head straight, by the feet upside down, by a side sideways', async () => {
+  test('grabbed by the lowest quarter it hangs upside down; anywhere else it hangs the right way up', async () => {
     const { Squish } = await load();
-    const hangs = async (toCenter) => {
+    const hangs = async (grab) => {
       const s = new Squish();
-      s.pickUp(toCenter);
+      s.pickUp(grab);
       step(s, 2500);
       return s.lean;
     };
-    assert.ok(Math.abs(await hangs({ x: 0, y: 0.4 })) < 0.02, 'head: the center is below');
-    assert.ok(Math.abs(Math.abs(await hangs({ x: 0.01, y: -0.4 })) - Math.PI) < 0.05, 'feet: the center is above');
-    assert.ok(Math.abs((await hangs({ x: 0.4, y: 0 })) - Math.PI / 2) < 0.05, 'the left side: it hangs on its side');
-    assert.ok(Math.abs((await hangs({ x: -0.4, y: 0 })) + Math.PI / 2) < 0.05, 'the right side, the other way');
-    assert.ok(Math.abs(await hangs({ x: 0.05, y: -0.05 })) < 0.02, 'the belly: not tipped over');
-    assert.ok(Math.abs(await hangs()) < 0.02, 'no grab point: straight');
+    const upright = async (grab) => Math.abs(await hangs(grab)) < 0.02;
+    const upsideDown = async (grab) => Math.abs(Math.abs(await hangs(grab)) - Math.PI) < 0.05;
+    assert.ok(await upright({ fromTop: 0 }), 'by the head');
+    assert.ok(await upright({ fromTop: 0.5 }), 'by the belly');
+    assert.ok(await upright({ fromTop: 0.74 }), 'just above the feet');
+    assert.ok(await upsideDown({ fromTop: 0.76 }), 'just inside the feet');
+    assert.ok(await upsideDown({ fromTop: 1 }), 'by the very bottom');
+    assert.ok(await upright(), 'no grab point: right way up');
+    assert.ok((await hangs({ fromTop: 0.9, turn: 1 })) > 0, 'it turns over one way');
+    assert.ok((await hangs({ fromTop: 0.9, turn: -1 })) < 0, 'or the other, by the side it was grabbed on');
   });
 
   test('held by the feet it turns over with a wobble, and when let go it hops, rights itself and lands', async () => {
     const { Squish } = await load();
     const s = new Squish();
-    s.pickUp({ x: 0.01, y: -0.4 });
+    s.pickUp({ fromTop: 0.9 });
     let top = 0;
     step(s, 1500, () => (top = Math.max(top, s.lean)));
     assert.ok(top > Math.PI, 'it swings past upside down before it settles');
@@ -291,7 +295,7 @@ describe('how the pet answers the hand', () => {
 
     const flips = new Squish();
     for (let i = 0; i < 6; i++) {
-      flips.pickUp({ x: 0.01, y: -0.4 }); // by the feet: upside down
+      flips.pickUp({ fromTop: 0.9 }); // by the feet: upside down
       step(flips, 300);
       flips.drop();
       step(flips, 200);
@@ -299,7 +303,7 @@ describe('how the pet answers the hand', () => {
     assert.ok(flips.dizzy > 0, 'turned over again and again it is dizzy too');
 
     const once = new Squish();
-    once.pickUp({ x: 0.01, y: -0.4 });
+    once.pickUp({ fromTop: 0.9 });
     step(once, 1500);
     once.drop();
     step(once, 1500);
