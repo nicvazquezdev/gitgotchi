@@ -3,6 +3,7 @@
 // events); the animation rules themselves are in shared/pet-animator.js.
 import { createPet, FLOOR_MAX, PAD } from '../shared/pet-sprites.js';
 import { Stroller } from '../shared/pet-stroll.js';
+import { Squish } from '../shared/pet-squish.js';
 
 /** Screen px per native px at the smallest size: pet sizes are whole multiples of it (see PET_SIZE_RANGE). */
 export const PX_PER_SCALE = 52;
@@ -32,6 +33,7 @@ export class PetView {
     this.scale = 4;
     this.pet = null;
     this.stroller = new Stroller();
+    this.squish = new Squish(); // how the body answers the hand: pet.js tells it about the press, click and drag
     this.calm = false; // Do not disturb or Reduce Motion: only the idle loop
     this.still = false; // the user holds or points at the pet
     this.mood = 'neutral';
@@ -76,6 +78,7 @@ export class PetView {
   setCalm(calm) {
     if (calm === this.calm) return;
     this.calm = calm;
+    this.squish.calm = calm;
     if (this.pet) {
       this.pet.calm = calm;
       if (calm) this.stroller.stop(this.pet);
@@ -85,16 +88,6 @@ export class PetView {
   /** `still`: the user is holding or pointing at the pet, so it does not walk away from them. */
   setStill(still) {
     this.still = still;
-  }
-
-  /** The user picks the pet up (a real drag, not a click) or puts it down: it flaps while held, then is woozy. */
-  hold(on) {
-    this.pet?.hold(on);
-  }
-
-  /** A click: the pet looks up at the popover that opens above it. */
-  lookUp() {
-    this.pet?.lookUp();
   }
 
   /** The canvas gets `scale` CSS px per native px (a whole number) and fills the width it is given. */
@@ -142,7 +135,10 @@ export class PetView {
     if (!pet) return;
     if ((window.devicePixelRatio || 1) !== this.dpr) this.layout(); // moved to another display
 
-    this.stroller.update(dt, pet, { calm: this.calm, still: this.still || pet.engaged });
+    this.squish.update(dt);
+    pet.held = this.squish.held;
+    pet.hop = Math.round(this.squish.air);
+    this.stroller.update(dt, pet, { calm: this.calm, still: this.still || this.squish.busy });
     pet.update(dt);
     if (this.wantsHappy && pet.state !== 'cheer' && pet.state !== 'landing') {
       this.wantsHappy = false;
@@ -158,10 +154,22 @@ export class PetView {
   }
 
   draw() {
-    const { ctx, canvas, pet } = this;
+    const { ctx, canvas, pet, squish, ds, native } = this;
     if (!pet) return;
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    pet.draw(ctx, this.ds, 0, this.native.oy * this.ds);
+    // The body squashes about the feet (the floor line) and swings about the head, the way it is held.
+    const x = (pet.x + pet.stage.size / 2) * ds;
+    const feet = (native.oy + pet.groundY) * ds;
+    const head = (native.oy + PAD) * ds;
+    ctx.save();
+    ctx.translate(x, head);
+    ctx.rotate(squish.lean);
+    ctx.translate(-x, -head);
+    ctx.translate(x, feet);
+    ctx.scale(squish.scaleX, squish.scaleY);
+    ctx.translate(-x, -feet);
+    pet.draw(ctx, ds, 0, native.oy * ds);
+    ctx.restore();
   }
 
   // ---------- Where the creature is ----------

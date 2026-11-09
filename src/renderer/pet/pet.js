@@ -126,9 +126,7 @@ function openPopover() {
 }
 
 function reactToClick() {
-  if (!status) return;
-  view.lookUp(); // the popover opens above the pet
-  openPopover();
+  if (status) openPopover();
 }
 
 // ---------- Live reactions (new GitHub activity) ----------
@@ -223,18 +221,23 @@ document.addEventListener('mouseleave', () => !drag && setHover(false));
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !isOverPet(e)) return;
   canvas.setPointerCapture(e.pointerId);
-  drag = { x: e.screenX, y: e.screenY, moved: false };
+  drag = { x: e.screenX, y: e.screenY, moved: false, lastX: e.screenX, lastTime: e.timeStamp };
+  view.squish.press();
   syncStill();
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
 });
 
 canvas.addEventListener('pointermove', (e) => {
-  if (!drag || drag.moved) return;
-  if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) > DRAG_THRESHOLD_PX) {
+  if (!drag) return;
+  if (!drag.moved) {
+    if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) <= DRAG_THRESHOLD_PX) return;
     drag.moved = true;
     document.body.classList.add('dragging');
-    view.hold(true);
+    view.squish.pickUp();
   }
+  view.squish.drag(e.screenX - drag.lastX, e.timeStamp - drag.lastTime); // it swings with the speed of the cursor
+  drag.lastX = e.screenX;
+  drag.lastTime = e.timeStamp;
 });
 
 canvas.addEventListener('pointerup', (e) => {
@@ -243,8 +246,10 @@ canvas.addEventListener('pointerup', (e) => {
   const wasClick = !drag.moved;
   drag = null;
   document.body.classList.remove('dragging');
-  view.hold(false);
-  if (wasClick) reactToClick();
+  if (wasClick) {
+    view.squish.pop(); // boing
+    reactToClick();
+  } else view.squish.drop();
   setHover(isOverPet(e) || isOverBubble(e));
   syncStill();
 });

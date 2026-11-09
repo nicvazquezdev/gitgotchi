@@ -197,61 +197,17 @@ describe('the animation rules', () => {
     assert.equal(a.state, 'cheer');
   });
 
-  test('held, a pet flaps off the ground; put down, it lands in dust (a floater has none) and is woozy for a moment', async () => {
-    const walker = await pet('ram', 1);
-    walker.hold(true);
-    const frames = new Set();
-    step(walker, 600, () => {
-      frames.add(walker.frameName);
-      assert.ok(walker.lift < 0, 'off the ground');
-    });
-    assert.ok([...frames].length > 1 && [...frames].every((f) => f.startsWith('cheer')), 'it flaps');
-    assert.ok(walker.engaged);
-
-    walker.hold(false);
-    assert.equal(walker.parts.filter((p) => p.kind === 'puff').length, 2);
-    const woozy = new Set();
-    const sway = new Set();
-    step(walker, 900, () => {
-      woozy.add(walker.frameName);
-      sway.add(walker._shiverX());
-    });
-    assert.deepEqual([...woozy].sort(), ['blink', 'half']);
-    assert.deepEqual([...sway].sort(), [-1, 1]);
-    step(walker, 200);
-    assert.ok(!walker.engaged, 'then it is itself again');
-    assert.equal(walker._shiverX(), 0);
-
-    const floater = await pet('jelly', 0);
-    floater.hold(true);
-    floater.hold(false);
-    assert.equal(floater.parts.filter((p) => p.kind === 'puff').length, 0);
-  });
-
-  test('a click makes the pet stretch up on tiptoe and come back; not while held, woozy or in calm mode', async () => {
+  test('held, a pet shows the arms-up pose, and hop lifts it off the ground rows at a time with its shadow', async () => {
     const a = await pet('ram', 1);
-    a.lookUp();
-    const lifts = new Set();
-    step(a, 800, () => lifts.add(a.lift));
-    assert.deepEqual(
-      [...lifts].sort((x, y) => x - y),
-      [-2, -1, 0],
-    );
-    assert.equal(a.lift, 0);
-    assert.ok(!a.engaged);
-
-    a.hold(true);
-    a.lookUp();
-    assert.equal(a.perkT, -1);
-    a.hold(false);
-    a.lookUp();
-    assert.equal(a.perkT, -1, 'woozy');
-
-    const calm = await pet('ram', 1);
-    calm.calm = true;
-    calm.lookUp();
-    calm.hold(true);
-    assert.ok(!calm.engaged);
+    const rest = a.lift;
+    assert.ok(!a.frameName.startsWith('cheer'));
+    a.held = true;
+    assert.equal(a.frameName, 'cheer1');
+    a.held = false;
+    a.hop = 3;
+    assert.equal(a.lift, rest - 3);
+    a.hop = 0;
+    assert.equal(a.lift, rest);
   });
 
   test('the animation is the same on every run with the same random seed', async () => {
