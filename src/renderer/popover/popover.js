@@ -9,7 +9,7 @@ import { PetView } from '../pet/pet-view.js';
 const api = window.gitgotchi.popover;
 const app = $('#app');
 
-const NOTICE_MOODS = ['anxious'];
+const NOTICE_ICONS = { anxious: 'clock', happy: 'smile' }; // the moods that come with a reason on the card
 const STALE_AFTER_DAYS = 2; // a PR that has waited this long stands out (same threshold as the anxious mood)
 const TABS = ['review', 'mine'];
 
@@ -115,13 +115,13 @@ function header(status) {
   );
 }
 
-/** Why the pet looks the way it does (only for the moods that need an explanation), under the portrait. */
+/** Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. */
 const moodNotice = ({ mood, moodLabel, moodReason }) =>
-  NOTICE_MOODS.includes(mood) && moodReason
+  NOTICE_ICONS[mood] && moodReason
     ? h(
         'div',
-        { class: 'notice' },
-        icon('clock', { stroke: 2.2 }),
+        { class: `notice ${mood}` },
+        icon(NOTICE_ICONS[mood], { stroke: 2.2 }),
         h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
       )
     : null;

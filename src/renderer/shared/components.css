@@ -327,6 +327,13 @@ canvas.sprite {
 .notice strong {
   font-weight: 600;
 }
+.notice.happy {
+  background: var(--success-bg);
+  color: var(--success);
+}
+.notice.happy svg {
+  color: var(--success);
+}
 
 /* ---------- Section card (profile, settings): pages set the padding ---------- */
 .card {

@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--light] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -26,6 +26,7 @@ const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an e
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
 const goalOpen = process.argv.includes('--goal-open'); // today has little XP yet: the goal is still ahead
 const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
+const happy = process.argv.includes('--happy'); // a happy pet: it merged PRs recently and nothing has waited for long
 const levelUp = process.argv.includes('--level-up'); // pet: a new level (the hop and the toast)
 const fresh = process.argv.includes('--fresh'); // a pet that has done nothing yet
 const complete = process.argv.includes('--complete'); // a pet with every achievement
@@ -149,6 +150,7 @@ status.reviewQueue = reviewQueue(
 );
 
 if (mine) status.reviewQueue = [];
+if (happy) Object.assign(status, { mood: 'happy', moodLabel: 'Happy', moodReason: '2 PRs merged recently' });
 const fixtures = {
   freeze: freeze ? NOW.getTime() : null,
   evolution: final ? { fromIndex: 2, toIndex: 3 } : { fromIndex: 0, toIndex: 1 },
@@ -244,7 +246,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}${light ? '-light' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };
