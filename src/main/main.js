@@ -110,7 +110,6 @@ const actions = {
   openMenu: () => actions.showMenu(),
   showMenu: () => {
     actions.flushEvolution();
-    actions.refreshReviews();
     const { x, y } = screen.getCursorScreenPoint();
     panelWindow.show({ x, y, width: 0, height: 0 });
   },
@@ -235,17 +234,13 @@ app.whenReady().then(() => {
   popoverWindow.init(actions.panelState);
   settingsWindow.init(actions.settingsState);
   tray = createTray();
-  // The icon opens the card (the same one the pet opens); a right-click on it opens the menu.
-  tray.on('click', () => {
-    actions.flushEvolution();
-    actions.refreshReviews();
-    popoverPetRect = null;
-    popoverWindow.toggle(trayAnchor());
-  });
-  tray.on('right-click', () => {
+  // The icon is the menu (a click or a right-click); the card hangs from the pet.
+  const toggleMenu = () => {
     actions.flushEvolution();
     panelWindow.toggle(tray.getBounds());
-  });
+  };
+  tray.on('click', toggleMenu);
+  tray.on('right-click', toggleMenu);
 
   if (petService.isConfigured()) {
     petWindow.show();
