@@ -234,54 +234,7 @@ body.dragging .pet {
   }
 }
 
-/* ---------- Level on hover, moments and the XP that rises (all above the creature's head) ---------- */
-.level {
-  position: absolute;
-  bottom: calc(var(--u) * (var(--stage-size) + 2) + 8px);
-  left: 50%;
-  translate: -50% 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 28px;
-  padding: 0 12px;
-  clip-path: var(--cut-3);
-  background: var(--titlebar);
-  box-shadow: inset 0 0 0 2px var(--border-strong);
-  color: var(--text);
-  font: 600 14px var(--font-pixel);
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms steps(3);
-}
-/* A bubble or a moment has the place: the pill waits. The popover has it too, while it hangs from the creature. */
-body.hover:not(.speaking):not(.dragging):not(.popover-open) .level {
-  opacity: 1;
-}
-.mini {
-  display: flex;
-  gap: 2px;
-  width: 72px;
-  height: 6px;
-}
-.mini > i {
-  flex: 1;
-  background: var(--track);
-}
-.mini > i.on {
-  background: var(--neon-gold);
-}
-.mini > i.on:nth-child(n + 4) {
-  background: #ffa63a;
-}
-.mini > i.on:nth-child(n + 6) {
-  background: #ff6a5c;
-}
-.mini > i.on:nth-child(n + 8) {
-  background: var(--neon-pink);
-}
-
+/* ---------- Moments and the XP that rises (all above the creature's head) ---------- */
 .moment {
   position: absolute;
   bottom: calc(var(--u) * (var(--stage-size) + 2) + 14px);

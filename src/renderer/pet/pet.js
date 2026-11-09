@@ -49,7 +49,6 @@ function setStatus(next) {
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
   $('#alert').hidden = !status.error;
-  renderLevel();
   if (gained > 0 && !paused()) floatXp(gained);
   renderBubble();
 }
@@ -69,7 +68,6 @@ function renderBubble() {
   const bubble = $('#bubble');
   const message = quiet() || momentTimer || popoverOpen ? null : spoken;
   bubble.hidden = !message;
-  document.body.classList.toggle('speaking', Boolean(message) || Boolean(momentTimer));
   if (!message) return;
   const key = `${message.title}|${message.sub}`;
   if (bubble.dataset.key === key) return; // unchanged: don't replay the pop-in
@@ -93,20 +91,7 @@ function say(title, { sub, dot, ms = 3500 } = {}) {
   }, ms);
 }
 
-// ---------- Level, XP and moments ----------
-
-/** The pill that shows on hover: the level and a small bar (10 blocks). */
-function renderLevel() {
-  const on = Math.round((status.levelXp / status.levelXpNeeded) * 10);
-  $('#level').replaceChildren(
-    h('span', { class: 'lv-num' }, `Lv ${status.level}`),
-    h(
-      'div',
-      { class: 'mini' },
-      Array.from({ length: 10 }, (_, i) => h('i', { class: i < on ? 'on' : '' })),
-    ),
-  );
-}
+// ---------- XP and moments ----------
 
 /** "+10 XP" that rises over the pet and fades. */
 function floatXp(gained) {
@@ -305,7 +290,6 @@ api.onPrefs((next) => {
 api.onPopoverRequest(() => status && openPopover());
 api.onPopoverOpen((open) => {
   popoverOpen = open;
-  document.body.classList.toggle('popover-open', open);
   if (open) {
     // The popover tells it all: what the bubble said does not come back when the popover closes.
     spoken = null;
