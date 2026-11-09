@@ -88,6 +88,22 @@ body {
 .card > .notice {
   margin: 0 16px 12px;
 }
+/* A notice that opens something is a button: it does not stretch like a div, and the card gives it its margin. */
+.notice.link {
+  width: calc(100% - 32px);
+  border: 0;
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+.notice.link > span {
+  flex: 1;
+}
+.notice.link:hover,
+.notice.link:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--warning-icon);
+}
 
 /* ---------- Today: the daily goal ---------- */
 .today {

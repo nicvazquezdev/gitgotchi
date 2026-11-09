@@ -115,16 +115,30 @@ function header(status) {
   );
 }
 
-/** Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. */
-const moodNotice = ({ mood, moodLabel, moodReason }) =>
-  NOTICE_ICONS[mood] && moodReason
-    ? h(
-        'div',
-        { class: `notice ${mood}` },
-        icon(NOTICE_ICONS[mood], { stroke: 2.2 }),
-        h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
-      )
-    : null;
+/**
+ * Why the pet looks the way it does (a neutral pet has nothing to explain), under the portrait. An anxious pet is
+ * worried about a PR, so its notice opens the one that has waited longest (`waiting` is oldest first).
+ */
+function moodNotice({ mood, moodLabel, moodReason, prs }) {
+  if (!NOTICE_ICONS[mood] || !moodReason) return null;
+  const text = [
+    icon(NOTICE_ICONS[mood], { stroke: 2.2 }),
+    h('span', {}, h('strong', {}, moodLabel), ` · ${moodReason}`),
+  ];
+  const oldest = mood === 'anxious' ? prs?.waiting?.[0] : null;
+  if (!oldest) return h('div', { class: `notice ${mood}` }, ...text);
+  return h(
+    'button',
+    {
+      class: `notice ${mood} link`,
+      type: 'button',
+      title: `Open the PR that has waited longest: ${oldest.title}`,
+      onclick: () => api.openPullRequest(oldest.url),
+    },
+    ...text,
+    icon('external', { size: 14 }),
+  );
+}
 
 // ---------- Today: the daily goal ----------
 
