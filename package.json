@@ -2,6 +2,28 @@
   "name": "gitgotchi",
   "version": "0.1.0",
   "description": "Pixel pet that lives on your desktop and evolves with your GitHub activity",
+  "license": "MIT",
+  "author": {
+    "name": "Nicolás Vázquez",
+    "email": "157853579+nicvazquezdev@users.noreply.github.com",
+    "url": "https://github.com/nicvazquezdev"
+  },
+  "homepage": "https://github.com/nicvazquezdev/gitgotchi#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicvazquezdev/gitgotchi.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nicvazquezdev/gitgotchi/issues"
+  },
+  "keywords": [
+    "electron",
+    "github",
+    "pixel-art",
+    "desktop-pet",
+    "tamagotchi",
+    "gamification"
+  ],
   "main": "src/main/main.js",
   "scripts": {
     "start": "electron .",
