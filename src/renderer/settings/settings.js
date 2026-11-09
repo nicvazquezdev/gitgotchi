@@ -207,10 +207,6 @@ const rows = {
       ? 'Off for now: Do not disturb is on.'
       : 'When someone asks for your review, or one of your PRs gets changes requested, fails its checks or is approved.',
   })),
-  menuBarCount: switchRow('Review count in the menu bar', 'toggleMenuBarCount', ({ menuBarCount }) => ({
-    checked: menuBarCount,
-    hint: 'The number of PRs waiting for your review, next to the pet icon.',
-  })),
   timeOff: switchRow('Time off', 'toggleTimeOff', ({ timeOff }) => ({
     checked: timeOff.active,
     hint: timeOff.active
@@ -230,7 +226,7 @@ const app = $('#app');
 app.hidden = true; // until the first state arrives
 app.append(
   section('Pet', rows.size, rows.bubbles),
-  section('Reviews', rows.notifications, rows.menuBarCount),
+  section('Reviews', rows.notifications),
   section('Away', rows.timeOff, rows.timeOffReturn),
   section('GitHub', rows.account, rows.backup),
   section('General', rows.openAtLogin),

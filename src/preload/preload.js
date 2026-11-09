@@ -94,13 +94,13 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   // ---- end everyday UI ----
 
   settings: {
-    // -> { login, repoCount, speechBubbles, doNotDisturb, notifications, menuBarCount, timeOff, openAtLogin,
+    // -> { login, repoCount, speechBubbles, doNotDisturb, notifications, timeOff, openAtLogin,
     //      timeOff: { active, since, backOn },
     //      cloud: { enabled, repo, saved, phase, error, lastPushAt },
     //      petSize, sizeRange: { min, max }, defaultPetSize }
     state: invoke('settings:state'),
     onState: subscribe('settings:state'),
-    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'toggleMenuBarCount' | 'toggleTimeOff' | 'toggleOpenAtLogin'
+    // 'toggleSpeechBubbles' | 'toggleNotifications' | 'toggleTimeOff' | 'toggleOpenAtLogin'
     // | 'toggleCloudSync'
     // | 'openSaveRepo' | 'openSetup'
     action: send('settings:action'),

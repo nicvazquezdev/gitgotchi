@@ -187,7 +187,6 @@ const fixtures = {
     speechBubbles: true,
     doNotDisturb: false,
     notifications: true,
-    menuBarCount: true,
     timeOff: timeOffView(timeOff, dayKey(0)),
     openAtLogin: false,
     cloud: { enabled: false, repo: null, saved: false, phase: null, error: null, lastPushAt: null },

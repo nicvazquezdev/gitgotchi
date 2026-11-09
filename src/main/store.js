@@ -21,7 +21,6 @@ const defaults = () => ({
   speechBubbles: true, // device setting: show the pet's speech bubbles
   doNotDisturb: false, // device setting: no bubbles, notifications or evolution popups
   notifications: true, // device setting: system notifications (review requested, checks failed, ...)
-  menuBarCount: true, // device setting: the number of PRs waiting for the user's review next to the menu bar icon
   openAtLoginDefaulted: false, // true once "Open at login" got its default (on), so a later opt-out sticks
   cloudSync: false, // optional cloud save in the user's GitHub account (device setting)
   cloudSaved: false, // a save exists in the user's GitHub account (written or found by this app)
@@ -53,7 +52,7 @@ function update(patch) {
 
 /** Clears everything except the device settings (pet position and size, menu toggles). */
 function reset() {
-  const { position, petSize, speechBubbles, doNotDisturb, notifications, menuBarCount, openAtLoginDefaulted } = get();
+  const { position, petSize, speechBubbles, doNotDisturb, notifications, openAtLoginDefaulted } = get();
   update({
     ...defaults(),
     position,
@@ -61,7 +60,6 @@ function reset() {
     speechBubbles,
     doNotDisturb,
     notifications,
-    menuBarCount,
     openAtLoginDefaulted,
   });
 }

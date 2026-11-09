@@ -50,7 +50,6 @@ const POPOVER_ACTIONS = ['openProfile', 'openCollection', 'openSettings'];
 const SETTINGS_ACTIONS = [
   'toggleSpeechBubbles',
   'toggleNotifications',
-  'toggleMenuBarCount',
   'toggleTimeOff',
   'toggleOpenAtLogin',
   'toggleCloudSync',
