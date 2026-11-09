@@ -29,8 +29,8 @@ function on(channel, fn) {
   ipcMain.on(channel, (event, payload) => isTrusted(event) && fn(payload));
 }
 
-// ---- everyday UI (menu bar dropdown, PR popover) ----
-// Dropdown rows. Actions in KEEP_OPEN update the dropdown in place; the rest close it first.
+// ---- everyday UI (the menu, the card) ----
+// Menu rows. Actions in KEEP_OPEN update the menu in place; the rest close it first.
 const PANEL_ACTIONS = [
   'sync',
   'togglePet',
@@ -38,13 +38,11 @@ const PANEL_ACTIONS = [
   'pauseTomorrow',
   'pauseVacation',
   'resume',
-  'openPopover',
   'openProfile',
-  'openCollection',
   'openSettings',
   'quit',
 ];
-const KEEP_OPEN = new Set(['sync', 'togglePet']);
+const KEEP_OPEN = new Set(['sync']);
 // Card buttons: they close the card first.
 const POPOVER_ACTIONS = ['openProfile', 'openXp', 'openMenu', 'resume'];
 // ---- end everyday UI ----
@@ -156,7 +154,7 @@ function registerIpc(actions) {
   // --- end Profile & evolution windows ---
 
   // ---- everyday UI ----
-  // Panel (menu bar dropdown)
+  // Menu
   handle('panel:state', () => actions.panelState());
   on('panel:action', (name) => {
     if (!PANEL_ACTIONS.includes(name)) return;

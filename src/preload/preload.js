@@ -78,8 +78,8 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   panel: {
     state: invoke('panel:state'), // -> { status, configured, connected, petVisible }
     onState: subscribe('panel:state'),
-    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openPopover' | 'openProfile'
-    // | 'openCollection' | 'openSettings' | 'quit'
+    // 'sync' | 'togglePet' | 'pauseHour' | 'pauseTomorrow' | 'pauseVacation' | 'resume' | 'openProfile' | 'openSettings'
+    // | 'quit'
     action: send('panel:action'),
     setHeight: send('panel:height'), // content height in px
   },

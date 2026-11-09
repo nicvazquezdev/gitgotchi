@@ -42,7 +42,6 @@ let pendingEvolution = null;
 
 const actions = {
   openProfile: (view) => profileWindow.open(view),
-  openCollection: () => profileWindow.open('collection'),
   openXp: () => profileWindow.open('xp'),
   celebrateEvolution: ({ index }) => {
     pendingEvolution = { fromIndex: pendingEvolution?.fromIndex ?? index - 1, toIndex: index };
@@ -119,7 +118,6 @@ const actions = {
   toggleSpeechBubbles: () => togglePref('speechBubbles'),
   toggleNotifications: () => togglePref('notifications'),
   // The pet page knows where the creature is: it answers with the rect to anchor on (`togglePopover`).
-  openPopover: () => (petWindow.isVisible() ? petWindow.send('pet:popover-request') : showPopoverAtTray()),
   /** `rect`: the creature's rect in the pet window's own coordinates. */
   togglePopover: (rect) => {
     actions.refreshReviews();
@@ -237,13 +235,17 @@ app.whenReady().then(() => {
   popoverWindow.init(actions.panelState);
   settingsWindow.init(actions.settingsState);
   tray = createTray();
-  const toggleMenu = () => {
+  // The icon opens the card (the same one the pet opens); a right-click on it opens the menu.
+  tray.on('click', () => {
     actions.flushEvolution();
     actions.refreshReviews();
+    popoverPetRect = null;
+    popoverWindow.toggle(trayAnchor());
+  });
+  tray.on('right-click', () => {
+    actions.flushEvolution();
     panelWindow.toggle(tray.getBounds());
-  };
-  tray.on('click', toggleMenu);
-  tray.on('right-click', toggleMenu);
+  });
 
   if (petService.isConfigured()) {
     petWindow.show();

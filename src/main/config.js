@@ -24,8 +24,8 @@ module.exports = {
   // is drawn at the same whole size and stays sharp. Set with the slider in the Settings window.
   PET_SIZE_RANGE: { min: 104, max: 416, step: 52 },
   DEFAULT_PET_SIZE: 208,
-  // Menu-bar dropdown and PR popover: fixed width; the height follows the content (the page reports it).
-  PANEL_WINDOW: { width: 320, height: 360 },
+  // The menu and the card: fixed width; the height follows the content (the page reports it).
+  PANEL_WINDOW: { width: 216, height: 200 },
   POPOVER_WINDOW: { width: 440, height: 400 },
   // Profile, settings and evolution windows; the native traffic lights overlay the 40 px page title bar.
   PROFILE_WINDOW: { width: 1040, height: 712 },

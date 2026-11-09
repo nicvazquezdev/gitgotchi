@@ -1,4 +1,4 @@
-/* Menu bar dropdown. The window is transparent: this card is the visible menu (the OS adds the shadow). */
+/* The menu. The window is transparent: this card is the visible menu (the OS adds the shadow). */
 html,
 body {
   background: transparent;
@@ -6,12 +6,11 @@ body {
 }
 
 .menu {
-  width: 320px;
+  width: 216px;
   padding: 6px;
-  border-radius: var(--radius-lg);
+  clip-path: var(--cut-4);
   background: var(--bg-menu);
-  outline: 1px solid var(--ring);
-  outline-offset: -1px;
+  box-shadow: inset 0 0 0 1px var(--ring);
   font-size: 13px;
   user-select: none;
   cursor: default;
@@ -19,192 +18,61 @@ body {
 
 .divider {
   height: 1px;
-  margin: 4px 8px;
+  margin: 6px 4px;
   border: 0;
   background: var(--divider);
 }
-.head + .divider {
-  margin-top: 2px;
-}
 
-/* ---------- Header ---------- */
-.head {
+.item {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
-  padding: 8px 8px 10px;
-}
-.thumb {
-  --sun-top: -4%;
-  --sun-size: 112%;
-  flex: none;
-  width: 48px;
-  height: 48px;
-  clip-path: var(--cut-3);
-  overflow: hidden;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-}
-.thumb .sprite {
-  margin-bottom: -10px;
-}
-.head-body {
-  flex: 1;
-  min-width: 0;
-}
-.head-title {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  margin-bottom: 6px;
-}
-.name {
-  font-size: 18px;
-  line-height: 22px;
-}
-.xp-line {
-  margin-top: 5px;
-  color: var(--text-2);
-}
-
-/* ---------- Companions: a face per pet, one click makes it the active one ---------- */
-.party {
-  padding: 2px 8px 8px;
-}
-.party-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 7px;
-}
-.party-head .eyebrow {
-  font-size: 11px;
-}
-.party-head .link {
-  font-size: 12px;
-}
-.party-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-}
-.face {
-  position: relative;
-  flex: none;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border: 0;
-  clip-path: var(--cut-4);
-  overflow: hidden;
-  box-shadow: inset 0 0 0 1px var(--border-strong);
-  cursor: pointer;
-  transition: transform 100ms steps(2);
-}
-.face .sprite {
-  margin-bottom: -2px;
-}
-.face:hover:not(.active) {
-  transform: translateY(-2px);
-  box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--select) 55%, transparent);
-}
-.face.active {
-  box-shadow: inset 0 0 0 2px var(--select);
-  cursor: default;
-}
-.face-lv {
-  position: absolute;
-  left: 3px;
-  bottom: 3px;
-  padding: 0 3px;
-  background: rgba(10, 3, 24, 0.8);
-  font: 600 9px/12px var(--font-pixel);
-  color: var(--text);
-}
-.face-bolt {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  display: grid;
-  place-items: center;
-  width: 14px;
-  height: 14px;
-  clip-path: var(--cut-3);
-  background: var(--accent);
-  color: var(--on-accent);
-}
-.face.add {
-  align-items: center;
-  background: transparent;
-  color: var(--text-3);
-  box-shadow: inset 0 0 0 1.5px var(--border-strong);
-}
-.face.add:hover {
-  color: var(--accent-text);
-  box-shadow: inset 0 0 0 1.5px var(--accent);
-}
-
-/* ---------- Rows ---------- */
-.row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
   width: 100%;
   height: 32px;
-  padding: 0 8px;
+  padding: 0 10px;
   border: 0;
   clip-path: var(--cut-3);
   background: transparent;
   color: var(--text);
-  font: inherit;
+  font: 500 13px var(--font-ui);
   text-align: left;
-}
-button.row {
   cursor: pointer;
 }
-button.row:hover:not(:disabled),
-.toggle:hover {
+.item:hover:not(:disabled),
+.item:focus-visible {
   background: var(--overlay-hover);
 }
-button.row:disabled {
-  opacity: 0.6;
+.item:disabled {
+  color: var(--text-3);
   cursor: default;
 }
-.grow {
-  flex: 1;
-}
-.detail {
+.item .hint {
   font-size: 12px;
-  color: var(--text-2);
-}
-.row.static {
-  color: var(--text-2);
-}
-
-.toggle {
-  justify-content: space-between;
-}
-.item {
-  height: 28px;
-  justify-content: space-between;
-}
-
-/* ---------- Messages ---------- */
-.welcome {
-  margin: 0;
-  padding: 10px 8px 8px;
-  color: var(--text-2);
-}
-.notice.error {
-  margin: 6px 2px 2px;
-  font-size: 12px;
-}
-
-/* The chevron marks a row that opens something. */
-.pr-row > svg {
   color: var(--text-3);
+}
+.item svg {
+  color: var(--text-3);
+  transition: transform 120ms steps(2);
+}
+.item[aria-expanded='true'] svg {
+  transform: rotate(90deg);
+}
+
+/* The three lengths of a pause, unfolded under it. */
+.lengths {
+  margin: 2px 0 4px 12px;
+  padding-left: 6px;
+  border-left: 2px solid var(--divider);
+}
+.lengths .item {
+  height: 30px;
+  color: var(--text-2);
+}
+.lengths .item:hover {
+  color: var(--text);
+}
+
+.menu > .notice {
+  margin: 4px 4px 2px;
 }
