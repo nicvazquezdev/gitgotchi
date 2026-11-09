@@ -218,7 +218,7 @@ body {
   margin-bottom: 6px;
 }
 .stage.locked img {
-  opacity: 0.28;
+  opacity: 0.85;
 }
 .stage .nm {
   margin-top: 7px;

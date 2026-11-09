@@ -28,7 +28,7 @@ const SPECIES = SPRITES.map(({ id, title, stages }) => ({
     name, // creature name at this stage, e.g. Cindle → Kindlet → Pyrrow → Solphyre
     file,
     shadow,
-    silhouette: `${id}_${i + 1}_sil.png`, // locked stages are shown as this, at ~20% opacity
+    silhouette: `${id}_${i + 1}_sil.png`, // locked stages are shown as this, almost opaque on the growth line
     size, // native px (square canvas)
     shadowEllipse, // native px; sprites are aligned on its center so every stage stands on the same floor
     floats: shadowEllipse.alpha <= FLOAT_SHADOW_ALPHA,
