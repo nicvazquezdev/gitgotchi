@@ -32,7 +32,6 @@ const CASES = [
   { name: 'profile-collection-locked-dark', page: 'profile', flags: ['--tab', 'collection/ram'] },
   { name: 'popover-review-dark', page: 'popover', flags: [] },
   { name: 'popover-mine-dark', page: 'popover', flags: ['--mine'] },
-  { name: 'popover-goal-open-dark', page: 'popover', flags: ['--goal-open'] },
   { name: 'popover-time-off-dark', page: 'popover', flags: ['--time-off'] },
   { name: 'popover-happy-dark', page: 'popover', flags: ['--happy'] },
   { name: 'popover-conflicts-dark', page: 'popover', flags: ['--mine', '--conflicts'] },

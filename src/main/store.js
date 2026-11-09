@@ -18,7 +18,6 @@ const defaults = () => ({
   activity: { days: {}, lastSyncedAt: null },
   position: null, // { x, y } of the pet window
   petSize: DEFAULT_PET_SIZE, // pet box size in px (the sprite canvas, see PET_BOX)
-  goalDay: null, // device setting: the last day the daily goal was celebrated here ('YYYY-MM-DD')
   speechBubbles: true, // device setting: show the pet's speech bubbles
   doNotDisturb: false, // device setting: no bubbles, notifications or evolution popups
   notifications: true, // device setting: system notifications (review requested, checks failed, ...)

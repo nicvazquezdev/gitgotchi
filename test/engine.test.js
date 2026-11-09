@@ -442,6 +442,15 @@ describe('PR lists', () => {
   });
 });
 
+describe('today', () => {
+  test('todayXp is what the person earned today, since the pet hatched', () => {
+    const today = toDay(NOON);
+    const days = { [today]: day({ reviews: 2, merges: 1 }), [addDays(today, -1)]: day({ reviews: 5 }) };
+    assert.equal(status(activity(days)).todayXp, 2 * WEIGHTS.reviews + WEIGHTS.merges);
+    assert.equal(status(activity({ [addDays(today, -1)]: day({ reviews: 5 }) })).todayXp, 0);
+  });
+});
+
 describe('time off', () => {
   const withTimeOff = (timeOff, acts = activity()) =>
     computeStatus({ ...stateOf(acts, pet(undefined)), timeOff }, NOON);

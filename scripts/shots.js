@@ -1,4 +1,4 @@
-// `npm run shots [-- page ...] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--goal-open] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
+// `npm run shots [-- page ...] [--mine] [--tab view] [--tall] [--scroll] [--celebrate] [--level-up] [--time-off] [--happy] [--conflicts] [--fresh] [--complete] [--final] [--click selector] [--freeze] [--out dir]`: renders the app windows with sample data to PNG files,
 // so a UI change can be checked by eye without running the app. Pages: profile popover panel settings evolution pet.
 // `--freeze`: the same image on every run (fixed clock, no animations, no scrollbars, no animated sprites): what
 // `npm run shots:check` compares with the saved ones (see visual-check.js).
@@ -23,7 +23,6 @@ const outFlag = process.argv.indexOf('--out');
 const outDir = outFlag > -1 ? process.argv[outFlag + 1] : path.join(os.tmpdir(), 'gitgotchi-shots');
 const mine = process.argv.includes('--mine'); // popover: open on "My PRs" (an empty review queue makes it the default tab)
 const celebrate = process.argv.includes('--celebrate'); // pet: new achievements arrive (the cheer and the bubble)
-const goalOpen = process.argv.includes('--goal-open'); // today has little XP yet: the goal is still ahead
 const away = process.argv.includes('--time-off'); // on time off since two days ago, back in five
 const conflicts = process.argv.includes('--conflicts'); // popover: two of the PRs have merge conflicts
 const happy = process.argv.includes('--happy'); // a happy pet: it merged PRs recently and nothing has waited for long
@@ -101,7 +100,6 @@ const repos = ['acme/web-app', 'acme/cli'];
 // one, the mushroom is fully grown and the geode just hatched. The other four species are still to hatch.
 // `--fresh`: only a phoenix that has done nothing yet.
 if (away) for (const n of [0, 1, 2]) delete days[dayKey(n)]; // nothing done while away
-if (goalOpen) days[dayKey(0)] = { prs: 0, prsXp: 0, reviews: 1, merges: 0, commits: 4, issues: 0 }; // 14 XP
 const history = fresh ? { days: {}, prs: [], commits: [] } : { days, prs, commits: [] };
 const pet = (species, name, daysOld, earned, extra) => ({
   species,
@@ -247,7 +245,7 @@ async function shot(name) {
   );
   const file = path.join(
     outDir,
-    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${goalOpen ? '-goal-open' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
+    `${name}${tab ? `-${tab.replace(/\W+/g, '-')}` : ''}${mine ? '-mine' : ''}${celebrate ? '-celebrate' : ''}${levelUp ? '-level-up' : ''}${away ? '-time-off' : ''}${happy ? '-happy' : ''}${conflicts ? '-conflicts' : ''}${fresh ? '-fresh' : ''}${complete ? '-complete' : ''}${final ? '-final' : ''}${click ? '-clicked' : ''}${tall ? '-tall' : ''}${scroll ? '-scrolled' : ''}.png`,
   );
   fs.writeFileSync(file, image.toPNG());
   return { file, overflowing };

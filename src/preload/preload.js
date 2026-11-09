@@ -56,7 +56,6 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     onCompanion: subscribe('pet:companion'), // { kind: 'hatched' | 'switched', species, name }
     onLevelUp: subscribe('pet:level-up'), // { level, name, toNext }: the new level and the XP to the next one
     onAchievements: subscribe('pet:achievements'), // [{ id, name, description, icon }]: just reached
-    onGoal: subscribe('pet:goal'), // { xp, goal }: today's XP reached the daily goal
   },
 
   // --- Profile & evolution windows ---

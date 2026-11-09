@@ -91,10 +91,6 @@ const STAGES = [
 // - Never below `floorWeekly` (40 = two small PRs and a review), so an almost inactive user cannot level up trivially.
 const BASELINE = { windowDays: 28, minHistoryDays: 7, defaultWeekly: 120, floorWeekly: 40 };
 
-// The daily goal is a typical working day of the person: their weekly baseline over this many working days
-// (game/daily-goal.js).
-const DAILY_GOAL = { workdays: 5 };
-
 // Mood rules (see engine.moodFor). Two moods: happy, else neutral. The pet is never anxious: how long a PR has
 // waited for review does not change how it feels.
 const MOOD = {
@@ -294,7 +290,6 @@ module.exports = {
   COMMIT_KEEP_DAYS,
   KINDS,
   BASELINE,
-  DAILY_GOAL,
   MOOD,
   PR_KEEP_MERGED_DAYS,
   XP_RULES,

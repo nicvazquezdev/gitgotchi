@@ -1,5 +1,5 @@
 // Pure rules for time off (a vacation, a holiday): days that are neither activity nor a missed day. A streak is not
-// broken by them (like weekends, see stats.js), and the daily goal and reminders rest.
+// broken by them (like weekends, see stats.js), and reminders and notifications rest.
 // A range is `{ from, to }`, both 'YYYY-MM-DD' and inclusive. `to` is null while the person is away with no set return.
 const { toDay, fromDay, addDays } = require('../dates');
 

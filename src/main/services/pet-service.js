@@ -9,8 +9,6 @@
 // `reviewRequests` is not XP: someone asked the user for a review),
 // 'attention' (what the user may want a system notification for: `[{ kind, id, title, repo, number, url, author, via }]`,
 // kind: 'reviewRequested' | 'approved' | 'readyToMerge' | 'changesRequested' | 'checksFailed' | 'mergeConflicts'),
-// 'goal' (the daily goal was reached today: `{ xp, goal }`, once a day, never for what was already reached when the
-// app started),
 // 'companion' (the user hatched or switched to a pet: `{ kind: 'hatched' | 'switched', species, name }`),
 // 'configured' (the profile was saved: repos or pets may have changed).
 // The user has a collection of pets, one per species, and only the active one earns XP (see game/collection.js).
@@ -44,7 +42,6 @@ class PetService extends EventEmitter {
   #reviewsAt = 0;
   #reviewing = null;
   #teams = { slugs: [], at: 0 }; // the teams of the user ('org/slug'), read again every LIVE.TEAMS_REFRESH_MS
-  #goalChecked = false; // the first check of a session only records: a goal reached earlier is not news
 
   isConfigured() {
     const { pets, activePet, repos } = store.get();
@@ -241,7 +238,6 @@ class PetService extends EventEmitter {
       this.#baselined = true;
       this.#checkProgress();
       this.#checkAchievements();
-      this.#checkGoal();
     } catch (err) {
       console.error('[sync]', err);
       this.#poll.etag = null; // a failed sync must not hide events behind a 304
@@ -348,7 +344,6 @@ class PetService extends EventEmitter {
     if (Object.keys(delta).length > 0) this.emit('activity', delta);
     this.#checkProgress();
     this.#checkAchievements();
-    this.#checkGoal();
     this.notify();
   }
 
@@ -400,21 +395,6 @@ class PetService extends EventEmitter {
       this.emit('levelUp', level, { name: status.name, toNext: status.levelXpNeeded - status.levelXp });
     }
     if (before.stageIndex != null && stage.index > before.stageIndex) this.emit('evolved', stage);
-  }
-
-  /**
-   * Announces the daily goal when today's XP reaches it, once a day. The first check of a session only records it:
-   * a goal reached before the app started (or before this version) is not news.
-   */
-  #checkGoal() {
-    const status = engine.computeStatus(store.get());
-    if (!status) return;
-    const day = toDay(new Date());
-    const first = !this.#goalChecked;
-    this.#goalChecked = true;
-    if (!status.daily.reached || store.get().goalDay === day) return;
-    store.update({ goalDay: day });
-    if (!first) this.emit('goal', { xp: status.daily.xp, goal: status.daily.goal });
   }
 
   /**

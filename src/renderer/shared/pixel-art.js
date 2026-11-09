@@ -102,18 +102,6 @@ const GLYPHS = {
     '...####...',
     '..........',
   ],
-  target: [
-    '...####...',
-    '..#....#..',
-    '.#.####.#.',
-    '#.#....#.#',
-    '#.#.##.#.#',
-    '#.#.##.#.#',
-    '#.#....#.#',
-    '.#.####.#.',
-    '..#....#..',
-    '...####...',
-  ],
   cycle: [
     '..####....',
     '.#....#.#.',
@@ -270,27 +258,6 @@ function medalRows(name) {
   return rows.map((row) => row.join(''));
 }
 
-/**
- * A progress ring: a pixel circle that fills clockwise from the top. `m` is the part done, `d` the track.
- * @param {number} progress  0 to 1
- * @param {number} size  grid pixels (even, so the ring is centered between pixels)
- */
-function ringRows(progress, size = 16) {
-  const outer = size / 2;
-  const inner = outer - 2.6;
-  const done = Math.max(0, Math.min(1, progress));
-  return Array.from({ length: size }, (_, y) =>
-    Array.from({ length: size }, (_, x) => {
-      const dx = x + 0.5 - outer;
-      const dy = y + 0.5 - outer;
-      const distance = Math.hypot(dx, dy);
-      if (distance > outer || distance < inner) return '.';
-      const turn = (Math.atan2(dx, -dy) / (2 * Math.PI) + 1) % 1; // 0 at the top, growing clockwise
-      return turn < done ? 'm' : 'd';
-    }).join(''),
-  );
-}
-
 /** The grid of a text in the bitmap font (digits and '/'), one column apart. */
 function digitRows(text) {
   const glyphs = [...String(text)].map((char) => FONT[char] ?? FONT['0']);
@@ -301,11 +268,9 @@ function digitRows(text) {
 const medal = (name, scale = 3) => pixelSvg(medalRows(name), scale);
 /** A trophy cup. */
 const cup = (scale = 2) => pixelSvg(CUP, scale);
-/** A progress ring (see `ringRows`), colored by `--t-main` (done) and `--t-dark` (track). */
-const ring = (progress, scale = 2) => pixelSvg(ringRows(progress), scale);
 /** A padlock. */
 const lock = (scale = 2) => pixelSvg(LOCK, scale);
 /** Digits and slashes in the bitmap font, in the text color. */
 const digits = (text, scale = 4) => pixelSvg(digitRows(text), scale);
 
-export { GLYPH_NAMES, MEDAL_SIZE, pixelPaths, medalRows, digitRows, ringRows, medal, cup, lock, ring, digits };
+export { GLYPH_NAMES, MEDAL_SIZE, pixelPaths, medalRows, digitRows, medal, cup, lock, digits };
