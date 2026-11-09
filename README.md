@@ -29,8 +29,6 @@
   <img src="docs/images/card-trophies.png" alt="Trophies tab: a grid of pixel medals" width="250" />
 </p>
 
-<p align="center"><sub>Sample data: no real account or repos.</sub></p>
-
 ## Features
 
 - 🐾 **A pet on your desktop.** It floats above every window, idles, strolls and cheers when a PR of yours is merged. Drag it, throw it, pet it.
