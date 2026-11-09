@@ -40,6 +40,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     refresh: invoke('pet:refresh'),
     setClickThrough: send('pet:click-through'), // boolean
     dragStart: send('pet:drag-start'), // { offsetX, offsetY }
+    dragShift: send('pet:drag-shift'), // px: held by the feet, the window goes lower so the body hangs below the cursor
     dragEnd: send('pet:drag-end'),
     openMenu: send('pet:menu'),
     // ---- everyday UI ----

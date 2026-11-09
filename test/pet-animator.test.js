@@ -210,6 +210,36 @@ describe('the animation rules', () => {
     assert.equal(a.lift, rest);
   });
 
+  test('facingSign says which way the creature looks on the screen, mirrored or not; the front-facing never turns', async () => {
+    const ram = await pet('ram', 1); // drawn facing left
+    assert.equal(ram.facingSign, 1);
+    ram.flip = true;
+    assert.equal(ram.facingSign, -1);
+    const front = await pet('phoenix', 0);
+    assert.equal(front.facingSign, 0);
+    front.flip = true;
+    assert.equal(front.facingSign, 0);
+  });
+
+  test('a host that draws the body tilted can draw the shadow apart: draw() leaves it out, drawShadow() is only it', async () => {
+    const a = await pet('moth', 2);
+    Object.assign(a, { sheet: 'SHEET', shadowImg: 'SHADOW' });
+    const drawn = [];
+    const ctx = { save() {}, restore() {}, translate() {}, scale() {}, drawImage: (image) => drawn.push(image) };
+    a.draw(ctx, 4, 0, 0);
+    assert.equal(drawn[0], 'SHADOW', 'by default the shadow comes first, then the body');
+    assert.ok(drawn.includes('SHEET'));
+
+    drawn.length = 0;
+    a.shadowApart = true;
+    a.draw(ctx, 4, 0, 0);
+    assert.ok(!drawn.includes('SHADOW') && drawn.includes('SHEET'), 'apart: only the body');
+
+    drawn.length = 0;
+    a.drawShadow(ctx, 4, 0, 0);
+    assert.deepEqual(drawn, ['SHADOW'], 'and the shadow alone on its own');
+  });
+
   test('the animation is the same on every run with the same random seed', async () => {
     const record = async () => {
       const a = await pet('koi', 3, { mood: 'anxious', seed: 7 });

@@ -221,7 +221,14 @@ document.addEventListener('mouseleave', () => !drag && setHover(false));
 canvas.addEventListener('pointerdown', (e) => {
   if (e.button !== 0 || !isOverPet(e)) return;
   canvas.setPointerCapture(e.pointerId);
-  drag = { x: e.screenX, y: e.screenY, moved: false, lastX: e.screenX, lastTime: e.timeStamp };
+  drag = {
+    x: e.screenX,
+    y: e.screenY,
+    grab: { x: e.clientX, y: e.clientY }, // where on the pet it was grabbed
+    moved: false,
+    lastX: e.screenX,
+    lastTime: e.timeStamp,
+  };
   view.squish.press();
   syncStill();
   api.dragStart({ offsetX: e.clientX, offsetY: e.clientY });
@@ -233,7 +240,8 @@ canvas.addEventListener('pointermove', (e) => {
     if (Math.hypot(e.screenX - drag.x, e.screenY - drag.y) <= DRAG_THRESHOLD_PX) return;
     drag.moved = true;
     document.body.classList.add('dragging');
-    view.squish.pickUp();
+    const lowerBy = view.pickUp(drag.grab.x, drag.grab.y); // it hangs from where it was grabbed
+    if (lowerBy > 0) api.dragShift(lowerBy); // held by the feet: the window goes lower so the body fits below the cursor
   }
   view.squish.drag(e.screenX - drag.lastX, e.timeStamp - drag.lastTime); // it swings with the speed of the cursor
   drag.lastX = e.screenX;
@@ -243,6 +251,7 @@ canvas.addEventListener('pointermove', (e) => {
 canvas.addEventListener('pointerup', (e) => {
   if (!drag) return;
   api.dragEnd();
+  view.release(); // the window goes back up
   const wasClick = !drag.moved;
   drag = null;
   document.body.classList.remove('dragging');
@@ -297,6 +306,7 @@ api.onPrefs((next) => {
 api.onPopoverRequest(() => status && openPopover());
 api.onPopoverOpen((open) => {
   popoverOpen = open;
+  view.squish.lookUp(open); // it looks up at the popover for as long as it is on screen
   if (open) {
     // The popover tells it all: what the bubble said does not come back when the popover closes.
     spoken = null;

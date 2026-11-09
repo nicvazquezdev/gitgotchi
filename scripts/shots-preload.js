@@ -39,6 +39,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
     refresh: value(fx.status),
     setClickThrough: ignore,
     dragStart: ignore,
+    dragShift: ignore,
     dragEnd: ignore,
     openMenu: ignore,
     prefs: value({ speechBubbles: true }),
@@ -69,6 +70,7 @@ contextBridge.exposeInMainWorld('gitgotchi', {
   popover: {
     state: value({ ...fx.panel, placement: 'above', tailX: 180, room: 760 }), // room: a laptop screen
     onState: never,
+    onTail: never,
     action: ignore,
     openPullRequest: ignore,
     setHeight: ignore,

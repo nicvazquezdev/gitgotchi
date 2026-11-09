@@ -111,6 +111,7 @@ function registerIpc(actions) {
   on('pet:drag-start', ({ offsetX, offsetY }) =>
     petWindow.startDrag({ offsetX: Number(offsetX), offsetY: Number(offsetY) }),
   );
+  on('pet:drag-shift', (px) => petWindow.dragShift(px));
   on('pet:drag-end', () => petWindow.stopDrag());
   on('pet:menu', () => actions.showMenu());
   handle('pet:size', () => petWindow.size());

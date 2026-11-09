@@ -47,6 +47,7 @@ export class DesktopPet extends PetAnimator {
   joyLeft = 0; // ms of hearts and sparkles still to come
   held = false;
   hop = 0; // whole rows above the ground; the shadow shrinks with them
+  shadowApart = false; // the host draws the shadow itself (see `drawShadow`)
 
   setMood(mood) {
     super.setMood(mood);
@@ -63,12 +64,28 @@ export class DesktopPet extends PetAnimator {
     this.nextSparkle = this.t + 450;
   }
 
+  /** Which way the creature faces on the screen: 1 to the left, -1 to the right, 0 to the front (it never turns). */
+  get facingSign() {
+    const facing = this.stage.facing;
+    if (facing === 'front') return 0;
+    return (facing === 'left') !== this.flip ? 1 : -1;
+  }
+
   get frameName() {
     return this.held ? 'cheer1' : super.frameName;
   }
 
   get lift() {
     return super.lift - this.hop;
+  }
+
+  _drawShadow(ctx, scale, X, oy, lift) {
+    if (!this.shadowApart) super._drawShadow(ctx, scale, X, oy, lift);
+  }
+
+  /** Only the shadow, for a host that draws the body tilted or upside down: the shadow stays on the floor. */
+  drawShadow(ctx, scale, ox = 0, oy = 0) {
+    super._drawShadow(ctx, scale, ox + this.x * scale, oy, this.lift);
   }
 
   update(dt) {
