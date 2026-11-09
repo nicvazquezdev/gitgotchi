@@ -20,7 +20,7 @@ body {
   /* Set by pet.js: --pet-size = 52 px per whole scale step (see PET_SIZE_RANGE);
      --stage-size = native size of the current creature. --u is one native pixel. */
   --u: calc(var(--pet-size) / 52);
-  /* Width of the speech bubble: fixed, so its text wraps the same at every pet size. */
+  /* The speech bubble hugs its text up to this width, so a long line wraps the same at every pet size. */
   --bubble-width: 268px;
 }
 
@@ -169,9 +169,10 @@ body.dragging .pet {
   /* Just above the creature's head (+2: its floor line in the box), leaving room for the tail. */
   bottom: calc(var(--u) * (var(--stage-size) + 2) + 12px);
   left: 50%;
-  width: var(--bubble-width);
-  margin-left: calc(var(--bubble-width) / -2);
-  padding: 12px 16px;
+  translate: -50% 0;
+  width: max-content;
+  max-width: var(--bubble-width);
+  padding: 11px 16px;
   color: var(--text);
   cursor: pointer;
   isolation: isolate;
@@ -226,41 +227,128 @@ body.dragging .pet {
   font-size: 13px;
   color: var(--text-2);
 }
-/* Achievement toast, like a console's: the medal, what it is, the name and what it was for. */
-.bubble-text {
-  min-width: 0;
-  flex: 1;
-}
-.bubble.toast {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  --bubble-edge: var(--t-main);
-}
-.bubble-medal {
-  flex: none;
-}
-.bubble-kicker {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 3px;
-  font: 600 10px var(--font-pixel);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: color-mix(in srgb, var(--t-main) 75%, var(--text));
-}
-.bubble-kicker b {
-  font: 600 11px var(--font-ui);
-  letter-spacing: 0;
-  text-transform: none;
-}
-.bubble.toast .bubble-sub {
-  padding-left: 0;
-}
 @keyframes bubble-in {
   from {
     opacity: 0;
     transform: translateY(4px);
+  }
+}
+
+/* ---------- Level on hover, moments and the XP that rises (all above the creature's head) ---------- */
+.level {
+  position: absolute;
+  bottom: calc(var(--u) * (var(--stage-size) + 2) + 8px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 28px;
+  padding: 0 12px;
+  clip-path: var(--cut-3);
+  background: var(--titlebar);
+  box-shadow: inset 0 0 0 2px var(--border-strong);
+  color: var(--text);
+  font: 600 14px var(--font-pixel);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms steps(3);
+}
+/* A bubble or a moment has the place: the pill waits. */
+body.hover:not(.speaking):not(.dragging) .level {
+  opacity: 1;
+}
+.mini {
+  display: flex;
+  gap: 2px;
+  width: 72px;
+  height: 6px;
+}
+.mini > i {
+  flex: 1;
+  background: var(--track);
+}
+.mini > i.on {
+  background: var(--neon-gold);
+}
+.mini > i.on:nth-child(n + 4) {
+  background: #ffa63a;
+}
+.mini > i.on:nth-child(n + 6) {
+  background: #ff6a5c;
+}
+.mini > i.on:nth-child(n + 8) {
+  background: var(--neon-pink);
+}
+
+.moment {
+  position: absolute;
+  bottom: calc(var(--u) * (var(--stage-size) + 2) + 14px);
+  left: 50%;
+  translate: -50% 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: 36px;
+  padding: 0 16px;
+  clip-path: var(--cut-3);
+  background: var(--titlebar);
+  box-shadow: inset 0 0 0 2px var(--t-main, var(--neon-gold));
+  color: var(--text);
+  font: 600 17px var(--font-pixel);
+  white-space: nowrap;
+  animation: bubble-in 160ms steps(2);
+}
+.moment-icon {
+  display: flex;
+  line-height: 0;
+}
+/* A four-pointed sparkle made of squares. */
+.spark {
+  width: 4px;
+  height: 4px;
+  background: var(--neon-gold);
+  box-shadow:
+    4px 0 var(--neon-gold),
+    -4px 0 var(--neon-gold),
+    0 4px var(--neon-gold),
+    0 -4px var(--neon-gold);
+}
+
+.float-layer {
+  position: absolute;
+  bottom: calc(var(--u) * (var(--stage-size) + 2) + 6px);
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.float {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  translate: -50% 0;
+  color: var(--neon-gold);
+  font: 400 28px/1 var(--font-num);
+  text-shadow:
+    0 2px 0 var(--ink),
+    0 0 14px rgba(255, 210, 63, 0.45);
+  white-space: nowrap;
+  animation: float-up 1.5s steps(12) forwards;
+}
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  15%,
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-34px);
   }
 }
 
@@ -293,7 +381,9 @@ body.dragging .pet {
   .pet.wiggle,
   .pet.evolve,
   .pet.swap,
-  .alert {
+  .alert,
+  .moment,
+  .float {
     animation: none;
   }
   .particle {

@@ -1,5 +1,4 @@
 import { $, h, replayClass } from '../shared/dom.js';
-import { plural, oldestDays, oldestWaitingDays } from '../shared/format.js';
 import { PetView, PX_PER_SCALE } from './pet-view.js';
 import { medal } from '../shared/pixel-art.js';
 
@@ -23,23 +22,16 @@ const calm = () => reducedMotion.matches || paused();
 const syncCalm = () => view.setCalm(calm());
 reducedMotion.addEventListener('change', syncCalm);
 
-const LINES = {
-  happy: ['What a week! 🔥', 'Yum, fresh pushes!', 'I feel huge today', 'Keep it up!'],
-  neutral: ['All quiet here', 'One more PR?', "I'm a little hungry…", 'A push would be nice'],
-};
-
 let status = null;
 let prefs = { speechBubbles: true };
 let drag = null;
 let spoken = null; // the line being said right now: { title, sub, dot }
+let momentTimer = null; // a moment (a level, a trophy) is on screen: it takes the place of the speech bubble
 let bubbleTimer = null;
-let waitingVisible = false; // the PR reminder is only up for a moment, so the pet never nags
+let waitingVisible = false; // the reminder is only up for a moment, so the pet never nags
 let waitingTimer = null;
-let waitingCount = null;
 let reviewCount = null;
 let loading = Promise.resolve(); // the creature on screen is being swapped for another one
-
-const pick = (list) => list[Math.floor(Math.random() * list.length)];
 
 /** The creature for the current stage, e.g. { name: 'Chispín', size: 36, ... }. */
 const creature = () => status.species.stages[status.stage.index];
@@ -48,27 +40,26 @@ const creature = () => status.species.stages[status.stage.index];
 
 function setStatus(next) {
   if (!next) return;
-  const moodChanged = status && status.mood !== next.mood;
   const creatureChanged = !status || status.species.id !== next.species.id || status.stage.index !== next.stage.index;
+  const gained = status && status.species.id === next.species.id ? next.xp - status.xp : 0;
   status = next;
   syncCalm(); // a pause starts or ends
-  // The pet on the desktop is always in its normal state: the mood (and why) is shown in the popover.
+  // The pet on the desktop is always in its normal state: how it feels shows in the eyes of the card's shell.
   if (creatureChanged) {
     loading = view.setCreature(status.species.id, status.stage.index).catch((err) => console.error(err));
   }
-  const count = status.prs?.waiting?.length ?? 0;
   const reviews = status.reviewQueue?.length ?? 0;
-  if (count !== waitingCount || reviews !== reviewCount) {
-    const changed = (count !== waitingCount && count > 0) || (reviews !== reviewCount && reviews > 0);
-    waitingCount = count;
+  if (reviews !== reviewCount) {
+    const grew = reviews > 0;
     reviewCount = reviews;
-    if (changed) showWaiting(); // first status or a number went up or changed
+    if (grew) showWaiting(); // first status, or the number changed
   }
   // Native sprite size of the current stage: CSS places the bubble and indicators around it.
   root.setProperty('--stage-size', creature().size);
   $('#alert').hidden = !status.error;
-  if (moodChanged) say(pick(LINES[status.mood] ?? LINES.neutral));
-  else renderBubble();
+  renderLevel();
+  if (gained > 0 && !paused()) floatXp(gained);
+  renderBubble();
 }
 
 function setSize(px) {
@@ -77,75 +68,37 @@ function setSize(px) {
 }
 
 // ---------- Bubble ----------
-// A card with a dot, a bold line and a secondary line. It only speaks for a moment: mood changes, live reactions,
-// and the PR reminder (when the number of PRs that wait for the user's review, or of their own, changes; click to see them).
-// Off with Speech bubbles or during a pause.
+// A card with a dot and one line (and sometimes a second one). It only speaks for a moment: live reactions, and the
+// reminder that someone asked for the user's review (click to see it). Off with Speech bubbles or during a pause.
 
 const quiet = () => !prefs.speechBubbles || paused();
 
-/** The standing message: PRs waiting for the user's review first (they can act on those), else their own PRs. */
+/** The standing message: review requests wait for the user, nothing else is worth a reminder. */
 function waitingMessage() {
-  if (paused()) return null; // while paused nothing is waiting for the person
+  if (paused()) return null;
   const queue = status?.reviewQueue ?? [];
-  if (queue.length) {
-    const days = oldestWaitingDays(queue); // since the user was asked; null when no request has a known date
-    const wait = days === null ? '' : days > 0 ? `The oldest has waited ${plural(days, 'day')}. ` : 'Asked today. ';
-    return {
-      title: queue.length === 1 ? '1 PR needs your review' : `${queue.length} PRs need your review`,
-      sub: `${wait}Click me to see them.`,
-      dot: 'waiting',
-    };
-  }
-  const waiting = status?.prs?.waiting ?? [];
-  if (!waiting.length) return null;
-  const days = oldestDays(waiting);
-  return {
-    title: `${plural(waiting.length, 'PR')} waiting for review`,
-    sub: `${days > 0 ? `For ${plural(days, 'day')}` : 'Opened today'}. Click me to see them.`,
-    dot: 'waiting',
-  };
+  if (!queue.length) return null;
+  return { title: queue.length === 1 ? '1 review waiting' : `${queue.length} reviews waiting`, dot: 'waiting' };
 }
 
 function renderBubble() {
   const bubble = $('#bubble');
-  const message = quiet() ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
+  const message = quiet() || momentTimer ? null : (spoken ?? (waitingVisible ? waitingMessage() : null));
   bubble.hidden = !message;
+  document.body.classList.toggle('speaking', Boolean(message) || Boolean(momentTimer));
   if (!message) return;
-  const { toast } = message;
-  const key = `${message.title}|${message.sub}|${toast?.icon}`;
+  const key = `${message.title}|${message.sub}`;
   if (bubble.dataset.key === key) return; // unchanged: don't replay the pop-in
   bubble.dataset.key = key;
-  bubble.className = toast ? `bubble toast tier-${toast.tier}` : 'bubble';
   bubble.replaceChildren(
-    // A toast, like a console's: the medal, what it is (and a figure on the right), the name and what it was for.
-    ...(toast ? [h('div', { class: 'bubble-medal' }, medal(toast.icon, 2))] : []),
-    h(
-      'div',
-      { class: 'bubble-text' },
-      ...(toast
-        ? [
-            h(
-              'div',
-              { class: 'bubble-kicker' },
-              h('span', {}, toast.kicker),
-              ...(toast.side ? [h('b', {}, toast.side)] : []),
-            ),
-          ]
-        : []),
-      h(
-        'div',
-        { class: 'bubble-title' },
-        ...(toast ? [] : [h('span', { class: `dot ${message.dot ?? ''}` })]),
-        message.title,
-      ),
-      // Not `null`: replaceChildren turns it into the text "null".
-      ...(message.sub ? [h('div', { class: 'bubble-sub' }, message.sub)] : []),
-    ),
+    h('div', { class: 'bubble-title' }, h('span', { class: `dot ${message.dot ?? ''}` }), message.title),
+    // Not `null`: replaceChildren turns it into the text "null".
+    ...(message.sub ? [h('div', { class: 'bubble-sub' }, message.sub)] : []),
   );
   replayClass(bubble, 'bubble');
 }
 
-/** Shows the PR reminder for a few seconds. */
+/** Shows the review reminder for a few seconds. */
 function showWaiting(ms = 5000) {
   waitingVisible = true;
   renderBubble();
@@ -157,14 +110,55 @@ function showWaiting(ms = 5000) {
 }
 
 /** Says a line for a moment; the standing message comes back afterwards. */
-function say(title, { sub, dot, toast, ms = 3500 } = {}) {
-  spoken = { title, sub, dot, toast };
+function say(title, { sub, dot, ms = 3500 } = {}) {
+  spoken = { title, sub, dot };
   renderBubble();
   clearTimeout(bubbleTimer);
   bubbleTimer = setTimeout(() => {
     spoken = null;
     renderBubble();
   }, ms);
+}
+
+// ---------- Level, XP and moments ----------
+
+/** The pill that shows on hover: the level and a small bar (10 blocks). */
+function renderLevel() {
+  const on = Math.round((status.levelXp / status.levelXpNeeded) * 10);
+  $('#level').replaceChildren(
+    h('span', { class: 'lv-num' }, `Lv ${status.level}`),
+    h(
+      'div',
+      { class: 'mini' },
+      Array.from({ length: 10 }, (_, i) => h('i', { class: i < on ? 'on' : '' })),
+    ),
+  );
+}
+
+/** "+10 XP" that rises over the pet and fades. */
+function floatXp(gained) {
+  const el = h('div', { class: 'float' }, `+${gained} XP`);
+  $('#float').append(el);
+  setTimeout(() => el.remove(), 1600);
+}
+
+/**
+ * One pill for every good thing that happens (a new level, a trophy): an icon, a short text, a few seconds. It takes
+ * the place of the speech bubble while it is up. `tier` colors the ring of a medal.
+ */
+function showMoment({ text, icon, tier = 'special' }, ms = 4000) {
+  const moment = $('#moment');
+  moment.className = `moment tier-${tier}`;
+  moment.replaceChildren(...(icon ? [h('span', { class: 'moment-icon' }, icon)] : []), h('span', {}, text));
+  moment.hidden = false;
+  replayClass(moment, 'moment');
+  clearTimeout(momentTimer);
+  momentTimer = setTimeout(() => {
+    momentTimer = null;
+    moment.hidden = true;
+    renderBubble();
+  }, ms);
+  renderBubble();
 }
 
 /** Opens the PR popover above the creature (a second click closes it). */
@@ -183,15 +177,21 @@ function reactToClick() {
 
 // Most exciting first. `cheer`: the pet's cheer animation; otherwise `anim` is a CSS class on the pet, `fx` the particle style.
 const REACTIONS = [
-  { kind: 'merges', cheer: true, text: 'PR merged! 🎉', dot: 'approved' },
-  { kind: 'approvals', cheer: true, text: 'Your PR got approved! 🎉', dot: 'approved' },
-  { kind: 'achievements', cheer: true, text: 'Achievement unlocked! 🏆', dot: 'approved' },
+  { kind: 'merges', cheer: true, text: 'PR merged!', dot: 'approved' },
+  { kind: 'approvals', cheer: true, text: 'Your PR got approved!', dot: 'approved' },
   { kind: 'readyToMerge', anim: 'jump', fx: 'sparkle', text: 'Your PR is ready to merge!', dot: 'approved' },
   { kind: 'changesRequested', anim: 'wiggle', text: 'Changes requested on your PR', dot: 'waiting' },
   { kind: 'checksFailed', anim: 'wiggle', text: 'Checks failed on your PR', dot: 'waiting' },
   { kind: 'mergeConflicts', anim: 'wiggle', text: 'Merge conflicts on your PR', dot: 'waiting' },
   { kind: 'prs', anim: 'jump', fx: 'sparkle', text: 'A new PR! Go go go!', dot: 'waiting' },
-  { kind: 'reviewRequests', anim: 'jump', fx: 'sparkle', text: 'Someone wants your review!', dot: 'waiting' },
+  {
+    kind: 'reviewRequests',
+    anim: 'jump',
+    fx: 'sparkle',
+    text: 'New review request',
+    sub: '+5 XP if you answer within the hour',
+    dot: 'waiting',
+  },
   { kind: 'reviews', anim: 'wiggle', fx: 'sparkle', text: 'Nice review!', dot: 'approved' },
   { kind: 'issues', anim: 'wiggle', text: 'Issue noted!' },
   { kind: 'comments', anim: 'wiggle', text: 'Chatty today!' },
@@ -228,26 +228,18 @@ function reactToActivity(delta) {
       if (reaction.fx) burst(reaction.fx);
     }
   }
-  say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { dot: reaction.dot, ms: 4000 });
+  say(count > 1 ? `${reaction.text} x${count}` : reaction.text, { sub: reaction.sub, dot: reaction.dot, ms: 4000 });
 }
 
-/**
- * New achievements: the usual cheer, then a toast with the medal of the first one and what it was for
- * (the rest are in the profile).
- */
+/** New achievements: the cheer, then one pill with the medal of the first one (the rest are in the pet page). */
 function celebrateAchievements(list) {
   if (!list?.length) return;
-  reactToActivity({ achievements: list.length });
+  if (!calm()) view.celebrate();
   const [first] = list;
-  const several = list.length > 1;
-  say(first.name, {
-    sub: several ? `And ${list.length - 1} more in your profile` : first.description,
-    toast: {
-      icon: first.icon,
-      tier: first.tier ?? 'bronze',
-      kicker: several ? `${list.length} achievements unlocked` : 'Achievement unlocked',
-    },
-    ms: 6000,
+  showMoment({
+    text: list.length > 1 ? `${list.length} new trophies` : first.name,
+    icon: medal(first.icon, 1),
+    tier: first.tier ?? 'bronze',
   });
 }
 
@@ -319,26 +311,22 @@ api.onSize(setSize);
 api.onStatus(setStatus);
 api.onEvolved(() => {
   replayClass(canvas, 'evolve');
-  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}! ✨`, { ms: 6000 });
+  say(`${status?.name ?? 'Your pet'} evolved into ${creature().name}!`, { ms: 6000 });
 });
 api.onActivity(reactToActivity);
 api.onAchievements(celebrateAchievements);
-// A new level: a hop, sparkles and a toast (if it also evolves, the evolution that follows takes over).
-api.onLevelUp(({ level, toNext, name }) => {
+// A new level: a hop, sparkles and the pill (if it also evolves, the evolution that follows takes over).
+api.onLevelUp(({ level }) => {
   if (!calm()) {
     replayClass(canvas, 'jump');
     burst('sparkle');
   }
-  say(`Level ${level}`, {
-    sub: `${name} · ${toNext} XP to level ${level + 1}`,
-    toast: { icon: 'up', tier: 'special', kicker: 'Level up' },
-    ms: 4500,
-  });
+  showMoment({ text: `Level ${level}`, icon: h('i', { class: 'spark' }), tier: 'gold' }, 3500);
 });
 // The user hatched a pet or switched to another one: it comes in out of a flash and says that it earns the XP now.
 api.onCompanion(({ kind, name }) => {
   loading.then(() => !calm() && replayClass(canvas, 'swap'));
-  say(kind === 'hatched' ? 'Hello, world! 🥚' : 'My turn! ✨', {
+  say(kind === 'hatched' ? 'Hello, world!' : 'My turn!', {
     sub: `${name} earns all new XP now`,
     dot: 'approved',
     ms: 5000,
@@ -355,4 +343,3 @@ setSize(await api.size());
 prefs = await api.prefs();
 syncCalm();
 setStatus(await api.status());
-if (status && !waitingMessage()) say(`Hi! I'm ${status.name}`);
