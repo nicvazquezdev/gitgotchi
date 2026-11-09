@@ -3,9 +3,9 @@ import { h } from '../shared/dom.js';
 import { timeAgo, dayLabel } from '../shared/format.js';
 import { xpRules } from './xp-rules.js';
 
-let rulesOpen = false; // the rules of XP are open above the log
+let rulesOpen = false; // the rules of XP are on show, in the place of the log
 
-/** Leaving the tab: the rules fold again. */
+/** Leaving the tab: the log comes back. */
 export const leaveHistory = () => (rulesOpen = false);
 
 const plural = (n, one, many) => (n === 1 ? one : many(n));
@@ -57,31 +57,34 @@ const dayBlock = ({ day, xp, lines }, { now, commitsPerDay }) =>
 
 /** @param {{ rules: object, rerender: (options?: { focus?: string }) => void, now?: Date }} options */
 export function historyPage({ xpLog, lastSyncedAt }, { rules, rerender, now = new Date() }) {
+  const toggle = (label) =>
+    h(
+      'button',
+      {
+        class: 'link',
+        type: 'button',
+        id: 'rules-toggle',
+        dataset: { key: 'rules' },
+        onclick: () => {
+          rulesOpen = !rulesOpen;
+          rerender({ focus: 'rules', resetScroll: true });
+        },
+      },
+      label,
+    );
+  // The rules take the place of the log, and a link brings it back.
+  if (rulesOpen) {
+    return h(
+      'div',
+      { class: 'log-page' },
+      h('div', { class: 'log-intro' }, h('p', {}, 'How XP works.'), toggle('Back to the log')),
+      xpRules(rules),
+    );
+  }
   return h(
     'div',
     { class: 'log-page' },
-    h(
-      'div',
-      { class: 'log-intro' },
-      h('p', {}, 'What you earned, and why.'),
-      h(
-        'button',
-        {
-          class: 'link',
-          type: 'button',
-          id: 'rules-toggle',
-          'aria-expanded': String(rulesOpen),
-          'aria-controls': 'xp-rules',
-          dataset: { key: 'rules' },
-          onclick: () => {
-            rulesOpen = !rulesOpen;
-            rerender({ focus: 'rules' });
-          },
-        },
-        rulesOpen ? 'Hide the rules' : 'How XP works',
-      ),
-    ),
-    rulesOpen ? xpRules(rules) : null,
+    h('div', { class: 'log-intro' }, h('p', {}, 'What you earned, and why.'), toggle('How XP works')),
     xpLog.length
       ? xpLog.map((entry) => dayBlock(entry, { now, commitsPerDay: rules.commitsPerDay }))
       : h('p', { class: 'log-empty' }, 'No XP yet. Open a PR, review one or get one merged to earn it.'),
