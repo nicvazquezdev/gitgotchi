@@ -255,7 +255,9 @@ function prRow(pr, { badge, meta, end, endClass = 'xp-text', endTitle, done = fa
   );
 }
 
-// The left chip says what the PR needs: a state icon, never an unexplained letter. The size is spelled out in the text.
+// The left chip is the size of the PR in the letters of the XP table (XS, S, M, L), as in the design; its name is the
+// tooltip. A PR that needs attention (changes asked, checks failing, conflicts) shows its state icon instead, and
+// then the size is spelled out in the text.
 const STATUS_ICONS = {
   changes: 'alert',
   conflicts: 'merge',
@@ -264,14 +266,20 @@ const STATUS_ICONS = {
   running: 'clock',
   review: 'clock',
 };
-const statusBadge = (pr) =>
+const ATTENTION = ['changes', 'conflicts', 'failing']; // states that take the chip from the size
+const showsSize = (pr) => Boolean(pr.size) && !ATTENTION.includes(pr.status?.kind);
+const stateBadge = (pr) =>
   h(
     'span',
     { class: `badge ${pr.status?.kind ?? 'review'}`, title: pr.status?.label },
     icon(STATUS_ICONS[pr.status?.kind] ?? 'clock', { size: 14, stroke: 2.6 }),
   );
+const sizeBadge = (pr) =>
+  h('span', { class: 'badge size', role: 'img', 'aria-label': pr.sizeName, title: pr.sizeName }, pr.size);
+const statusBadge = (pr) => (showsSize(pr) ? sizeBadge(pr) : stateBadge(pr));
 const doneBadge = () => h('span', { class: 'badge ready' }, icon('check', { size: 14, stroke: 3 }));
-const queueBadge = () => h('span', { class: 'badge review' }, icon('search', { size: 14, stroke: 2.6 }));
+const queueBadge = (pr) =>
+  showsSize(pr) ? sizeBadge(pr) : h('span', { class: 'badge review' }, icon('search', { size: 14, stroke: 2.6 }));
 
 const FLAGGED = ['changes', 'conflicts', 'failing', 'running']; // states worth a line of their own
 
@@ -281,7 +289,7 @@ const FLAGGED = ['changes', 'conflicts', 'failing', 'running']; // states worth 
  */
 function metaLine(pr, ...rest) {
   const flag = FLAGGED.includes(pr.status?.kind) ? pr.status : null;
-  const text = [repoRef(pr), pr.sizeName ?? 'Medium', ...rest].filter(Boolean).join(' · ');
+  const text = [repoRef(pr), !showsSize(pr) && (pr.sizeName ?? 'Medium'), ...rest].filter(Boolean).join(' · ');
   return [
     pr.fastBonus
       ? h(
@@ -333,7 +341,7 @@ function reviewTab(queue) {
       // instead, and do not flag it as late: it would be a guess.
       const known = pr.waitingDays !== null;
       return prRow(pr, {
-        badge: queueBadge(),
+        badge: queueBadge(pr),
         meta: metaLine(pr, pr.author, pr.via && `via ${teamName(pr)}`, !known && `opened ${ago(pr.ageDays)}`),
         end: known ? shortAge(pr.waitingDays) : null,
         endClass: pr.waitingDays >= STALE_AFTER_DAYS ? 'stale' : 'quiet',

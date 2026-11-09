@@ -794,6 +794,12 @@ body {
   background: var(--accent-soft);
   color: var(--size-text);
 }
+/* The size of the PR, in the terminal font like the figures. */
+.badge.size {
+  height: 22px;
+  font: 400 18px/1 var(--font-num);
+  letter-spacing: 0.02em;
+}
 .badge.ready {
   background: var(--success-bg);
   color: var(--success);
