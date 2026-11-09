@@ -10,8 +10,9 @@ const FAILED = new Set(['FAILURE', 'ERROR']);
 
 /**
  * `prs`: normalized nodes `{ id, state, reviewDecision, ci, createdAt, mergedAt, repo }`; `repos`: selected
- * `owner/repo` names. Besides `prs` and `merges`, the delta carries two animation-only kinds (they give no XP):
- * `approvals` and `changesRequested`, when the review decision of an open PR just became APPROVED or CHANGES_REQUESTED.
+ * `owner/repo` names. Besides `prs` and `merges`, the delta carries three animation-only kinds (they give no XP):
+ * `approvals` and `changesRequested`, when the review decision of an open PR just became APPROVED or CHANGES_REQUESTED,
+ * and `checksFailed`, when its checks just went red.
  * `prev`: the previous snapshot or null. Returns the next snapshot, the new activity, and the `moments`: what just
  * happened to one of the user's open PRs that they may want to hear about, with the PR:
  * `[{ kind: 'approved' | 'changesRequested' | 'checksFailed', pr }]`. A PR the app already knew is needed to tell a
@@ -51,6 +52,7 @@ function diffPullRequests(prev, prs, repos, now = Date.now()) {
       }
     }
     if (pr.state === 'OPEN' && pr.id in (prev.checks ?? {}) && FAILED.has(pr.ci) && !FAILED.has(prev.checks[pr.id])) {
+      bump('checksFailed');
       moments.push({ kind: 'checksFailed', pr });
     }
   }

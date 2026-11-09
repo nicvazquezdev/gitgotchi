@@ -162,7 +162,7 @@ describe('diffPullRequests: moments (what the user may want to hear about)', () 
 
     const red = diffPullRequests(base, [open({ ci: 'FAILURE' })], REPOS, NOW + 10_000);
     assert.deepEqual(kinds(red), ['checksFailed']);
-    assert.deepEqual(red.delta, {}, 'failing checks give the pet nothing to celebrate');
+    assert.deepEqual(red.delta, { checksFailed: 1 }, 'the pet reacts to red checks (animation only, no XP)');
   });
 
   test('failing checks count once per failure: going from pending or green to red, not red to red', () => {
