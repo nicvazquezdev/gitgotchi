@@ -652,11 +652,6 @@ body {
 .card .tabs {
   margin: 12px 16px 16px;
 }
-.card .tab {
-  flex: 1 1 auto;
-  gap: 6px;
-  padding: 0 6px;
-}
 .head-actions {
   display: flex;
   gap: 2px;

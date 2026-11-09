@@ -512,7 +512,7 @@ canvas.sprite {
   box-shadow: inset 0 0 0 1px var(--card-border);
 }
 
-/* ---------- Tabs: a segmented control with a count per tab ---------- */
+/* ---------- Tabs: a segmented control ---------- */
 .tabs {
   display: flex;
   gap: 2px;
@@ -540,10 +540,6 @@ canvas.sprite {
 .tab[aria-selected='true'] {
   background: var(--surface-hover);
   color: var(--accent-text);
-}
-.tab[aria-selected='true'] .count-chip {
-  background: var(--accent);
-  color: var(--on-accent);
 }
 
 /* ---------- Window title bar (macOS: traffic lights are native, see trafficLightPosition) ---------- */

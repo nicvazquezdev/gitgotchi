@@ -75,11 +75,7 @@ function leave() {
   stopRenaming();
 }
 
-function tabs({ collection, achievements }) {
-  const counts = {
-    pets: `${collection.hatched}/${collection.total}`,
-    trophies: `${achievements.unlocked}/${achievements.total}`,
-  };
+function tabs() {
   const onKey = (e) => {
     const step = { ArrowRight: 1, ArrowLeft: -1 }[e.key];
     if (!step) return;
@@ -103,7 +99,6 @@ function tabs({ collection, achievements }) {
           onclick: () => openTab(name),
         },
         LABELS[name],
-        counts[name] ? h('span', { class: 'count-chip' }, counts[name]) : null,
       ),
     ),
   );
@@ -266,7 +261,7 @@ function render(state = latest, { resetScroll = false, focus: focusOn } = {}) {
     'div',
     { class: 'card' },
     ...(status
-      ? [header(status), pauseBanner(status.pause), h('div', { class: 'card-body' }, content(status)), tabs(status)]
+      ? [header(status), pauseBanner(status.pause), h('div', { class: 'card-body' }, content(status)), tabs()]
       : [h('p', { class: 'empty' }, 'No pet yet. Pick your repos to hatch one.')]),
   );
 
