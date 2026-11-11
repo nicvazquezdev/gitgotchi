@@ -1,0 +1,54 @@
+name: Install scripts
+
+# install.sh and install.ps1 on each system, against the latest published release: the app installs and starts, and a
+# second run (an update) replaces it while it is running.
+on:
+  push:
+    paths: [install.sh, install.ps1, .github/workflows/install.yml]
+  pull_request:
+    paths: [install.sh, install.ps1, .github/workflows/install.yml]
+  workflow_dispatch:
+
+jobs:
+  install:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: macOS
+        if: runner.os == 'macOS'
+        run: |
+          sh install.sh
+          sleep 10
+          pgrep -f 'Gitgotchi.app/Contents/MacOS/' || { echo 'Gitgotchi is not running'; exit 1; }
+          codesign --verify --deep --strict /Applications/Gitgotchi.app
+          sh install.sh
+          sleep 10
+          pgrep -f 'Gitgotchi.app/Contents/MacOS/' || { echo 'Gitgotchi did not start again'; exit 1; }
+
+      - name: Linux
+        if: runner.os == 'Linux'
+        run: |
+          sh install.sh
+          dpkg -s gitgotchi | grep '^Version'
+          # With the sandbox on (no --no-sandbox), as it runs for a person on Ubuntu. `timeout` ends it with 124 if it stayed up.
+          code=0
+          timeout 20 xvfb-run -a gitgotchi || code=$?
+          [ "$code" = 124 ] || { echo "Gitgotchi exited with $code"; exit 1; }
+          sh install.sh
+
+      - name: Windows
+        if: runner.os == 'Windows'
+        shell: powershell # Windows PowerShell 5.1: the one `irm | iex` runs in
+        run: |
+          .\install.ps1
+          Start-Sleep 10
+          if (-not (Get-Process Gitgotchi -ErrorAction SilentlyContinue)) { throw 'Gitgotchi is not running' }
+          .\install.ps1
+          Start-Sleep 10
+          if (-not (Get-Process Gitgotchi -ErrorAction SilentlyContinue)) { throw 'Gitgotchi did not start again' }
