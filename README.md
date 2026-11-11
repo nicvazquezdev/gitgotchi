@@ -44,7 +44,21 @@
 
 Requires the [GitHub CLI](https://cli.github.com) logged in (`gh auth login`). The app reuses that login.
 
-Download the installer for your system from the [latest release](https://github.com/nicvazquezdev/gitgotchi/releases/latest):
+One command installs the latest release (run it again to update). On macOS, no "cannot verify the app" prompt shows up this way.
+
+```sh
+# macOS and Linux
+curl -fsSL https://raw.githubusercontent.com/nicvazquezdev/gitgotchi/main/install.sh | sh
+```
+
+```powershell
+# Windows (PowerShell)
+irm https://raw.githubusercontent.com/nicvazquezdev/gitgotchi/main/install.ps1 | iex
+```
+
+On Linux it installs the `.deb` when `apt` is there (it asks for `sudo`) and the AppImage otherwise. Read [`install.sh`](install.sh) or [`install.ps1`](install.ps1) first if you like: each one downloads the installer from the release, checks its sha512 and runs it.
+
+Or download the installer for your system from the [latest release](https://github.com/nicvazquezdev/gitgotchi/releases/latest):
 
 | System  | Download                                                                      |
 | ------- | ----------------------------------------------------------------------------- |
@@ -69,7 +83,7 @@ The pet is a transparent window that stays on top, so on Linux it needs a deskto
 
 Gitgotchi is made and used every day on macOS. The Windows and Linux builds are newer: they pass the same tests and boot in CI on each system, but they have had less use. If something looks off, please [open an issue](https://github.com/nicvazquezdev/gitgotchi/issues/new/choose).
 
-**Updates.** The app looks for a new release a minute after it opens and every six hours. On Windows and with the Linux AppImage it downloads the new version and installs it when you quit, or from _Settings → Restart to update_. On macOS and with the `.deb` it only tells you that one is out (a row in _Settings_ and an item in the menu, no notifications) and opens the release page. macOS can only update an app by itself when it has an Apple Developer ID signature.
+**Updates.** The app looks for a new release a minute after it opens and every six hours. On Windows and with the Linux AppImage it downloads the new version and installs it when you quit, or from _Settings → Restart to update_. On macOS and with the `.deb` it only tells you that one is out (a row in _Settings_ and an item in the menu, no notifications) and opens the release page: run the install command again to update. macOS can only update an app by itself when it has an Apple Developer ID signature.
 
 ### Run it from source
 
